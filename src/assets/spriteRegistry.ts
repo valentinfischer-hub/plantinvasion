@@ -1,3 +1,5 @@
+import { FALLBACK_TILE_KEYS } from './biomeFallbackTiles';
+
 /**
  * Mapping von Tile-Index zu Sprite-Texture-Key fuer das Stardew-Style-Tileset.
  * Die echten 32x32 PNGs liegen unter public/assets/generated/.
@@ -39,7 +41,20 @@ export const TILE_SPRITE_KEYS: Record<number, string> = {
   25: 'tile_beachsand',
   26: 'tile_saltwater',
   27: 'tile_seashell',
-  28: 'tile_driftwood'
+  28: 'tile_driftwood',
+  // Mordwald (Biom 6)
+  30: 'tile_swampfloor',
+  31: 'tile_swampwater',
+  32: 'tile_swampoak',
+  33: 'tile_spanishmoss',
+  34: 'tile_carnivoregrass',
+  // Magmabluete (Biom 7)
+  40: 'tile_ash',
+  41: 'tile_lava',
+  42: 'tile_basalt',
+  43: 'tile_charredstump',
+  44: 'tile_pyrophytgrass',
+  45: 'tile_sulfurspring'
 };
 
 export const PLAYER_SPRITE_KEYS = {
@@ -62,6 +77,7 @@ export const NPC_SPRITE_KEYS: Record<string, string> = {
 export function getAllSpriteFiles(): { key: string; file: string }[] {
   const result: { key: string; file: string }[] = [];
   for (const k of Object.values(TILE_SPRITE_KEYS)) {
+    if (FALLBACK_TILE_KEYS.includes(k)) continue; // procedural-only, no PNG
     result.push({ key: k, file: `assets/generated/${k}.png` });
   }
   for (const k of Object.values(PLAYER_SPRITE_KEYS)) {

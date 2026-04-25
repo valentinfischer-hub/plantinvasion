@@ -18,6 +18,7 @@ Postmortem: `brain/postmortems/S-07_frostkamm_salzbucht_battle_anim.md`
 6. Performance-Pass: Map-Tile-Render-Cache statt sprite-pro-Tile
 7. Devlog #3 schreiben
 8. **DONE 2026-04-25**: Growth-System V0.2 (Aufwachsystem-Rework). Hydration-Skala, Multiplikatoren, Quality-Tier, Bloom-Cycle. Spec, Code, Tests, Save-Migration v5->v6. Siehe D-019.
+9. **DONE 2026-04-25**: Mordwald-Biom (Karnivoren-Sumpf) plus Magmabluete-Biom (Vulkan-Pyrophyt). Beide mit Spec, Map-File, 6er Encounter-Pool, prozeduralem Tile-Set, Map-Edge-Transitions, NPC. Endgame-Spec V0.1 inkl. 15 Mythical-Pflanzen, Verodyne-Boss-Konzept, Eden-Lost-Region.
 
 ## Tasks
 ### Spec-Phase

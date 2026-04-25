@@ -332,3 +332,119 @@ export const SALZBUCHT_TALLGRASS: EncounterDef[] = [
     baseColor: 0x8a4ec8
   }
 ];
+
+// Mordwald (Karnivoren-Sumpf, Biom 6)
+export const MORDWALD_TALLGRASS: EncounterDef[] = [
+  {
+    slug: 'sundew',
+    scientificName: 'Drosera capensis',
+    commonName: 'Sonnentau',
+    family: 'Droseraceae',
+    weight: 25,
+    minLevel: 18, maxLevel: 26,
+    baseColor: 0xc94d6e
+  },
+  {
+    slug: 'pitcher-plant',
+    scientificName: 'Nepenthes attenboroughii',
+    commonName: 'Kannenpflanze',
+    family: 'Droseraceae',
+    weight: 20,
+    minLevel: 20, maxLevel: 28,
+    baseColor: 0x8b3a6b
+  },
+  {
+    slug: 'cobra-lily',
+    scientificName: 'Darlingtonia californica',
+    commonName: 'Kobra-Lilie',
+    family: 'Droseraceae',
+    weight: 15,
+    minLevel: 22, maxLevel: 30,
+    baseColor: 0x4a8228
+  },
+  {
+    slug: 'bladderwort',
+    scientificName: 'Utricularia vulgaris',
+    commonName: 'Wasserschlauch',
+    family: 'Droseraceae',
+    weight: 25,
+    minLevel: 18, maxLevel: 24,
+    baseColor: 0x9bc4e3
+  },
+  {
+    slug: 'corpse-flower',
+    scientificName: 'Amorphophallus titanum',
+    commonName: 'Titanenwurz',
+    family: 'Droseraceae',
+    weight: 10,
+    minLevel: 26, maxLevel: 34,
+    baseColor: 0x6b1a1a
+  },
+  {
+    slug: 'butterwort',
+    scientificName: 'Pinguicula vulgaris',
+    commonName: 'Fettkraut',
+    family: 'Droseraceae',
+    weight: 5,
+    minLevel: 22, maxLevel: 28,
+    baseColor: 0xaa78c8
+  }
+];
+
+// Magmabluete (Vulkan-Pyrophyt, Biom 7)
+export const MAGMABLUETE_TALLGRASS: EncounterDef[] = [
+  {
+    slug: 'fire-lily',
+    scientificName: 'Cyrtanthus ventricosus',
+    commonName: 'Feuerlilie',
+    family: 'Crassulaceae',
+    weight: 25,
+    minLevel: 24, maxLevel: 32,
+    baseColor: 0xff5c5c
+  },
+  {
+    slug: 'banksia',
+    scientificName: 'Banksia attenuata',
+    commonName: 'Banksie',
+    family: 'Bromeliaceae',
+    weight: 20,
+    minLevel: 26, maxLevel: 34,
+    baseColor: 0xffa840
+  },
+  {
+    slug: 'serotinous-pine',
+    scientificName: 'Pinus contorta',
+    commonName: 'Drehkiefer',
+    family: 'Crassulaceae',
+    weight: 15,
+    minLevel: 28, maxLevel: 38,
+    baseColor: 0x4a5b28
+  },
+  {
+    slug: 'protea',
+    scientificName: 'Protea cynaroides',
+    commonName: 'Koenigs-Protea',
+    family: 'Bromeliaceae',
+    weight: 20,
+    minLevel: 26, maxLevel: 34,
+    baseColor: 0xff7eb8
+  },
+  {
+    slug: 'eucalyptus',
+    scientificName: 'Eucalyptus regnans',
+    commonName: 'Riesen-Eukalyptus',
+    family: 'Bromeliaceae',
+    weight: 10,
+    minLevel: 30, maxLevel: 40,
+    baseColor: 0x6a8a48
+  },
+  {
+    slug: 'fynbos-erica',
+    scientificName: 'Erica versicolor',
+    commonName: 'Fynbos-Heide',
+    family: 'Lamiaceae',
+    weight: 10,
+    minLevel: 24, maxLevel: 30,
+    baseColor: 0xff9ad0
+  }
+];

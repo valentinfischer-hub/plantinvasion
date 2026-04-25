@@ -107,7 +107,14 @@ Append-only Log strategischer Entscheidungen. Jeder Eintrag hat Datum, Entscheid
 
 **Konsequenz**: Save-Migration v5 -> v6 mit Backfill (hydration=100, careScore=0, generation aus parentIds). Plant-Type um 6 Felder erweitert. GardenScene-UI um Hydration-Bar, Quality-Stars, Bloom-Pulse, Harvest-Button. Spec in brain/design/growth_system.md, Test in brain/playtests/2026-04-25_growth_system_unit_test.md (9/9 PASS, tsc gruen).
 
-### D-011 Existing Greenhouse-Codebase wird als Heimatgarten erhalten
+### D-020 Procedural-Fallback-Tiles fuer neue Biome (2026-04-25)
+**Entscheidung**: Mordwald (tile_swamp*) und Magmabluete (tile_ash, tile_lava etc.) bekommen ihre Tile-Sprites prozedural via Phaser.Graphics.generateTexture statt PNG-Asset. Spaetere PixelLab-PNG-Generation wird die procedural Variante automatisch ueberschreiben (ensure-only-if-missing-Pattern in `biomeFallbackTiles.ts`).
+
+**Begruendung**: Schneller Ship ohne PixelLab-Cost-Hit. Tiles sehen 16x16 Pixel-Art-typisch aus, passen zu existierenden Stardew-Style-Sprites. Beim Pinselstrich-Upgrade in S-09 Phase 1 (Mordwald-Polish) werden die Procedural-Sprites durch PNG-Assets ersetzt, ohne Code-Aenderungen.
+
+**Konsequenz**: 11 neue Texture-Keys (5 Mordwald, 6 Magmabluete) in `src/assets/biomeFallbackTiles.ts`. Registry-Update in `spriteRegistry.ts`. Loader skipt diese Keys beim PNG-Load (FALLBACK_TILE_KEYS-Filter).
+
+### D-019 Growth-System V0.2 (Aufwachsystem-Rework, 2026-04-25)
 **Entscheidung**: Sprint 0 plus Sprint 1 Code (Greenhouse-Grid, 5 Starter-Pflanzen, XP-Curve, Save-System) bleibt erhalten. Wird in S-03 zu Sub-Scene "GardenScene" innerhalb des Heimatdorfs Wurzelheim. Tile-Movement und Worldmap werden drumherum gebaut, nicht statt dessen.
 
 **Begruendung**: Existing Code laeuft live auf plantinvasion.netlify.app, hat funktionierende Mechaniken die wir brauchen (Wachstum, XP, Stats, Save). Wegwerfen waere Verlust an Working-Code. Pivot bedeutet Erweiterung nach aussen, nicht Reset nach innen. Existing 5 Pflanzen werden Tutorial-Pflanzen, restliche 195 kommen iterativ.

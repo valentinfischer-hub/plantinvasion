@@ -4,7 +4,9 @@ import verdanto from '../data/maps/verdanto';
 import kaktoria from '../data/maps/kaktoria';
 import frostkamm from '../data/maps/frostkamm';
 import salzbucht from '../data/maps/salzbucht';
-import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
+import mordwald from '../data/maps/mordwald';
+import magmabluete from '../data/maps/magmabluete';
+import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, MORDWALD_TALLGRASS, MAGMABLUETE_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
 import {
   TILE_SIZE,
   CAMERA_ZOOM,
@@ -14,6 +16,7 @@ import { PlayerController, type CollisionChecker } from '../entities/PlayerContr
 import { NPC } from '../entities/NPC';
 import { DialogBox } from '../ui/DialogBox';
 import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
+import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
 import { QUESTS, type QuestDef } from '../data/quests';
@@ -21,14 +24,16 @@ import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
-const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14]);
+const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43]);
 
 const MAPS: Record<string, MapDef> = {
   wurzelheim,
   verdanto,
   kaktoria,
   frostkamm,
-  salzbucht
+  salzbucht,
+  mordwald,
+  magmabluete
 };
 
 function getEncounterPool(zone: string, tile: number): EncounterDef[] {
@@ -39,6 +44,8 @@ function getEncounterPool(zone: string, tile: number): EncounterDef[] {
   if (zone === 'kaktoria') return KAKTORIA_TALLGRASS;
   if (zone === 'frostkamm') return FROSTKAMM_TALLGRASS;
   if (zone === 'salzbucht') return SALZBUCHT_TALLGRASS;
+  if (zone === 'mordwald') return MORDWALD_TALLGRASS;
+  if (zone === 'magmabluete') return MAGMABLUETE_TALLGRASS;
   return WURZELHEIM_TALLGRASS;
 }
 
@@ -100,9 +107,17 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
   }
 
+  // Wird in create() VOR renderTiles aufgerufen, damit procedural-Texturen
+  // fuer Mordwald/Magmabluete bereitstehen falls kein PNG geladen wurde.
+  private ensureBiomeFallbackTiles(): void {
+    generateBiomeFallbackTiles(this);
+  }
+
   public create(): void {
     this.cameras.main.setBackgroundColor('#1a1f1a');
 
+    // Procedural-Fallback-Tiles fuer Biome ohne PNG
+    this.ensureBiomeFallbackTiles();
     // Welt-Container fuer Tiles
     this.renderTiles();
 
@@ -362,6 +377,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (this.currentZone === 'kaktoria') return 'tile_sand';
     if (this.currentZone === 'frostkamm') return 'tile_snow';
     if (this.currentZone === 'salzbucht') return 'tile_beachsand';
+    if (this.currentZone === 'mordwald') return 'tile_swampfloor';
+    if (this.currentZone === 'magmabluete') return 'tile_ash';
     // wurzelheim/verdanto base = grass
     if (t === 1) return 'tile_path';
     if (t === 3) return 'tile_water';
@@ -375,7 +392,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
   private isDecoTile(t: number): boolean {
     // Tiles die auf top of base layer sollen
-    return [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 23, 24, 27, 28].includes(t);
+    return [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 23, 24, 27, 28, 31, 32, 33, 34, 41, 42, 43, 44, 45].includes(t);
   }
 
   private getTile(x: number, y: number): number {
@@ -429,6 +446,26 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.dialog.open(['Vor dir liegt Glaciara, das Endgame-Biom.', '(In V0.9 freischaltbar)']);
       return;
     }
+    // Salzbucht Sueden -> Mordwald Norden
+    if (this.currentZone === 'salzbucht' && tileY >= this.map.height - 1) {
+      this.changeZone('mordwald', tileX, 1, 'down');
+      return;
+    }
+    // Mordwald Norden -> Salzbucht Sueden
+    if (this.currentZone === 'mordwald' && tileY <= 0) {
+      this.changeZone('salzbucht', tileX, this.map.height - 2, 'up');
+      return;
+    }
+    // Mordwald Sueden -> Magmabluete Norden
+    if (this.currentZone === 'mordwald' && tileY >= this.map.height - 1) {
+      this.changeZone('magmabluete', tileX, 1, 'down');
+      return;
+    }
+    // Magmabluete Norden -> Mordwald Sueden
+    if (this.currentZone === 'magmabluete' && tileY <= 0) {
+      this.changeZone('mordwald', tileX, this.map.height - 2, 'up');
+      return;
+    }
     void tileX;
   }
 
@@ -464,7 +501,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       return;
     }
     // Hohes Gras (Tile 2) oder Bromelien (Tile 13): Encounter-Trigger
-    const encounterRate = t === 13 ? 0.10 : (t === 2 ? 0.05 : 0);
+    const encounterRate = t === 13 ? 0.10 : (t === 2 || t === 34 || t === 44 ? 0.07 : 0);
     if (encounterRate > 0 && Math.random() < encounterRate) {
       const pool = getEncounterPool(this.currentZone, t);
       console.log('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'size:', pool.length);
@@ -475,6 +512,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       else if (this.currentZone === 'kaktoria') poolKey = 'kaktoria-tallgrass';
       else if (this.currentZone === 'frostkamm') poolKey = 'frostkamm-tallgrass';
       else if (this.currentZone === 'salzbucht') poolKey = 'salzbucht-tallgrass';
+      else if (this.currentZone === 'mordwald') poolKey = 'mordwald-tallgrass';
+      else if (this.currentZone === 'magmabluete') poolKey = 'magmabluete-tallgrass';
       this.scene.start('BattleScene', { poolKey });
       return;
     }
