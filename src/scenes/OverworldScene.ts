@@ -20,6 +20,7 @@ import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
 import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
+import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
 import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
@@ -94,6 +95,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private interactHint!: Phaser.GameObjects.Text;
   private touch!: TouchKeysHandle;
   private prevTouchE = false;
+  private knownAchievements: Set<string> = new Set();
   private tutorial!: TutorialOverlay;
 
   constructor() {
@@ -197,6 +199,49 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.tryClaimDailyLogin();
     // Zone-Visit fuer Achievement-Tracking
     gameStore.recordZoneVisit(this.currentZone);
+
+    // Initial-Snapshot der bekannten Achievements
+    this.knownAchievements = new Set(gameStore.getAchievements());
+    // Subscribe fuer Achievement-Diffs
+    gameStore.subscribe(() => this.checkNewAchievements());
+  }
+
+  private checkNewAchievements(): void {
+    const current = gameStore.getAchievements();
+    for (const slug of current) {
+      if (!this.knownAchievements.has(slug)) {
+        this.knownAchievements.add(slug);
+        this.showAchievementToast(slug);
+      }
+    }
+  }
+
+  private showAchievementToast(slug: string): void {
+    const def = getAchievement(slug);
+    if (!def) return;
+    const { width } = this.scale;
+    const container = this.add.container(width / 2, 80).setScrollFactor(0).setDepth(2100);
+    const bg = this.add.graphics();
+    bg.fillStyle(0xffd166, 0.95);
+    bg.fillRoundedRect(-160, -28, 320, 56, 8);
+    bg.lineStyle(2, 0xb86ee3, 1);
+    bg.strokeRoundedRect(-160, -28, 320, 56, 8);
+    container.add(bg);
+    const title = this.add.text(0, -16, 'Achievement!', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#1a1f1a'
+    }).setOrigin(0.5, 0);
+    const name = this.add.text(0, 4, def.name, {
+      fontFamily: 'monospace', fontSize: '13px', color: '#1a1f1a'
+    }).setOrigin(0.5, 0);
+    container.add([title, name]);
+    sfx.dialogOpen();
+    this.tweens.add({
+      targets: container,
+      alpha: { from: 1, to: 0 },
+      delay: 3000,
+      duration: 1500,
+      onComplete: () => container.destroy()
+    });
   }
 
   private tryClaimDailyLogin(): void {

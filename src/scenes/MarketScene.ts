@@ -8,13 +8,19 @@ import { sfx } from '../audio/sfxGenerator';
  * Aufgerufen von OverworldScene wenn Spieler mit Markt-NPC redet.
  */
 export class MarketScene extends Phaser.Scene {
-  private mode: 'buy' | 'sell' = 'buy';
+  private mode: 'buy' | 'sell' | 'roster' = 'roster';
   private listContainer!: Phaser.GameObjects.Container;
   private coinsText!: Phaser.GameObjects.Text;
   private modeButton!: Phaser.GameObjects.Container;
 
   constructor() {
     super('MarketScene');
+  }
+
+  private modeLabel(): string {
+    if (this.mode === 'roster') return 'Modus: Tagesangebot';
+    if (this.mode === 'buy') return 'Modus: Kaufen (alle)';
+    return 'Modus: Verkaufen';
   }
 
   create(): void {
@@ -31,8 +37,8 @@ export class MarketScene extends Phaser.Scene {
     this.updateCoinsText();
 
     // Mode-Toggle
-    this.modeButton = this.makeButton(width / 2, 88, this.mode === 'buy' ? 'Modus: Kaufen' : 'Modus: Verkaufen', '#9be36e', () => {
-      this.mode = this.mode === 'buy' ? 'sell' : 'buy';
+    this.modeButton = this.makeButton(width / 2, 88, this.modeLabel(), '#9be36e', () => {
+      this.mode = this.mode === 'roster' ? 'buy' : (this.mode === 'buy' ? 'sell' : 'roster');
       this.refreshList();
     });
 
@@ -63,11 +69,15 @@ export class MarketScene extends Phaser.Scene {
     // Update mode-Button-Text
     const modeText = this.modeButton.getAt(1) as Phaser.GameObjects.Text;
     if (modeText && modeText.setText) {
-      modeText.setText(this.mode === 'buy' ? 'Modus: Kaufen' : 'Modus: Verkaufen');
+      modeText.setText(this.modeLabel());
     }
 
     let listToShow: ItemDef[];
-    if (this.mode === 'buy') {
+    if (this.mode === 'roster') {
+      const roster = gameStore.getMarketShopRoster();
+      const slugs = new Set<string>([...roster.seedSlugs, ...roster.boosterSlugs, 'soil-bronze', 'soil-silver', 'soil-gold']);
+      listToShow = ITEMS.filter((i) => slugs.has(i.slug));
+    } else if (this.mode === 'buy') {
       listToShow = ITEMS;
     } else {
       // Nur Items die wir haben
@@ -77,8 +87,9 @@ export class MarketScene extends Phaser.Scene {
     let by = 130;
     for (const item of listToShow) {
       const have = inv[item.slug] ?? 0;
-      const price = this.mode === 'buy' ? item.buyPrice : item.sellPrice;
-      const action = this.mode === 'buy' ? 'Kaufen' : 'Verkaufen';
+      const isBuy = this.mode === 'buy' || this.mode === 'roster';
+      const price = isBuy ? item.buyPrice : item.sellPrice;
+      const action = isBuy ? 'Kaufen' : 'Verkaufen';
 
       const row = this.add.container(width / 2, by);
       const bg = this.add.rectangle(0, 0, width - 40, 36, 0x000000, 0.5)
@@ -90,7 +101,7 @@ export class MarketScene extends Phaser.Scene {
         fontFamily: 'monospace', fontSize: '10px', color: '#8a6e4a'
       });
       const buyBtn = this.add.text((width - 40) / 2 - 70, 0, action, {
-        fontFamily: 'monospace', fontSize: '11px', color: this.mode === 'buy' ? '#9be36e' : '#fcd95c',
+        fontFamily: 'monospace', fontSize: '11px', color: isBuy ? '#9be36e' : '#fcd95c',
         backgroundColor: '#222222', padding: { x: 6, y: 4 }
       }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
       buyBtn.on('pointerup', () => this.tryTransaction(item));
@@ -109,7 +120,7 @@ export class MarketScene extends Phaser.Scene {
   }
 
   private tryTransaction(item: ItemDef): void {
-    if (this.mode === 'buy') {
+    if (this.mode === 'buy' || this.mode === 'roster') {
       const ok = gameStore.spendCoins(item.buyPrice);
       if (!ok) {
         sfx.bump();
