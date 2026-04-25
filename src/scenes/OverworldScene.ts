@@ -90,6 +90,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private keyP!: Phaser.Input.Keyboard.Key;
   private keyM!: Phaser.Input.Keyboard.Key;
   private keyQ!: Phaser.Input.Keyboard.Key;
+  private keyBoss!: Phaser.Input.Keyboard.Key;
+  private keyDiary!: Phaser.Input.Keyboard.Key;
   private debugText!: Phaser.GameObjects.Text;
   private _saveAccum?: number;
   private interactHint!: Phaser.GameObjects.Text;
@@ -158,6 +160,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.keyP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
     this.keyM = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
     this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+    this.keyBoss = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
+    this.keyDiary = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
 
     // Debug
     this.debugText = this.add.text(8, 8, '', {
@@ -289,6 +293,25 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       }
     }
 
+    // Tagebuch-Hotkey (T)
+    if (Phaser.Input.Keyboard.JustDown(this.keyDiary)) {
+      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
+      this.scene.start('DiaryScene');
+      return;
+    }
+    // Boss-Battle-Trigger (K-Hotkey): startet aktive boss-quest in current zone
+    if (Phaser.Input.Keyboard.JustDown(this.keyBoss)) {
+      const activeBossQuest = QUESTS.find((qq) => {
+        if (qq.goal.type !== 'defeat-boss') return false;
+        if (gameStore.getQuestState(qq.id) !== 'active') return false;
+        return true;
+      });
+      if (activeBossQuest && activeBossQuest.goal.type === 'defeat-boss') {
+        gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
+        this.scene.start('BattleScene', { bossId: activeBossQuest.goal.bossId });
+        return;
+      }
+    }
     // Quest-Log-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyQ)) {
       this.tutorial?.markInteract('quest');
@@ -319,7 +342,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Debug
     this.debugText.setText(
-      `${this.currentZone}  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E=talk, P=pokedex, Q=quest, M=markt, Shift=run]`
+      `${this.currentZone}  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E=talk, P=pokedex, Q=quest, M=markt, K=boss, T=tagebuch, Shift=run]`
     );
   }
 

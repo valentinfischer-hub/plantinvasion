@@ -12,7 +12,7 @@ export type QuestGoal =
   | { type: 'have-plant'; speciesSlug: string; count: number }
   | { type: 'talk-to'; npcId: string }
   | { type: 'reach-zone'; zone: string }
-  | { type: 'defeat-boss'; bossId: string };
+  | { type: 'defeat-boss'; bossId: string };  // bossId matches BOSSES[].id
 
 export interface QuestReward {
   coins?: number;

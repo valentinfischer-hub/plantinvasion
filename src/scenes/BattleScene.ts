@@ -13,9 +13,11 @@ import {
 import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, type EncounterDef } from '../data/encounters';
 import { getSpecies } from '../data/species';
 import { getMove, defaultMovesForFamily, type MoveDef } from '../data/moves';
+import { getBoss, type BossDef } from '../data/bosses';
 
 interface BattleSceneInitData {
   poolKey?: string;
+  bossId?: string;
 }
 
 function poolFromKey(key?: string): EncounterDef[] {
@@ -45,6 +47,8 @@ export class BattleScene extends Phaser.Scene {
   private xpReward = 0;
   private capturedEnc?: { slug: string; rarity: number; level: number };
   private poolKey: string = 'wurzelheim-tallgrass';
+  private bossId?: string;
+  private bossDef?: BossDef;
   private uiCam!: Phaser.Cameras.Scene2D.Camera;
 
   constructor() {
@@ -62,6 +66,7 @@ export class BattleScene extends Phaser.Scene {
   init(data: BattleSceneInitData = {}) {
     this.over = false;
     this.poolKey = data.poolKey ?? 'wurzelheim-tallgrass';
+    this.bossId = data.bossId;
   }
 
   create(): void {
@@ -89,22 +94,47 @@ export class BattleScene extends Phaser.Scene {
       spdBias: playerPlant.stats.spd - 50
     });
 
-    // Wild-Plant aus Encounter-Pool
-    const pool = poolFromKey(this.poolKey);
-    const enc = pickEncounter(pool);
-    gameStore.discoverSpecies(enc.slug);
-    const zone = gameStore.getOverworldPos().zone;
-    const wildLevel = clampLevelToRegion(randomLevel(enc), zone);
-    this.wild = makeBattleSide({
-      name: enc.commonName,
-      family: enc.family,
-      level: wildLevel,
-      isPlayer: false,
-      spriteColor: enc.baseColor,
-      moveSlugs: defaultMovesForFamily(enc.family)
-    });
-    this.xpReward = 10 + 5 * wildLevel;
-    this.capturedEnc = { slug: enc.slug, rarity: 2, level: wildLevel };
+    if (this.bossId) {
+      // Boss-Mode
+      const boss = getBoss(this.bossId);
+      if (boss) {
+        this.bossDef = boss;
+        this.wild = makeBattleSide({
+          name: boss.name,
+          family: boss.family,
+          level: boss.level,
+          isPlayer: false,
+          spriteColor: boss.spriteColor,
+          spriteKey: boss.spriteKey,
+          moveSlugs: boss.moveSlugs,
+          atkBias: boss.atkBias,
+          defBias: boss.defBias,
+          spdBias: boss.spdBias
+        });
+        // HP multiplier
+        this.wild.stats.maxHp = Math.floor(this.wild.stats.maxHp * boss.hpMultiplier);
+        this.wild.stats.hp = this.wild.stats.maxHp;
+        this.xpReward = boss.rewardCoins / 4;
+        this.capturedEnc = undefined;     // Boss kann nicht gefangen werden
+      }
+    } else {
+      // Wild-Encounter
+      const pool = poolFromKey(this.poolKey);
+      const enc = pickEncounter(pool);
+      gameStore.discoverSpecies(enc.slug);
+      const zone = gameStore.getOverworldPos().zone;
+      const wildLevel = clampLevelToRegion(randomLevel(enc), zone);
+      this.wild = makeBattleSide({
+        name: enc.commonName,
+        family: enc.family,
+        level: wildLevel,
+        isPlayer: false,
+        spriteColor: enc.baseColor,
+        moveSlugs: defaultMovesForFamily(enc.family)
+      });
+      this.xpReward = 10 + 5 * wildLevel;
+      this.capturedEnc = { slug: enc.slug, rarity: 2, level: wildLevel };
+    }
 
     // Battle-Background-Bereich (heller fuer Gegner, dunkler fuer Spieler)
     const bgTop = this.add.rectangle(width / 2, height / 4, width, height / 2, 0x4a8228, 0.4).setOrigin(0.5);
@@ -118,7 +148,7 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(width / 2, 42, this.wild.family, {
       fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
     }).setOrigin(0.5);
-    const wildSpriteKey = this.pickWildSpriteKey(enc.slug);
+    const wildSpriteKey = this.bossDef?.spriteKey ?? this.pickWildSpriteKey(this.capturedEnc?.slug ?? 'common-daisy');
     this.wildSprite = this.add.sprite(width / 2, 110, wildSpriteKey);
     this.wildSprite.setDisplaySize(72, 72);
     this.wildHpBar = this.add.rectangle(width / 2, 162, 200, 10, 0x6abf3a)
@@ -162,7 +192,15 @@ export class BattleScene extends Phaser.Scene {
 
     this.updateBars();
     sfx.dialogOpen();
-    this.waitingForInput = true;
+    if (this.bossDef) {
+      this.statusText.setText(this.bossDef.introText.join('\n'));
+      this.time.delayedCall(3500, () => {
+        this.statusText.setText('Was soll deine Pflanze tun?');
+        this.waitingForInput = true;
+      });
+    } else {
+      this.waitingForInput = true;
+    }
 
     // Camera-Routing fuer UI: keine zoom Probleme da Battle-Cam zoom 1 ist
     void this.uiCam;
@@ -275,20 +313,32 @@ export class BattleScene extends Phaser.Scene {
 
     if (outcome.battleOver) {
       this.over = true;
-      this.time.delayedCall(2000, () => {
-        if (outcome.winner === this.player) {
-          // Battle-Drop V0.2: 25% Seed, 10% Coins
-          let dropMsg = '';
-          if (this.capturedEnc?.slug) {
-            const drop = gameStore.applyBattleDrop(this.capturedEnc.slug);
-            if (drop.itemSlug) dropMsg += ` +1 ${drop.itemSlug}`;
-            if (drop.coins) dropMsg += ` +${drop.coins} Coins`;
-          }
-          this.endBattle(`Sieg! +${this.xpReward} XP${dropMsg}`);
-        } else {
-          this.endBattle('Deine Pflanze ist erschoepft.');
+if (this.bossDef && outcome.winner === this.player) {
+        // Boss-Sieg: Story-Flag setzen, Rewards, Defeat-Text
+        gameStore.setStoryFlag(this.bossDef.questFlagOnDefeat, true);
+        gameStore.addCoins(this.bossDef.rewardCoins);
+        for (const [slug, n] of Object.entries(this.bossDef.rewardItems)) {
+          gameStore.addItem(slug, n);
         }
-      });
+        this.statusText.setText(this.bossDef.defeatText.join('\n') + `\n+${this.bossDef.rewardCoins} Gold!`);
+        sfx.pickup();
+        this.time.delayedCall(3500, () => this.endBattle(`Boss besiegt: ${this.bossDef!.name}`));
+      } else {
+        this.time.delayedCall(2000, () => {
+          if (outcome.winner === this.player) {
+            // Battle-Drop V0.2: 25% Seed, 10% Coins
+            let dropMsg = '';
+            if (this.capturedEnc?.slug && (gameStore as any).applyBattleDrop) {
+              const drop = (gameStore as any).applyBattleDrop(this.capturedEnc.slug);
+              if (drop.itemSlug) dropMsg += ` +1 ${drop.itemSlug}`;
+              if (drop.coins) dropMsg += ` +${drop.coins} Coins`;
+            }
+            this.endBattle(`Sieg! +${this.xpReward} XP${dropMsg}`);
+          } else {
+            this.endBattle('Deine Pflanze ist erschoepft.');
+          }
+        });
+      }
     } else {
       this.time.delayedCall(1500, () => {
         this.statusText.setText('Was soll deine Pflanze tun?');
@@ -351,6 +401,11 @@ export class BattleScene extends Phaser.Scene {
 
   private tryCapture(): void {
     if (this.over || !this.waitingForInput) return;
+    if (this.bossDef) {
+      this.statusText.setText('Bosse koennen nicht gefangen werden!');
+      sfx.bump();
+      return;
+    }
     const wildPct = this.wild.stats.hp / this.wild.stats.maxHp;
     if (wildPct > 0.4) {
       this.statusText.setText('Wilde Pflanze ist zu stark zum Fangen.\nReduziere ihre HP unter 40%.');
