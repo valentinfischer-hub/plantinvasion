@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sfx } from '../audio/sfxGenerator';
 
 export class DialogBox {
   private container: Phaser.GameObjects.Container;
@@ -38,6 +39,7 @@ export class DialogBox {
   }
 
   public open(lines: string[], onClose?: () => void): void {
+    sfx.dialogOpen();
     this.lines = lines;
     this.idx = 0;
     this.onCloseCb = onClose ?? null;
@@ -49,6 +51,7 @@ export class DialogBox {
   public next(): void {
     if (!this.isOpen) return;
     this.idx++;
+    sfx.dialogAdvance();
     if (this.idx >= this.lines.length) {
       this.close();
     } else {

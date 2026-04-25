@@ -10,6 +10,7 @@ import { NPC } from '../entities/NPC';
 import { DialogBox } from '../ui/DialogBox';
 import { generateTilesetTextures, getTileTextureKey } from '../assets/proceduralTileset';
 import { gameStore } from '../state/gameState';
+import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10]);
@@ -84,6 +85,16 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.debugText = this.add.text(8, 8, '', {
       fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
     }).setScrollFactor(0).setDepth(2000);
+
+    // Audio-Context wird erst nach erstem User-Input freigeschaltet (Browser-Policy).
+    // Wir attachen daher die BGM-Start an den ersten Pointer- oder Key-Event.
+    const startAudio = () => {
+      startAmbientBGM();
+      this.input.off('pointerdown', startAudio);
+      if (this.input.keyboard) this.input.keyboard.off('keydown', startAudio);
+    };
+    this.input.on('pointerdown', startAudio);
+    this.input.keyboard?.on('keydown', startAudio);
 
     console.log('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
     (window as any).__overworld = this;
@@ -189,6 +200,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Tuer zum Garten
     if (t === 7) {
       console.log('[OverworldScene] door triggered, switching to GreenhouseScene');
+      sfx.door();
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GreenhouseScene');
       this.scene.start('GreenhouseScene');
       return;

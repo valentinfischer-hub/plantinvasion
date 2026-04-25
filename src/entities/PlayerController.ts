@@ -5,6 +5,7 @@ import {
   PLAYER_RUN_MULTIPLIER
 } from '../utils/constants';
 import { generatePlayerAtlas, type CharacterAtlasEntry } from '../assets/proceduralSprites';
+import { sfx } from '../audio/sfxGenerator';
 
 export type Dir = 'up' | 'down' | 'left' | 'right';
 
@@ -119,6 +120,7 @@ export class PlayerController {
     } else {
       // Bump - immerhin Facing aktualisieren
       this.sprite.setTexture(this.atlas.framesByDir[this.facing].idle);
+      sfx.bump();
     }
   }
 
@@ -141,6 +143,7 @@ export class PlayerController {
       this.tileY = this.targetTileY;
       this.isMoving = false;
       this.sprite.setPosition(this.px, this.py);
+      sfx.footstep();
       this.collision.onEnterTile?.(this.tileX, this.tileY, this);
     } else {
       const nx = dx / dist;
