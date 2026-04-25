@@ -4,7 +4,7 @@ import {
   PLAYER_SPEED_PX_PER_SEC,
   PLAYER_RUN_MULTIPLIER
 } from '../utils/constants';
-import { generatePlayerAtlas, type CharacterAtlasEntry } from '../assets/proceduralSprites';
+import { PLAYER_SPRITE_KEYS } from '../assets/spriteRegistry';
 import { sfx } from '../audio/sfxGenerator';
 import type { TouchKeysHandle } from '../ui/TouchControls';
 
@@ -47,10 +47,7 @@ export class PlayerController {
   private keyS: Phaser.Input.Keyboard.Key;
   private keyD: Phaser.Input.Keyboard.Key;
   private collision: CollisionChecker;
-  private atlas: CharacterAtlasEntry;
-  private walkFrameToggle = 0;       // 0 = idle, 1 = walkA, 2 = walkB
   public touch: TouchKeysHandle | null = null;
-  private walkFrameCounter = 0;
 
   constructor(scene: Phaser.Scene, tileX: number, tileY: number, collision: CollisionChecker) {
     this.tileX = tileX;
@@ -61,16 +58,9 @@ export class PlayerController {
     this.py = tileY * TILE_SIZE + TILE_SIZE / 2;
     this.collision = collision;
 
-    // Procedural-Sprite generieren
-    this.atlas = generatePlayerAtlas(scene, 'player', {
-      bodyColor: 0x3a7bd6,        // Blaues Shirt
-      headColor: 0xfcd9a8,        // Skin
-      outlineColor: 0x111111,
-      shoeColor: 0x553e2d,
-      hairColor: 0x3a2d1c
-    });
-
-    this.sprite = scene.add.sprite(this.px, this.py, this.atlas.framesByDir.down.idle);
+    // PNG-Sprite (Stardew-Style aus PixelLab)
+    this.sprite = scene.add.sprite(this.px, this.py, PLAYER_SPRITE_KEYS.down);
+    this.sprite.setDisplaySize(TILE_SIZE, TILE_SIZE);
     this.sprite.setDepth(10);
 
     if (!scene.input.keyboard) {
@@ -87,7 +77,6 @@ export class PlayerController {
   public update(_time: number, delta: number): void {
     if (this.isMoving) {
       this.advanceMovement(delta);
-      this.updateSpriteFrame();
       return;
     }
 
@@ -104,10 +93,7 @@ export class PlayerController {
     else if (right) dir = 'right';
 
     if (!dir) {
-      // Idle - reset walk-cycle
-      this.walkFrameToggle = 0;
-      this.walkFrameCounter = 0;
-      this.sprite.setTexture(this.atlas.framesByDir[this.facing].idle);
+      this.sprite.setTexture(PLAYER_SPRITE_KEYS[this.facing]);
       return;
     }
 
@@ -119,9 +105,10 @@ export class PlayerController {
       this.targetTileX = nx;
       this.targetTileY = ny;
       this.isMoving = true;
+      // Sprite-Direction aktualisieren beim Step
+      this.sprite.setTexture(PLAYER_SPRITE_KEYS[this.facing]);
     } else {
-      // Bump - immerhin Facing aktualisieren
-      this.sprite.setTexture(this.atlas.framesByDir[this.facing].idle);
+      this.sprite.setTexture(PLAYER_SPRITE_KEYS[this.facing]);
       sfx.bump();
     }
   }
@@ -154,19 +141,6 @@ export class PlayerController {
       this.py += ny * step;
       this.sprite.setPosition(this.px, this.py);
     }
-  }
-
-  private updateSpriteFrame(): void {
-    // Walk-Cycle: zwischen walkA und walkB toggeln basierend auf elapsed-time
-    this.walkFrameCounter++;
-    if (this.walkFrameCounter >= 8) {
-      this.walkFrameCounter = 0;
-      this.walkFrameToggle = this.walkFrameToggle === 1 ? 2 : 1;
-    }
-    const frame = this.walkFrameToggle === 1
-      ? this.atlas.framesByDir[this.facing].walkA
-      : this.atlas.framesByDir[this.facing].walkB;
-    this.sprite.setTexture(frame);
   }
 
   public getTileInFront(): { tileX: number; tileY: number } {

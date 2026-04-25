@@ -13,7 +13,7 @@ import {
 import { PlayerController, type CollisionChecker } from '../entities/PlayerController';
 import { NPC } from '../entities/NPC';
 import { DialogBox } from '../ui/DialogBox';
-import { generateTilesetTextures, getTileTextureKey } from '../assets/proceduralTileset';
+import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
 import { QUESTS, type QuestDef } from '../data/quests';
@@ -88,6 +88,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
   constructor() {
     super('OverworldScene');
+  }
+
+  public preload(): void {
+    for (const { key, file } of getAllSpriteFiles()) {
+      if (!this.textures.exists(key)) {
+        this.load.image(key, file);
+      }
+    }
   }
 
   public create(): void {
@@ -301,21 +309,61 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private renderTiles(): void {
-    // Tileset-Texturen einmal generieren bevor Tiles erstellt werden
-    generateTilesetTextures(this, 'tile');
     const layer = this.add.container(0, 0);
+    // Erstes Pass: Boden (Gras, Sand, Schnee, Strand) ohne Variation
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
         const t = this.map.tiles[y][x];
-        const sprite = this.add.image(
+        const baseKey = this.getBaseTileKey(t);
+        const baseSprite = this.add.image(
           x * TILE_SIZE + TILE_SIZE / 2,
           y * TILE_SIZE + TILE_SIZE / 2,
-          getTileTextureKey(t, 'tile')
+          baseKey
         );
-        layer.add(sprite);
+        baseSprite.setDisplaySize(TILE_SIZE, TILE_SIZE);
+        layer.add(baseSprite);
+      }
+    }
+    // Zweites Pass: Deko (Tree, Cactus, Bromeliad etc.) on top of base
+    for (let y = 0; y < this.map.height; y++) {
+      for (let x = 0; x < this.map.width; x++) {
+        const t = this.map.tiles[y][x];
+        if (this.isDecoTile(t)) {
+          const key = TILE_SPRITE_KEYS[t];
+          if (key && this.textures.exists(key)) {
+            const deco = this.add.image(
+              x * TILE_SIZE + TILE_SIZE / 2,
+              y * TILE_SIZE + TILE_SIZE / 2,
+              key
+            );
+            deco.setDisplaySize(TILE_SIZE, TILE_SIZE);
+            layer.add(deco);
+          }
+        }
       }
     }
     layer.setDepth(0);
+  }
+
+  private getBaseTileKey(t: number): string {
+    // Base-Tile pro Zone (kein Tree/Cactus etc auf Top-Layer)
+    if (this.currentZone === 'kaktoria') return 'tile_sand';
+    if (this.currentZone === 'frostkamm') return 'tile_snow';
+    if (this.currentZone === 'salzbucht') return 'tile_beachsand';
+    // wurzelheim/verdanto base = grass
+    if (t === 1) return 'tile_path';
+    if (t === 3) return 'tile_water';
+    if (t === 21) return 'tile_snow';
+    if (t === 22) return 'tile_ice';
+    if (t === 25) return 'tile_beachsand';
+    if (t === 26) return 'tile_saltwater';
+    if (t === 16) return 'tile_sand';
+    return 'tile_grass';
+  }
+
+  private isDecoTile(t: number): boolean {
+    // Tiles die auf top of base layer sollen
+    return [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 23, 24, 27, 28].includes(t);
   }
 
   private getTile(x: number, y: number): number {
