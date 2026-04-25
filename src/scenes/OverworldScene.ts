@@ -6,7 +6,9 @@ import frostkamm from '../data/maps/frostkamm';
 import salzbucht from '../data/maps/salzbucht';
 import mordwald from '../data/maps/mordwald';
 import magmabluete from '../data/maps/magmabluete';
-import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, MORDWALD_TALLGRASS, MAGMABLUETE_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
+import glaciara from '../data/maps/glaciara';
+import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, MORDWALD_TALLGRASS, MAGMABLUETE_TALLGRASS,
+  GLACIARA_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
 import {
   TILE_SIZE,
   CAMERA_ZOOM,
@@ -26,7 +28,7 @@ import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
-const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43, 50, 51]);
+const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43, 50, 51, 61, 62, 64]);
 
 const MAPS: Record<string, MapDef> = {
   wurzelheim,
@@ -35,7 +37,8 @@ const MAPS: Record<string, MapDef> = {
   frostkamm,
   salzbucht,
   mordwald,
-  magmabluete
+  magmabluete,
+  glaciara
 };
 
 function getEncounterPool(zone: string, tile: number): EncounterDef[] {
@@ -48,6 +51,7 @@ function getEncounterPool(zone: string, tile: number): EncounterDef[] {
   if (zone === 'salzbucht') return SALZBUCHT_TALLGRASS;
   if (zone === 'mordwald') return MORDWALD_TALLGRASS;
   if (zone === 'magmabluete') return MAGMABLUETE_TALLGRASS;
+  if (zone === 'glaciara') return GLACIARA_TALLGRASS;
   return WURZELHEIM_TALLGRASS;
 }
 
@@ -523,6 +527,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (this.currentZone === 'salzbucht') return 'tile_beachsand';
     if (this.currentZone === 'mordwald') return 'tile_swampfloor';
     if (this.currentZone === 'magmabluete') return 'tile_ash';
+    if (this.currentZone === 'glaciara') return 'tile_iceground';
     // wurzelheim/verdanto base = grass
     if (t === 1) return 'tile_path';
     if (t === 3) return 'tile_water';
@@ -536,7 +541,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
   private isDecoTile(t: number): boolean {
     // Tiles die auf top of base layer sollen
-    return [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 23, 24, 27, 28, 31, 32, 33, 34, 41, 42, 43, 44, 45, 50, 51].includes(t);
+    return [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 23, 24, 27, 28, 31, 32, 33, 34, 41, 42, 43, 44, 45, 50, 51, 60, 61, 62, 63, 64].includes(t);
   }
 
   private getTile(x: number, y: number): number {
@@ -585,9 +590,19 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.changeZone('kaktoria', tileX, 1, 'down');
       return;
     }
-    // Frostkamm Norden -> (Glaciara V0.9)
+    // Frostkamm Norden -> Glaciara Sueden
     if (this.currentZone === 'frostkamm' && tileY <= 0) {
-      this.dialog.open(['Vor dir liegt Glaciara, das Endgame-Biom.', '(In V0.9 freischaltbar)']);
+      this.changeZone('glaciara', tileX, this.map.height - 2, 'up');
+      return;
+    }
+    // Glaciara Sueden -> Frostkamm Norden
+    if (this.currentZone === 'glaciara' && tileY >= this.map.height - 1) {
+      this.changeZone('frostkamm', tileX, 1, 'down');
+      return;
+    }
+    // Glaciara Norden -> Eden Lost (nicht implementiert in V0.6)
+    if (this.currentZone === 'glaciara' && tileY <= 0) {
+      this.dialog.open(['Mythical-Tor: Du brauchst Verodyne-Schluessel.', '(Eden Lost in V1.0 freischaltbar)']);
       return;
     }
     // Salzbucht Sueden -> Mordwald Norden
@@ -659,6 +674,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       else if (this.currentZone === 'salzbucht') poolKey = 'salzbucht-tallgrass';
       else if (this.currentZone === 'mordwald') poolKey = 'mordwald-tallgrass';
       else if (this.currentZone === 'magmabluete') poolKey = 'magmabluete-tallgrass';
+      else if (this.currentZone === 'glaciara') poolKey = 'glaciara-tallgrass';
       this.scene.start('BattleScene', { poolKey });
       return;
     }

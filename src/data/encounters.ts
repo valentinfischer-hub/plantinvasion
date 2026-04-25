@@ -448,3 +448,61 @@ export const MAGMABLUETE_TALLGRASS: EncounterDef[] = [
     baseColor: 0xff9ad0
   }
 ];
+
+// Glaciara (Endgame-Eisbiom, Biom 8)
+export const GLACIARA_TALLGRASS: EncounterDef[] = [
+  {
+    slug: 'arctic-poppy',
+    scientificName: 'Papaver radicatum',
+    commonName: 'Arktischer Mohn',
+    family: 'Asteraceae',
+    weight: 25,
+    minLevel: 32, maxLevel: 42,
+    baseColor: 0xfff7d4
+  },
+  {
+    slug: 'glacier-buttercup',
+    scientificName: 'Ranunculus glacialis',
+    commonName: 'Gletscher-Hahnenfuss',
+    family: 'Asteraceae',
+    weight: 20,
+    minLevel: 34, maxLevel: 44,
+    baseColor: 0xffe8c2
+  },
+  {
+    slug: 'silver-fir',
+    scientificName: 'Abies alba',
+    commonName: 'Weiss-Tanne',
+    family: 'Crassulaceae',
+    weight: 15,
+    minLevel: 36, maxLevel: 48,
+    baseColor: 0x4a6b3a
+  },
+  {
+    slug: 'ice-bellflower',
+    scientificName: 'Campanula glacialis',
+    commonName: 'Eis-Glockenblume',
+    family: 'Lamiaceae',
+    weight: 20,
+    minLevel: 32, maxLevel: 42,
+    baseColor: 0x6b9de8
+  },
+  {
+    slug: 'frost-moss',
+    scientificName: 'Bryum arcticum',
+    commonName: 'Arktisches Moos',
+    family: 'Bromeliaceae',
+    weight: 15,
+    minLevel: 30, maxLevel: 40,
+    baseColor: 0x82c4a8
+  },
+  {
+    slug: 'permafrost-lichen',
+    scientificName: 'Cetraria nivalis',
+    commonName: 'Permafrost-Flechte',
+    family: 'Bromeliaceae',
+    weight: 5,
+    minLevel: 38, maxLevel: 50,
+    baseColor: 0xc8e8d4
+  }
+];

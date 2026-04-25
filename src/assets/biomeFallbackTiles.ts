@@ -171,6 +171,67 @@ function drawSulfurSpring(g: Phaser.GameObjects.Graphics) {
   pix(g, 3, 13, 0xfff7d4);
 }
 
+
+// =========================================================
+// Glaciara (Biom 8 Endgame)
+// =========================================================
+
+function drawIceGround(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xc8d8e8);
+  // Eis-Risse-Pattern
+  for (let y = 2; y < T; y += 5) {
+    rect(g, 1, y, T - 2, 1, 0xa8c8d8);
+  }
+  // Glanz-Pixel
+  pix(g, 4, 4, 0xfff7f7);
+  pix(g, 11, 9, 0xfff7f7);
+  pix(g, 7, 13, 0xfff7f7);
+}
+
+function drawIceCrack(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0x6a8a98);
+  // Tiefer Riss
+  rect(g, 4, 6, 8, 4, 0x2a3a48);
+  rect(g, 5, 5, 6, 1, 0x4a5a68);
+  // Eiskanten
+  pix(g, 4, 5, 0x9bc4e3);
+  pix(g, 11, 5, 0x9bc4e3);
+}
+
+function drawIceCrystal(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xc8d8e8);
+  // Kristall-Body
+  rect(g, 6, 4, 4, 10, 0x9bc4e3);
+  rect(g, 5, 6, 6, 6, 0x9bc4e3);
+  rect(g, 7, 3, 2, 1, 0xfff7f7);
+  // Glanz
+  pix(g, 6, 5, 0xfff7f7);
+  pix(g, 9, 8, 0xfff7f7);
+  pix(g, 7, 11, 0xfff7f7);
+}
+
+function drawGlaciaraGrass(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xa8c4d8);
+  // Frost-Halme
+  for (let x = 1; x < T; x += 3) {
+    rect(g, x, 5, 1, 9, 0xfff7f7);
+    pix(g, x, 4, 0x9bc4e3);
+  }
+}
+
+function drawMythicalGate(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0x4a3a5a);
+  // Tor-Body
+  rect(g, 3, 2, 10, 12, 0x6a4a8a);
+  rect(g, 4, 1, 8, 1, 0xb86ee3);
+  rect(g, 5, 4, 6, 8, 0x2a1a3a);
+  // Mythische Glow-Punkte
+  pix(g, 4, 7, 0xffd166);
+  pix(g, 11, 7, 0xffd166);
+  pix(g, 7, 9, 0xb86ee3);
+  pix(g, 9, 9, 0xb86ee3);
+}
+
 // =========================================================
 // Forage-Tiles (V0.2)
 // =========================================================
@@ -225,7 +286,13 @@ const FALLBACK_DRAWERS: Record<string, (g: Phaser.GameObjects.Graphics) => void>
   tile_sulfurspring: drawSulfurSpring,
   // Forage-Tiles
   tile_berrybush: drawBerryBush,
-  tile_wildplant: drawWildplant
+  tile_wildplant: drawWildplant,
+  // Glaciara
+  tile_iceground: drawIceGround,
+  tile_icecrack: drawIceCrack,
+  tile_icecrystal: drawIceCrystal,
+  tile_glaciaragrass: drawGlaciaraGrass,
+  tile_mythicalgate: drawMythicalGate
 };
 
 /**
