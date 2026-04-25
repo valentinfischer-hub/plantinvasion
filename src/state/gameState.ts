@@ -531,6 +531,49 @@ class GameStore {
   }
 
 
+  // === TIME-STATE ===
+  getTime(): { minute: number; day: number; season: 0|1|2|3; year: number } {
+    return (this.state as any).time ?? { minute: 360, day: 1, season: 0, year: 1 };
+  }
+
+  /** Advance game-time by N real-ms. 1 real-second = 1 game-minute. */
+  tickGameTime(deltaMs: number): void {
+    if (!(this.state as any).time) (this.state as any).time = { minute: 360, day: 1, season: 0, year: 1 };
+    const t = (this.state as any).time;
+    t.minute += deltaMs / 1000;
+    while (t.minute >= 1440) {
+      t.minute -= 1440;
+      t.day += 1;
+      if (t.day > 28) {
+        t.day = 1;
+        t.season = ((t.season + 1) % 4) as 0|1|2|3;
+        if (t.season === 0) t.year += 1;
+      }
+    }
+  }
+
+  /** Tageszeit-Phase: morning, day, evening, night */
+  getTimeOfDay(): 'morning' | 'day' | 'evening' | 'night' {
+    const m = this.getTime().minute;
+    if (m < 360) return 'night';        // 0-6
+    if (m < 540) return 'morning';      // 6-9
+    if (m < 1080) return 'day';         // 9-18
+    if (m < 1260) return 'evening';     // 18-21
+    return 'night';                       // 21-24
+  }
+
+  getSeasonName(): string {
+    const seasons = ['Fruehling', 'Sommer', 'Herbst', 'Winter'];
+    return seasons[this.getTime().season];
+  }
+
+  formatTime(): string {
+    const t = this.getTime();
+    const h = Math.floor(t.minute / 60).toString().padStart(2, '0');
+    const m = Math.floor(t.minute % 60).toString().padStart(2, '0');
+    return `${h}:${m}`;
+  }
+
   // === STORY-STATE ===
   getStoryFlag(flag: string): boolean {
     return !!(this.state as any).story?.flags?.[flag];

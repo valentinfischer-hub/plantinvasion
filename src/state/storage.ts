@@ -17,6 +17,13 @@ export interface PokedexState {
 export type InventoryState = Record<string, number>;
 export type QuestState = Record<string, 'pending' | 'active' | 'completed'>;
 
+export interface TimeState {
+  minute: number;       // 0-1439 (24h x 60min)
+  day: number;          // 1+
+  season: 0 | 1 | 2 | 3;  // Spring/Summer/Autumn/Winter
+  year: number;
+}
+
 export interface TutorialState {
   step: number;       // 0=welcome, 1=move, 2=talk, 3=garden, 4=market, 5=done
   done: boolean;
@@ -58,7 +65,7 @@ export interface GameState {
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
-export const SAVE_SCHEMA_VERSION = 8;
+export const SAVE_SCHEMA_VERSION = 9;
 
 const DEFAULT_OVERWORLD: OverworldState = {
   tileX: 14,
@@ -113,6 +120,11 @@ function ensurePlantGrowthFields(plant: any): Plant {
 
 function migrate(parsed: any): GameState | null {
   if (!parsed || typeof parsed !== 'object') return null;
+  if (parsed.version === 8) {
+    parsed.version = 9;
+    parsed.time = parsed.time ?? { minute: 360, day: 1, season: 0, year: 1 };  // start at 06:00 spring day1
+    console.log('[storage] migrated save v8 -> v9 (time-system)');
+  }
   if (parsed.version === 7) {
     parsed.version = 8;
     if (!parsed.forageTilesCooldown) parsed.forageTilesCooldown = {};

@@ -26,6 +26,7 @@ import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
 import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
+import { TimeOverlay } from '../ui/TimeOverlay';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43, 50, 51, 61, 62, 64]);
@@ -103,6 +104,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private prevTouchE = false;
   private knownAchievements: Set<string> = new Set();
   private tutorial!: TutorialOverlay;
+  private timeOverlay!: TimeOverlay;
 
   constructor() {
     super('OverworldScene');
@@ -178,6 +180,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Tutorial-Overlay
     this.tutorial = new TutorialOverlay(this);
+
+    // Day-Night-Cycle
+    this.timeOverlay = new TimeOverlay(this);
 
     // Audio-Context wird erst nach erstem User-Input freigeschaltet (Browser-Policy).
     // Wir attachen daher die BGM-Start an den ersten Pointer- oder Key-Event.
@@ -295,6 +300,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Update Interact-Hint
     this.updateInteractHint();
+
+    // Tageszeit ticken
+    this.timeOverlay?.tick(delta);
 
     // Tutorial Auto-Advance
     this.tutorial.checkAdvance({ tileX: this.player.tileX, tileY: this.player.tileY, facing: this.player.facing, isMoving: this.player.isMoving });
