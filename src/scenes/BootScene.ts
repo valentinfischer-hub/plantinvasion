@@ -5,21 +5,26 @@ export class BootScene extends Phaser.Scene {
     super('BootScene');
   }
 
-  create(): void {
+  preload(): void {
+    const species = ['sunflower', 'spike-cactus', 'venus-flytrap', 'lavender', 'tomato-plant'];
+    const stageFiles = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
+    species.forEach((slug) => {
+      stageFiles.forEach((sf, idx) => {
+        this.load.image(`${slug}-${idx}`, `assets/sprites/plants/${slug}/${sf}.png`);
+      });
+    });
+
     const cx = this.cameras.main.width / 2;
     const cy = this.cameras.main.height / 2;
-
     this.add.text(cx, cy - 20, 'Plantinvasion', {
-      fontFamily: 'monospace',
-      fontSize: '32px',
-      color: '#9be36e'
+      fontFamily: 'monospace', fontSize: '32px', color: '#9be36e'
     }).setOrigin(0.5);
     this.add.text(cx, cy + 14, 'loading...', {
-      fontFamily: 'monospace',
-      fontSize: '11px',
-      color: '#888888'
+      fontFamily: 'monospace', fontSize: '11px', color: '#888888'
     }).setOrigin(0.5);
+  }
 
-    this.time.delayedCall(800, () => this.scene.start('MainScene'));
+  create(): void {
+    this.time.delayedCall(400, () => this.scene.start('GreenhouseScene'));
   }
 }
