@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
+import { STARTER_SPECIES } from '../data/species';
+import { rollStarterStats } from '../data/genetics';
+import { GROWTH_STAGE_NAMES } from '../types/plant';
 
 /**
- * MainScene - V0.1 Skeleton-Scene.
- * Provisorischer Pflanzen-Platzhalter, wird durch PixelLab-Sprites ersetzt
- * sobald GDD und Pflanzen-Typen final sind.
+ * MainScene V0.1.1 - zeigt die 5 Start-Spezies mit ihren initialen Roll-Stats.
+ * Ohne echte Sprites (PixelLab-Generation kommt naechster Schritt).
  */
 export class MainScene extends Phaser.Scene {
   constructor() {
@@ -11,54 +13,54 @@ export class MainScene extends Phaser.Scene {
   }
 
   create(): void {
-    const { width, height } = this.scale;
-    const cx = width / 2;
-    const cy = height / 2;
+    const { width } = this.scale;
 
-    this.add
-      .text(cx, cy - 100, 'Plantinvasion', {
+    this.add.text(width / 2, 40, 'Plantinvasion', {
+      fontFamily: 'monospace',
+      fontSize: '28px',
+      color: '#9be36e'
+    }).setOrigin(0.5);
+
+    this.add.text(width / 2, 70, 'V0.1.1 — 5 Starter-Spezies', {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#888888'
+    }).setOrigin(0.5);
+
+    let y = 110;
+    STARTER_SPECIES.forEach((species, idx) => {
+      const seed = (idx + 1) * 1000 + 42;
+      const stats = rollStarterStats(species, seed);
+      const stage = GROWTH_STAGE_NAMES[Math.min(idx, 4)];
+
+      // Rarity-Sterne
+      const rarityStr = '★'.repeat(species.rarity) + '☆'.repeat(5 - species.rarity);
+
+      this.add.text(20, y, species.commonName, {
         fontFamily: 'monospace',
-        fontSize: '36px',
+        fontSize: '14px',
         color: '#9be36e'
-      })
-      .setOrigin(0.5);
+      });
 
-    this.add
-      .text(cx, cy - 60, 'v0.1.0  Skeleton', {
+      this.add.text(20, y + 18, species.scientificName, {
         fontFamily: 'monospace',
-        fontSize: '12px',
-        color: '#888888'
-      })
-      .setOrigin(0.5);
+        fontSize: '9px',
+        color: '#aaaaaa'
+      });
 
-    // Provisorische Pflanze (Vector-Platzhalter)
-    const stem = this.add.graphics();
-    stem.fillStyle(0x2e7d32, 1);
-    stem.fillRect(cx - 4, cy + 30, 8, 90);
-
-    const leaves = this.add.graphics();
-    leaves.fillStyle(0x4caf50, 1);
-    leaves.fillCircle(cx - 22, cy + 20, 18);
-    leaves.fillCircle(cx + 22, cy + 20, 18);
-    leaves.fillCircle(cx, cy, 22);
-
-    const flower = this.add.graphics();
-    flower.fillStyle(0xffeb3b, 1);
-    flower.fillCircle(cx, cy - 28, 10);
-
-    this.add
-      .text(cx, cy + 160, 'tap to interact', {
+      this.add.text(20, y + 32, `${rarityStr}  ATK ${stats.atk}  DEF ${stats.def}  SPD ${stats.spd}  ${stage}`, {
         fontFamily: 'monospace',
-        fontSize: '11px',
-        color: '#666666'
-      })
-      .setOrigin(0.5);
+        fontSize: '10px',
+        color: '#dddddd'
+      });
 
-    this.input.on('pointerdown', () => {
-      flower.clear();
-      flower.fillStyle(0xff5722, 1);
-      flower.fillCircle(cx, cy - 28, 12);
-      console.log('plant tapped');
+      y += 70;
     });
+
+    this.add.text(width / 2, this.scale.height - 24, 'sprites kommen via PixelLab', {
+      fontFamily: 'monospace',
+      fontSize: '9px',
+      color: '#555555'
+    }).setOrigin(0.5);
   }
 }
