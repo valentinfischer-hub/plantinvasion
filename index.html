@@ -5,12 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Plantinvasion</title>
     <style>
-      body { margin: 0; padding: 0; background: #1a1a2e; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: system-ui, sans-serif; color: #eee; }
-      #game { width: 100vw; max-width: 480px; height: 100vh; max-height: 854px; }
+      html, body { margin: 0; padding: 0; background: #1a1a2e; }
+      body { display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: system-ui, sans-serif; color: #eee; }
+      #game { width: 100vw; max-width: 480px; height: 100vh; max-height: 854px; outline: none; }
+      #game canvas { outline: none !important; }
     </style>
   </head>
   <body>
-    <div id="game"></div>
+    <div id="game" tabindex="0"></div>
+    <script>
+      // Auto-Focus auf Game-Container damit Keyboard-Events sofort ankommen
+      window.addEventListener('load', () => {
+        const el = document.getElementById('game');
+        if (el) { el.focus(); el.addEventListener('click', () => el.focus()); }
+      });
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
