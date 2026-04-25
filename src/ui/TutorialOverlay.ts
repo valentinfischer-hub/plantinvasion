@@ -6,56 +6,51 @@ export interface TutorialStep {
   step: number;
   title: string;
   text: string;
-  /**
-   * Bedingung wann der Step automatisch advanced wird.
-   * Wird in OverworldScene.update() gecheckt.
-   */
   advanceWhen?: (ctx: { tileX: number; tileY: number; facing: string; isMoving: boolean; lastInteract?: string }) => boolean;
 }
 
-/**
- * Tutorial-Schritte fuer Wurzelheim (erstes Spiel).
- */
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     step: 0,
     title: 'Willkommen in Wurzelheim',
-    text: 'Du bist die wandernde Botanikerin. Beginne mit der Erkundung des Heimatdorfs.\nDruecke [Weiter] um zu starten.'
+    text: 'Du bist die wandernde Botanikerin. Druecke [Weiter] um zu beginnen.'
   },
   {
     step: 1,
     title: 'Bewegung',
-    text: 'Bewege dich mit WASD oder den Pfeiltasten. Halte Shift fuer Rennen.\nLaufe einen Tile in eine beliebige Richtung.',
+    text: 'Bewege dich mit WASD oder den Pfeiltasten. Halte Shift fuer Rennen.\nLaufe einen Tile in eine Richtung.',
     advanceWhen: (ctx) => ctx.tileX !== 14 || ctx.tileY !== 17
   },
   {
     step: 2,
     title: 'NPCs ansprechen',
-    text: 'Anya, Bjoern und Clara warten in der Naehe der Marktstaende.\nLaufe zu einem NPC und druecke E oder Space um zu reden.',
+    text: 'Anya, Bjoern und Clara warten in der Naehe der Marktstaende.\nLaufe zu einem NPC und druecke E um zu reden.',
     advanceWhen: (ctx) => ctx.lastInteract === 'npc'
   },
   {
     step: 3,
     title: 'Garten betreten',
-    text: 'Die goldene Tuer am Spielerhaus (oben in der Mitte) fuehrt zum Garten.\nTipp: Im Garten kreuzt X die ersten beiden Pflanzen, O bringt dich zurueck.\nLaufe zur Tuer und betritt den Garten.',
+    text: 'Die goldene Tuer am Spielerhaus (oben in der Mitte) fuehrt zum Garten.\nDort waechst dein Sonnenblumen-Setzling. X kreuzt 2 Pflanzen, O bringt zurueck.',
     advanceWhen: (ctx) => ctx.lastInteract === 'garden'
   },
   {
     step: 4,
     title: 'Hotkeys merken',
-    text: 'M = Anyas Markt\nP = Pokedex (entdeckte Pflanzen)\nQ = Quest-Log\nE = NPC reden / interagieren\n\nViel Spass beim Erkunden!',
+    text: 'M = Markt   P = Pokedex   Q = Quests\nE = NPC reden   Shift = Rennen\n\nViel Spass beim Erkunden!'
   }
 ];
 
+/**
+ * Tutorial-Overlay rendert in einer separaten UI-Camera die nicht mit der World-Camera zoomed.
+ * Die Main-Camera ignoriert die Tutorial-Objekte, die UI-Camera ignoriert den Rest.
+ */
 export class TutorialOverlay {
   private scene: Phaser.Scene;
   private container!: Phaser.GameObjects.Container;
-  private bg!: Phaser.GameObjects.Rectangle;
   private titleText!: Phaser.GameObjects.Text;
   private bodyText!: Phaser.GameObjects.Text;
-  private nextBtn!: Phaser.GameObjects.Container;
-  private skipBtn!: Phaser.GameObjects.Container;
   private currentStep = -1;
+  private uiCam!: Phaser.Cameras.Scene2D.Camera;
   public lastInteract: string | undefined;
 
   constructor(scene: Phaser.Scene) {
@@ -66,36 +61,52 @@ export class TutorialOverlay {
 
   private build(): void {
     const cam = this.scene.cameras.main;
-    const w = cam.width - 24;
-    const h = 160;
-    const cx = cam.width / 2;
-    const cy = h / 2 + 12;
+    const W = cam.width;
+    const H = cam.height;
+
+    // UI-Camera (zoom 1, deckt ganzes viewport)
+    this.uiCam = this.scene.cameras.add(0, 0, W, H);
+    this.uiCam.setZoom(1);
+    this.uiCam.setScroll(0, 0);
+
+    const w = W - 24;
+    const h = 130;
+    const cx = W / 2;
+    const cy = H - h / 2 - 12;
 
     this.container = this.scene.add.container(cx, cy);
-    this.container.setScrollFactor(0);
     this.container.setDepth(2500);
 
-    this.bg = this.scene.add.rectangle(0, 0, w, h, 0x000000, 0.88)
+    const bg = this.scene.add.rectangle(0, 0, w, h, 0x000000, 0.92)
       .setStrokeStyle(2, 0xfcd95c);
     this.titleText = this.scene.add.text(-w / 2 + 12, -h / 2 + 10, '', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#fcd95c'
+      fontFamily: 'monospace', fontSize: '13px', color: '#fcd95c', fontStyle: 'bold'
     });
     this.bodyText = this.scene.add.text(-w / 2 + 12, -h / 2 + 32, '', {
       fontFamily: 'monospace', fontSize: '11px', color: '#ffffff',
       wordWrap: { width: w - 24 }
     });
 
-    this.nextBtn = this.makeButton(w / 2 - 60, h / 2 - 18, 'Weiter', '#9be36e', () => this.handleNext());
-    this.skipBtn = this.makeButton(-w / 2 + 60, h / 2 - 18, 'Skip', '#ff7e7e', () => this.handleSkip());
+    const nextBtn = this.makeButton(w / 2 - 60, h / 2 - 18, 'Weiter', '#9be36e', () => this.handleNext());
+    const skipBtn = this.makeButton(-w / 2 + 50, h / 2 - 18, 'Skip', '#ff7e7e', () => this.handleSkip());
 
-    this.container.add([this.bg, this.titleText, this.bodyText, this.nextBtn, this.skipBtn]);
+    this.container.add([bg, this.titleText, this.bodyText, nextBtn, skipBtn]);
+
+    // Camera-Routing: Main-Cam ignoriert Tutorial, UI-Cam ignoriert World
+    cam.ignore(this.container);
+    // UI-Cam soll nur den Tutorial-Container sehen, nicht die World
+    this.scene.children.list.forEach((obj) => {
+      if (obj !== this.container) {
+        this.uiCam.ignore(obj);
+      }
+    });
   }
 
   private makeButton(x: number, y: number, label: string, color: string, onClick: () => void): Phaser.GameObjects.Container {
     const c = this.scene.add.container(x, y);
-    const w = 100;
+    const w = 90;
     const h = 26;
-    const bg = this.scene.add.rectangle(0, 0, w, h, 0x222222, 0.9)
+    const bg = this.scene.add.rectangle(0, 0, w, h, 0x222222, 0.95)
       .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(color).color)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -126,7 +137,6 @@ export class TutorialOverlay {
     this.refresh();
   }
 
-  /** Wird in OverworldScene.update() aufgerufen, prueft auto-advance. */
   public checkAdvance(ctx: { tileX: number; tileY: number; facing: string; isMoving: boolean }): void {
     const t = gameStore.getTutorial();
     if (t.done) return;
@@ -140,7 +150,6 @@ export class TutorialOverlay {
     }
   }
 
-  /** Markiere dass Spieler etwas getan hat (NPC reden, Garten betreten). */
   public markInteract(kind: 'npc' | 'garden' | 'market' | 'pokedex' | 'quest'): void {
     this.lastInteract = kind;
   }
@@ -167,5 +176,8 @@ export class TutorialOverlay {
 
   public destroy(): void {
     this.container.destroy();
+    if (this.uiCam) {
+      this.scene.cameras.remove(this.uiCam);
+    }
   }
 }
