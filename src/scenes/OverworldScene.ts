@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import wurzelheim, { type MapDef } from '../data/maps/wurzelheim';
+import verdanto from '../data/maps/verdanto';
+import { WURZELHEIM_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
 import {
   TILE_SIZE,
   CAMERA_ZOOM,
@@ -14,7 +16,19 @@ import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
 import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
-const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10]);
+const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14]);
+
+const MAPS: Record<string, MapDef> = {
+  wurzelheim,
+  verdanto
+};
+
+const ENCOUNTER_POOLS: Record<string, EncounterDef[]> = {
+  wurzelheim: WURZELHEIM_TALLGRASS,
+  verdanto: WURZELHEIM_TALLGRASS    // V0.4 noch gleich, in V0.5 eigener Pool
+};
+
+void pickEncounter; void randomLevel; void ENCOUNTER_POOLS;
 
 // Tile-Position -> Dialog-Daten fuer Building-Tueren in V0.3
 interface BuildingDoor {
@@ -34,11 +48,13 @@ const BUILDING_DOORS: BuildingDoor[] = [
 
 export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private map: MapDef = wurzelheim;
+  private currentZone: string = 'wurzelheim';
   private player!: PlayerController;
   private npcs: NPC[] = [];
   private dialog!: DialogBox;
   private keyE!: Phaser.Input.Keyboard.Key;
   private keySpace!: Phaser.Input.Keyboard.Key;
+  private keyP!: Phaser.Input.Keyboard.Key;
   private debugText!: Phaser.GameObjects.Text;
   private _saveAccum?: number;
   private interactHint!: Phaser.GameObjects.Text;
@@ -55,8 +71,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Welt-Container fuer Tiles
     this.renderTiles();
 
-    // Player Spawn: vorzugsweise aus Save-State
+    // Map basierend auf Save-Zone laden
     const ow = gameStore.getOverworldPos();
+    this.currentZone = ow.zone || 'wurzelheim';
+    this.map = MAPS[this.currentZone] ?? wurzelheim;
     this.player = new PlayerController(
       this,
       ow.tileX,
@@ -84,6 +102,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
     this.keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.keyP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
 
     // Debug
     this.debugText = this.add.text(8, 8, '', {
@@ -144,6 +163,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       }
     }
 
+    // Pokedex-Hotkey
+    if (Phaser.Input.Keyboard.JustDown(this.keyP)) {
+      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
+      this.scene.start('PokedexScene');
+      return;
+    }
     // Interact-Key (Tastatur oder Touch)
     const touchE = this.touch.e.pressed && !this.prevTouchE;
     this.prevTouchE = this.touch.e.pressed;
@@ -153,7 +178,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Debug
     this.debugText.setText(
-      `Wurzelheim  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E/Space=interact, Shift=run]`
+      `${this.currentZone}  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E=talk, P=pokedex, Shift=run]`
     );
   }
 
@@ -236,6 +261,35 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     return this.map.tiles[y][x];
   }
 
+  private handleMapEdge(tileX: number, tileY: number): void {
+    // Wurzelheim Sueden -> Verdanto Norden
+    if (this.currentZone === 'wurzelheim' && tileY >= this.map.height - 1) {
+      this.changeZone('verdanto', 14, 1, 'down');
+      return;
+    }
+    // Verdanto Norden -> Wurzelheim Sueden
+    if (this.currentZone === 'verdanto' && tileY <= 0) {
+      this.changeZone('wurzelheim', 14, this.map.height - 2, 'up');
+      return;
+    }
+    // Verdanto Sueden -> (V0.5 Salzbucht)
+    if (this.currentZone === 'verdanto' && tileY >= this.map.height - 1) {
+      this.dialog.open([
+        'Vor dir liegt die Meereskueste Salzbucht.',
+        '(In V0.5 freischaltbar)'
+      ]);
+      return;
+    }
+    void tileX;
+  }
+
+  private changeZone(newZone: string, spawnX: number, spawnY: number, facing: 'up' | 'down' | 'left' | 'right'): void {
+    console.log('[OverworldScene] zone change', this.currentZone, '->', newZone);
+    sfx.dialogOpen();
+    gameStore.setOverworldPos(spawnX, spawnY, facing, 'OverworldScene', newZone);
+    this.scene.restart();
+  }
+
   // CollisionChecker
   public canEnter(tileX: number, tileY: number): boolean {
     const t = this.getTile(tileX, tileY);
@@ -255,18 +309,17 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.scene.start('GardenScene');
       return;
     }
-    // Map-Edge-Sueden Verdanto
+    // Map-Edge: Zone-Wechsel
     if (t === 11) {
-      this.dialog.open([
-        'Vor dir liegt der Tropische Regenwald Verdanto.',
-        '(In V0.3 freischaltbar)'
-      ]);
+      this.handleMapEdge(tileX, tileY);
       return;
     }
-    // Hohes Gras: 5% Encounter-Trigger
-    if (t === 2 && Math.random() < 0.05) {
-      console.log('[OverworldScene] encounter triggered on tall grass');
-      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene');
+    // Hohes Gras (Tile 2) oder Bromelien (Tile 13): Encounter-Trigger
+    const encounterRate = t === 13 ? 0.10 : (t === 2 ? 0.05 : 0);
+    if (encounterRate > 0 && Math.random() < encounterRate) {
+      const pool = ENCOUNTER_POOLS[this.currentZone] ?? WURZELHEIM_TALLGRASS;
+      console.log('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'size:', pool.length);
+      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       sfx.dialogOpen();
       this.scene.start('BattleScene');
       return;

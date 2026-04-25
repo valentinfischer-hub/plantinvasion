@@ -65,6 +65,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Wild-Plant aus Encounter-Pool ziehen
     const enc = pickEncounter(WURZELHEIM_TALLGRASS);
+    gameStore.discoverSpecies(enc.slug);
     const wildLevel = randomLevel(enc);
     this.wild = {
       name: enc.commonName,

@@ -169,6 +169,47 @@ function drawFlowerBed(g: Phaser.GameObjects.Graphics) {
   }
 }
 
+
+
+function drawBromelien(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0x4a8228);
+  // Bromelien-Cluster - radialer Stamm mit Blueten
+  rect(g, 6, 6, 4, 4, 0xff7eb8);    // Bluete
+  rect(g, 5, 5, 1, 6, 0x82d44e);    // Blatt links
+  rect(g, 10, 5, 1, 6, 0x82d44e);   // Blatt rechts
+  rect(g, 7, 4, 2, 1, 0xff7eb8);    // Bluete oben
+  rect(g, 7, 11, 2, 1, 0x82d44e);   // Stamm unten
+  // kleine zusaetzliche Bluete
+  pix(g, 3, 12, 0xfcd95c);
+  pix(g, 12, 12, 0xff5c5c);
+}
+
+function drawLianen(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0x4a8228);
+  // Vertikale Lianen
+  rect(g, 3, 0, 1, T, 0x553e2d);
+  rect(g, 7, 0, 1, T, 0x6e5a3a);
+  rect(g, 11, 0, 1, T, 0x553e2d);
+  // Blaetter an Lianen
+  rect(g, 4, 4, 2, 1, 0x82d44e);
+  rect(g, 8, 8, 2, 1, 0x82d44e);
+  rect(g, 12, 12, 2, 1, 0x82d44e);
+  rect(g, 4, 14, 2, 1, 0x82d44e);
+}
+
+function drawTropicalBloom(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0x4a8228);
+  // Grosse tropische Bluete
+  rect(g, 6, 4, 4, 4, 0xff5c5c);
+  rect(g, 5, 5, 6, 2, 0xff7e7e);
+  rect(g, 7, 3, 2, 1, 0xff5c5c);
+  rect(g, 7, 8, 2, 1, 0xff5c5c);
+  // Stiel und Blaetter
+  rect(g, 7, 9, 2, 6, 0x82d44e);
+  rect(g, 5, 11, 2, 1, 0x6abf3a);
+  rect(g, 9, 13, 2, 1, 0x6abf3a);
+}
+
 const DRAWERS: Array<(g: Phaser.GameObjects.Graphics) => void> = [
   drawGrass,           // 0
   drawPath,            // 1
@@ -182,7 +223,10 @@ const DRAWERS: Array<(g: Phaser.GameObjects.Graphics) => void> = [
   drawMarketStand,     // 9
   drawSign,            // 10
   drawMapEdge,         // 11
-  drawFlowerBed        // 12
+  drawFlowerBed,       // 12
+  drawBromelien,       // 13
+  drawLianen,          // 14
+  drawTropicalBloom    // 15
 ];
 
 export function generateTilesetTextures(scene: Phaser.Scene, baseKey: string = 'tile'): void {

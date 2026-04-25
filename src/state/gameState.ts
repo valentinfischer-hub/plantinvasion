@@ -68,7 +68,8 @@ export function newGame(): GameState {
       facing: 'up',
       zone: 'wurzelheim',
       lastSceneVisited: 'OverworldScene'
-    }
+    },
+    pokedex: { discovered: [], captured: [] }
   };
   const starter = createPlantOfSpecies('sunflower', state.plants);
   if (starter) state.plants.push(starter);
@@ -138,15 +139,39 @@ class GameStore {
     saveGame(this.state);
   }
 
-  setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GardenScene' = 'OverworldScene'): void {
+  setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GardenScene' = 'OverworldScene', zone?: string): void {
+    const currentZone = zone ?? this.state.overworld?.zone ?? 'wurzelheim';
     this.state.overworld = {
       tileX,
       tileY,
       facing,
-      zone: 'wurzelheim',
+      zone: currentZone,
       lastSceneVisited: scene
     };
     this.save();
+  }
+
+  discoverSpecies(slug: string): void {
+    if (!this.state.pokedex) this.state.pokedex = { discovered: [], captured: [] };
+    if (!this.state.pokedex.discovered.includes(slug)) {
+      this.state.pokedex.discovered.push(slug);
+      this.save();
+    }
+  }
+
+  captureSpecies(slug: string): void {
+    if (!this.state.pokedex) this.state.pokedex = { discovered: [], captured: [] };
+    if (!this.state.pokedex.discovered.includes(slug)) {
+      this.state.pokedex.discovered.push(slug);
+    }
+    if (!this.state.pokedex.captured.includes(slug)) {
+      this.state.pokedex.captured.push(slug);
+    }
+    this.save();
+  }
+
+  getPokedex() {
+    return this.state.pokedex ?? { discovered: [], captured: [] };
   }
 
   getOverworldPos() {
