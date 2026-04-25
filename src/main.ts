@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { MenuScene } from './scenes/MenuScene';
 import { OverworldScene } from './scenes/OverworldScene';
-import { GreenhouseScene } from './scenes/GreenhouseScene';
+import { GardenScene } from './scenes/GardenScene';
+import { BattleScene } from './scenes/BattleScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -18,7 +19,7 @@ const config: Phaser.Types.Core.GameConfig = {
     target: 60,
     forceSetTimeOut: true
   },
-  scene: [MenuScene, OverworldScene, GreenhouseScene]
+  scene: [MenuScene, OverworldScene, GardenScene, BattleScene]
 };
 
 const game = new Phaser.Game(config);

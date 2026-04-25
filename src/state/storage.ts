@@ -5,7 +5,7 @@ export interface OverworldState {
   tileY: number;
   facing: 'up' | 'down' | 'left' | 'right';
   zone: string;             // z.B. 'wurzelheim'
-  lastSceneVisited: 'OverworldScene' | 'GreenhouseScene';
+  lastSceneVisited: 'OverworldScene' | 'GardenScene';
 }
 
 export interface GameState {
@@ -32,6 +32,10 @@ const DEFAULT_OVERWORLD: OverworldState = {
 function migrate(parsed: any): GameState | null {
   if (!parsed || typeof parsed !== 'object') return null;
   if (parsed.version === SAVE_SCHEMA_VERSION) {
+    // Backwards-compat: alte GreenhouseScene-Strings zu GardenScene migrieren
+    if (parsed.overworld && (parsed.overworld as any).lastSceneVisited === 'GreenhouseScene') {
+      (parsed.overworld as any).lastSceneVisited = 'GardenScene';
+    }
     // Falls overworld fehlt, default setzen
     if (!parsed.overworld) parsed.overworld = { ...DEFAULT_OVERWORLD };
     return parsed as GameState;

@@ -249,10 +249,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     const t = this.getTile(tileX, tileY);
     // Tuer zum Garten
     if (t === 7) {
-      console.log('[OverworldScene] door triggered, switching to GreenhouseScene');
+      console.log('[OverworldScene] door triggered, switching to GardenScene');
       sfx.door();
-      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GreenhouseScene');
-      this.scene.start('GreenhouseScene');
+      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GardenScene');
+      this.scene.start('GardenScene');
       return;
     }
     // Map-Edge-Sueden Verdanto
@@ -261,6 +261,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         'Vor dir liegt der Tropische Regenwald Verdanto.',
         '(In V0.3 freischaltbar)'
       ]);
+      return;
+    }
+    // Hohes Gras: 5% Encounter-Trigger
+    if (t === 2 && Math.random() < 0.05) {
+      console.log('[OverworldScene] encounter triggered on tall grass');
+      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene');
+      sfx.dialogOpen();
+      this.scene.start('BattleScene');
       return;
     }
   }

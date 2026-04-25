@@ -26,7 +26,7 @@ interface PlantCard {
   bg: Phaser.GameObjects.Graphics;
 }
 
-export class GreenhouseScene extends Phaser.Scene {
+export class GardenScene extends Phaser.Scene {
   private gridOriginX = 0;
   private gridOriginY = 0;
   private cards: Map<string, PlantCard> = new Map();
@@ -35,7 +35,7 @@ export class GreenhouseScene extends Phaser.Scene {
   private dragSource?: { plantId: string; startX: number; startY: number };
 
   constructor() {
-    super('GreenhouseScene');
+    super('GardenScene');
   }
 
   preload(): void {
@@ -54,7 +54,7 @@ export class GreenhouseScene extends Phaser.Scene {
   }
 
   create(): void {
-    console.log('[GreenhouseScene] create called');
+    console.log('[GardenScene] create called');
     const { width } = this.scale;
 
     // Hintergrund: Greenhouse-Look

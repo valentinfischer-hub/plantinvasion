@@ -138,7 +138,7 @@ class GameStore {
     saveGame(this.state);
   }
 
-  setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GreenhouseScene' = 'OverworldScene'): void {
+  setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GardenScene' = 'OverworldScene'): void {
     this.state.overworld = {
       tileX,
       tileY,
