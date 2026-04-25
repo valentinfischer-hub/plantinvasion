@@ -210,6 +210,59 @@ function drawTropicalBloom(g: Phaser.GameObjects.Graphics) {
   rect(g, 9, 13, 2, 1, 0x6abf3a);
 }
 
+
+
+function drawSand(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xe3c478);
+  // Sand-Sprenkel
+  const dots = [[2,3],[7,5],[12,4],[5,9],[10,11],[3,13],[14,14],[8,15]];
+  for (const [x,y] of dots) {
+    pix(g, x, y, 0xc9a558);
+    pix(g, x+1, y-1, 0xfcd95c);
+  }
+}
+
+function drawSandstone(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xb87838);
+  // Stein-Linien
+  rect(g, 0, 4, T, 1, 0x8b5a28);
+  rect(g, 0, 9, T, 1, 0x8b5a28);
+  rect(g, 0, 14, T, 1, 0x8b5a28);
+  rect(g, 4, 0, 1, 4, 0x8b5a28);
+  rect(g, 11, 5, 1, 4, 0x8b5a28);
+  rect(g, 7, 10, 1, 4, 0x8b5a28);
+}
+
+function drawDesertCactus(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xe3c478);     // Sand-Hintergrund
+  // Hauptstamm
+  rect(g, 7, 4, 2, 11, 0x4a8228);
+  // Arme
+  rect(g, 5, 7, 1, 4, 0x4a8228);
+  rect(g, 4, 6, 1, 2, 0x4a8228);
+  rect(g, 10, 6, 1, 5, 0x4a8228);
+  rect(g, 11, 5, 1, 2, 0x4a8228);
+  // Outline / Stacheln
+  pix(g, 7, 5, 0x2d5a1f);
+  pix(g, 8, 8, 0x2d5a1f);
+  pix(g, 7, 11, 0x2d5a1f);
+  // Bluete oben
+  pix(g, 7, 3, 0xff7eb8);
+  pix(g, 8, 3, 0xff7eb8);
+}
+
+function drawDesertFlower(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xe3c478);
+  // Trockenblume mit Stiel
+  rect(g, 7, 8, 1, 6, 0x8b5a28);
+  // Bluete
+  rect(g, 5, 5, 6, 3, 0xff7e7e);
+  rect(g, 6, 4, 4, 1, 0xff5c5c);
+  rect(g, 6, 8, 4, 1, 0xff5c5c);
+  pix(g, 7, 6, 0xfcd95c);
+  pix(g, 8, 6, 0xfcd95c);
+}
+
 const DRAWERS: Array<(g: Phaser.GameObjects.Graphics) => void> = [
   drawGrass,           // 0
   drawPath,            // 1
@@ -226,7 +279,11 @@ const DRAWERS: Array<(g: Phaser.GameObjects.Graphics) => void> = [
   drawFlowerBed,       // 12
   drawBromelien,       // 13
   drawLianen,          // 14
-  drawTropicalBloom    // 15
+  drawTropicalBloom,   // 15
+  drawSand,            // 16
+  drawSandstone,       // 17
+  drawDesertCactus,    // 18
+  drawDesertFlower     // 19
 ];
 
 export function generateTilesetTextures(scene: Phaser.Scene, baseKey: string = 'tile'): void {

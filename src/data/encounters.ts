@@ -176,3 +176,52 @@ export const VERDANTO_BROMELIEN: EncounterDef[] = [
     baseColor: 0x9bc4e3
   }
 ];
+
+
+export const KAKTORIA_TALLGRASS: EncounterDef[] = [
+  {
+    slug: 'saguaro',
+    scientificName: 'Carnegiea gigantea',
+    commonName: 'Saguaro',
+    family: 'Cactaceae',
+    weight: 25,
+    minLevel: 8, maxLevel: 14,
+    baseColor: 0x4a8228
+  },
+  {
+    slug: 'barrel-cactus',
+    scientificName: 'Ferocactus wislizeni',
+    commonName: 'Fasskaktus',
+    family: 'Cactaceae',
+    weight: 30,
+    minLevel: 7, maxLevel: 12,
+    baseColor: 0x6abf3a
+  },
+  {
+    slug: 'desert-rose',
+    scientificName: 'Adenium obesum',
+    commonName: 'Wuestenrose',
+    family: 'Crassulaceae',
+    weight: 20,
+    minLevel: 8, maxLevel: 14,
+    baseColor: 0xff7eb8
+  },
+  {
+    slug: 'joshua-tree',
+    scientificName: 'Yucca brevifolia',
+    commonName: 'Joshua-Baum',
+    family: 'Crassulaceae',
+    weight: 15,
+    minLevel: 9, maxLevel: 16,
+    baseColor: 0x4a6b28
+  },
+  {
+    slug: 'tumbleweed',
+    scientificName: 'Salsola tragus',
+    commonName: 'Steppenlaeufer',
+    family: 'Asteraceae',
+    weight: 10,
+    minLevel: 6, maxLevel: 10,
+    baseColor: 0xb87838
+  }
+];

@@ -8,7 +8,7 @@ import {
   effectivenessLabel,
   clampLevelToRegion
 } from '../systems/BattleEngine';
-import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, type EncounterDef } from '../data/encounters';
+import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, type EncounterDef } from '../data/encounters';
 import { getSpecies } from '../data/species';
 
 interface BattleSceneInitData {
@@ -18,6 +18,7 @@ interface BattleSceneInitData {
 function poolFromKey(key?: string): EncounterDef[] {
   if (key === 'verdanto-tallgrass') return VERDANTO_TALLGRASS;
   if (key === 'verdanto-bromelien') return VERDANTO_BROMELIEN;
+  if (key === 'kaktoria-tallgrass') return KAKTORIA_TALLGRASS;
   return WURZELHEIM_TALLGRASS;
 }
 

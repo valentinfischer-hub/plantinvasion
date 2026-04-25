@@ -113,6 +113,43 @@ export class GardenScene extends Phaser.Scene {
 
     // Initial Header
     this.refreshHeader();
+
+    // Cross-Hotkey: X kreuzt die ersten 2 Plants im State
+    if (this.input.keyboard) {
+      const crossKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
+      crossKey.on('down', () => {
+        const state = gameStore.get();
+        if (state.plants.length < 2) {
+          this.showFlash('Brauchst 2 Pflanzen zum Kreuzen', '#ff7e7e');
+          return;
+        }
+        const result = gameStore.crossPlants(state.plants[0].id, state.plants[1].id);
+        if (!result.ok) {
+          this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+        } else {
+          this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
+        }
+      });
+      // O fuer Overworld zurueck
+      const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
+      owKey.on('down', () => this.scene.start('OverworldScene'));
+    }
+  }
+
+  private flashText?: Phaser.GameObjects.Text;
+  private showFlash(message: string, color: string): void {
+    if (this.flashText) this.flashText.destroy();
+    const { width, height } = this.scale;
+    this.flashText = this.add.text(width / 2, height / 2, message, {
+      fontFamily: 'monospace', fontSize: '14px', color,
+      backgroundColor: '#000000', padding: { x: 10, y: 6 }
+    }).setOrigin(0.5).setDepth(2000);
+    this.tweens.add({
+      targets: this.flashText,
+      alpha: 0,
+      duration: 1800,
+      onComplete: () => { this.flashText?.destroy(); this.flashText = undefined; }
+    });
   }
 
   private refreshHeader(): void {

@@ -5,6 +5,7 @@ import { GardenScene } from './scenes/GardenScene';
 import { BattleScene } from './scenes/BattleScene';
 import { PokedexScene } from './scenes/PokedexScene';
 import { MarketScene } from './scenes/MarketScene';
+import { QuestLogScene } from './scenes/QuestLogScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -21,7 +22,7 @@ const config: Phaser.Types.Core.GameConfig = {
     target: 60,
     forceSetTimeOut: true
   },
-  scene: [MenuScene, OverworldScene, GardenScene, BattleScene, PokedexScene, MarketScene]
+  scene: [MenuScene, OverworldScene, GardenScene, BattleScene, PokedexScene, MarketScene, QuestLogScene]
 };
 
 const game = new Phaser.Game(config);

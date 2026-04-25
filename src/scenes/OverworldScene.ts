@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import wurzelheim, { type MapDef } from '../data/maps/wurzelheim';
 import verdanto from '../data/maps/verdanto';
-import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
+import kaktoria from '../data/maps/kaktoria';
+import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
 import {
   TILE_SIZE,
   CAMERA_ZOOM,
@@ -13,6 +14,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { generateTilesetTextures, getTileTextureKey } from '../assets/proceduralTileset';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
+import { QUESTS, type QuestDef } from '../data/quests';
 import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
@@ -20,13 +22,17 @@ const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14]);
 
 const MAPS: Record<string, MapDef> = {
   wurzelheim,
-  verdanto
+  verdanto,
+  kaktoria
 };
 
 function getEncounterPool(zone: string, tile: number): EncounterDef[] {
   if (zone === 'verdanto') {
     if (tile === 13) return VERDANTO_BROMELIEN;
     return VERDANTO_TALLGRASS;
+  }
+  if (zone === 'kaktoria') {
+    return KAKTORIA_TALLGRASS;
   }
   return WURZELHEIM_TALLGRASS;
 }
@@ -49,6 +55,16 @@ const BUILDING_DOORS: BuildingDoor[] = [
   { tileX: 21, tileY: 15, dialog: ['NPC-Wohnhaus: Niemand zuhause.', '(Privater Bereich, V0.3)'] }
 ];
 
+function checkQuestComplete(quest: QuestDef): boolean {
+  const dex = gameStore.getPokedex();
+  const goal = quest.goal;
+  if (goal.type === 'capture') return dex.captured.includes(goal.speciesSlug);
+  if (goal.type === 'discover') return dex.discovered.includes(goal.speciesSlug);
+  if (goal.type === 'have-plant') return gameStore.get().plants.some((p) => p.speciesSlug === goal.speciesSlug);
+  if (goal.type === 'have-item') return (gameStore.getInventory()[goal.itemSlug] ?? 0) >= goal.count;
+  return false;
+}
+
 export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private map: MapDef = wurzelheim;
   private currentZone: string = 'wurzelheim';
@@ -59,6 +75,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private keySpace!: Phaser.Input.Keyboard.Key;
   private keyP!: Phaser.Input.Keyboard.Key;
   private keyM!: Phaser.Input.Keyboard.Key;
+  private keyQ!: Phaser.Input.Keyboard.Key;
   private debugText!: Phaser.GameObjects.Text;
   private _saveAccum?: number;
   private interactHint!: Phaser.GameObjects.Text;
@@ -108,6 +125,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.keyP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
     this.keyM = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+    this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
 
     // Debug
     this.debugText = this.add.text(8, 8, '', {
@@ -168,6 +186,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       }
     }
 
+    // Quest-Log-Hotkey
+    if (Phaser.Input.Keyboard.JustDown(this.keyQ)) {
+      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
+      this.scene.start('QuestLogScene');
+      return;
+    }
     // Markt-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyM)) {
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
@@ -189,7 +213,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Debug
     this.debugText.setText(
-      `${this.currentZone}  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E=talk, P=pokedex, M=markt, Shift=run]`
+      `${this.currentZone}  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E=talk, P=pokedex, Q=quest, M=markt, Shift=run]`
     );
   }
 
@@ -222,7 +246,30 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // NPC?
     const npc = this.npcs.find((n) => n.data.tileX === front.tileX && n.data.tileY === front.tileY);
     if (npc) {
-      this.dialog.open(npc.data.dialog);
+      const lines = [...npc.data.dialog];
+      // Quest-Logic: Suche Quest fuer diesen NPC
+      const quest = QUESTS.find((qq) => qq.giverId === npc.data.id);
+      if (quest) {
+        const status = gameStore.getQuestState(quest.id);
+        if (status === 'pending') {
+          lines.push('---', `Neue Quest: ${quest.title}`, quest.description);
+          gameStore.acceptQuest(quest.id);
+        } else if (status === 'active') {
+          // Pruefe Erfuellung
+          const ok = checkQuestComplete(quest);
+          if (ok) {
+            const rewardCoins = quest.reward.coins ?? 0;
+            const rewardItems = quest.reward.items ?? {};
+            gameStore.completeQuest(quest.id, rewardCoins, rewardItems);
+            lines.push('---', `Quest abgeschlossen: ${quest.title}!`, `Belohnung: ${rewardCoins} Gold`);
+          } else {
+            lines.push('---', `Aktive Quest: ${quest.title} (noch nicht erfuellt)`);
+          }
+        } else {
+          lines.push('---', `${quest.title}: erledigt.`);
+        }
+      }
+      this.dialog.open(lines);
       return;
     }
     // Schild?
@@ -283,11 +330,29 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.changeZone('wurzelheim', 14, this.map.height - 2, 'up');
       return;
     }
-    // Verdanto Sueden -> (V0.5 Salzbucht)
+    // Verdanto Sueden -> (Salzbucht V0.7)
     if (this.currentZone === 'verdanto' && tileY >= this.map.height - 1) {
       this.dialog.open([
         'Vor dir liegt die Meereskueste Salzbucht.',
-        '(In V0.5 freischaltbar)'
+        '(In V0.7 freischaltbar)'
+      ]);
+      return;
+    }
+    // Verdanto Osten -> Kaktoria West (durch Map-Edge an X=W-1)
+    if (this.currentZone === 'verdanto' && tileX >= this.map.width - 1) {
+      this.changeZone('kaktoria', 1, tileY, 'right');
+      return;
+    }
+    // Kaktoria Osten -> Verdanto West (umgekehrt)
+    if (this.currentZone === 'kaktoria' && tileX >= this.map.width - 1) {
+      this.changeZone('verdanto', this.map.width - 2, tileY, 'left');
+      return;
+    }
+    // Kaktoria Norden -> (Frostkamm S-06+)
+    if (this.currentZone === 'kaktoria' && tileY <= 0) {
+      this.dialog.open([
+        'Vor dir liegt das Hochgebirge Frostkamm.',
+        '(In V0.7 freischaltbar)'
       ]);
       return;
     }
@@ -332,7 +397,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       console.log('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'size:', pool.length);
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       sfx.dialogOpen();
-      const poolKey = this.currentZone === 'verdanto' ? (t === 13 ? 'verdanto-bromelien' : 'verdanto-tallgrass') : 'wurzelheim-tallgrass';
+      const poolKey = this.currentZone === 'verdanto' ? (t === 13 ? 'verdanto-bromelien' : 'verdanto-tallgrass') : (this.currentZone === 'kaktoria' ? 'kaktoria-tallgrass' : 'wurzelheim-tallgrass');
       this.scene.start('BattleScene', { poolKey });
       return;
     }

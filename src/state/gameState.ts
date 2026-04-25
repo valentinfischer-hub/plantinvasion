@@ -1,5 +1,5 @@
 import type { Plant } from '../types/plant';
-import { rollStarterStats } from '../data/genetics';
+import { rollStarterStats, crossStats, rollMutation } from '../data/genetics';
 import { tickPlant } from '../data/leveling';
 import { getSpecies } from '../data/species';
 import { loadGame, saveGame, SAVE_SCHEMA_VERSION, type GameState } from './storage';
@@ -70,7 +70,8 @@ export function newGame(): GameState {
       lastSceneVisited: 'OverworldScene'
     },
     pokedex: { discovered: [], captured: [] },
-    inventory: { 'basic-lure': 3, 'heal-tonic': 2 }
+    inventory: { 'basic-lure': 3, 'heal-tonic': 2 },
+    quests: {}
   };
   const starter = createPlantOfSpecies('sunflower', state.plants);
   if (starter) state.plants.push(starter);
@@ -175,6 +176,32 @@ class GameStore {
     return this.state.pokedex ?? { discovered: [], captured: [] };
   }
 
+  getQuestState(questId: string): 'pending' | 'active' | 'completed' {
+    return this.state.quests?.[questId] ?? 'pending';
+  }
+
+  acceptQuest(questId: string): void {
+    if (!this.state.quests) this.state.quests = {};
+    if (this.state.quests[questId] === 'completed') return;
+    this.state.quests[questId] = 'active';
+    this.save();
+  }
+
+  completeQuest(questId: string, rewardCoins = 0, rewardItems: Record<string, number> = {}): void {
+    if (!this.state.quests) this.state.quests = {};
+    this.state.quests[questId] = 'completed';
+    if (rewardCoins) this.addCoins(rewardCoins);
+    for (const [slug, n] of Object.entries(rewardItems)) {
+      this.addItem(slug, n);
+    }
+    this.save();
+  }
+
+  getActiveQuests(): string[] {
+    if (!this.state.quests) return [];
+    return Object.entries(this.state.quests).filter(([, s]) => s === 'active').map(([id]) => id);
+  }
+
   getInventory(): Record<string, number> {
     return this.state.inventory ?? {};
   }
@@ -209,6 +236,55 @@ class GameStore {
   addCoins(n: number): void {
     this.state.coins += n;
     this.save();
+  }
+
+  crossPlants(parentAId: string, parentBId: string): { ok: boolean; reason?: string; child?: Plant } {
+    const a = this.state.plants.find((p) => p.id === parentAId);
+    const b = this.state.plants.find((p) => p.id === parentBId);
+    if (!a || !b) return { ok: false, reason: 'Eltern nicht gefunden' };
+    if (a.id === b.id) return { ok: false, reason: 'Selbe Pflanze gewaehlt' };
+    if (a.level < 5 || b.level < 5) return { ok: false, reason: 'Beide Pflanzen brauchen Level 5+' };
+    const COST = 50;
+    if (this.state.coins < COST) return { ok: false, reason: `Du brauchst ${COST} Gold` };
+    // Free Slot
+    const slot = (() => {
+      const occupied = new Set(this.state.plants.map((p) => `${p.gridX},${p.gridY}`));
+      for (let y = 0; y < GRID_ROWS; y++) {
+        for (let x = 0; x < GRID_COLUMNS; x++) {
+          if (!occupied.has(`${x},${y}`)) return { x, y };
+        }
+      }
+      return null;
+    })();
+    if (!slot) return { ok: false, reason: 'Kein freier Slot' };
+    // Cross
+    const seed = Math.floor(Math.random() * 1_000_000_000);
+    const mutation = rollMutation(seed);
+    const stats = crossStats(a.stats, b.stats, seed, mutation.isMutation);
+    const now = Date.now();
+    // Inherit speciesSlug von parentA, V0.5 expand to family-mix
+    const child: Plant = {
+      id: 'p_' + Math.random().toString(36).slice(2, 10),
+      speciesSlug: a.speciesSlug,
+      stats,
+      geneSeed: seed,
+      parentAId: a.id,
+      parentBId: b.id,
+      isMutation: mutation.isMutation,
+      level: 1,
+      xp: 0,
+      totalXp: 0,
+      bornAt: now,
+      lastWateredAt: now,
+      lastTickAt: now,
+      gridX: slot.x,
+      gridY: slot.y
+    };
+    this.state.plants.push(child);
+    this.state.coins -= COST;
+    this.captureSpecies(child.speciesSlug);
+    this.save();
+    return { ok: true, child };
   }
 
   capturePlant(slug: string, level: number, atkBias: number, defBias: number, spdBias: number): boolean {
