@@ -225,3 +225,110 @@ export const KAKTORIA_TALLGRASS: EncounterDef[] = [
     baseColor: 0xb87838
   }
 ];
+
+
+export const FROSTKAMM_TALLGRASS: EncounterDef[] = [
+  {
+    slug: 'edelweiss',
+    scientificName: 'Leontopodium nivale',
+    commonName: 'Edelweiss',
+    family: 'Asteraceae',
+    weight: 15,
+    minLevel: 14, maxLevel: 22,
+    baseColor: 0xffffff
+  },
+  {
+    slug: 'snowdrop',
+    scientificName: 'Galanthus nivalis',
+    commonName: 'Schneegloeckchen',
+    family: 'Crassulaceae',
+    weight: 25,
+    minLevel: 12, maxLevel: 18,
+    baseColor: 0xe8eef5
+  },
+  {
+    slug: 'alpine-gentian',
+    scientificName: 'Gentiana acaulis',
+    commonName: 'Stengelloser Enzian',
+    family: 'Brassicaceae',
+    weight: 20,
+    minLevel: 14, maxLevel: 22,
+    baseColor: 0x4a78c8
+  },
+  {
+    slug: 'crocus',
+    scientificName: 'Crocus sativus',
+    commonName: 'Safran-Krokus',
+    family: 'Lamiaceae',
+    weight: 25,
+    minLevel: 12, maxLevel: 18,
+    baseColor: 0x8a4ec8
+  },
+  {
+    slug: 'bergkiefer',
+    scientificName: 'Pinus mugo',
+    commonName: 'Bergkiefer',
+    family: 'Crassulaceae',
+    weight: 15,
+    minLevel: 16, maxLevel: 24,
+    baseColor: 0x4a6b28
+  }
+];
+
+
+export const SALZBUCHT_TALLGRASS: EncounterDef[] = [
+  {
+    slug: 'sea-thrift',
+    scientificName: 'Armeria maritima',
+    commonName: 'Strand-Grasnelke',
+    family: 'Asteraceae',
+    weight: 25,
+    minLevel: 18, maxLevel: 28,
+    baseColor: 0xff7eb8
+  },
+  {
+    slug: 'sea-holly',
+    scientificName: 'Eryngium maritimum',
+    commonName: 'Strand-Mannstreu',
+    family: 'Apiaceae',
+    weight: 20,
+    minLevel: 18, maxLevel: 28,
+    baseColor: 0x4a8298
+  },
+  {
+    slug: 'sea-rocket',
+    scientificName: 'Cakile maritima',
+    commonName: 'Meersenf',
+    family: 'Brassicaceae',
+    weight: 25,
+    minLevel: 16, maxLevel: 24,
+    baseColor: 0xc8d8e8
+  },
+  {
+    slug: 'beach-aster',
+    scientificName: 'Symphyotrichum tenuifolium',
+    commonName: 'Strand-Aster',
+    family: 'Asteraceae',
+    weight: 15,
+    minLevel: 18, maxLevel: 26,
+    baseColor: 0xfff7d4
+  },
+  {
+    slug: 'mangrove',
+    scientificName: 'Rhizophora mangle',
+    commonName: 'Mangrove',
+    family: 'Bromeliaceae',
+    weight: 10,
+    minLevel: 22, maxLevel: 30,
+    baseColor: 0x4a6b28
+  },
+  {
+    slug: 'sea-grape',
+    scientificName: 'Coccoloba uvifera',
+    commonName: 'Meertraube',
+    family: 'Solanaceae',
+    weight: 5,
+    minLevel: 24, maxLevel: 32,
+    baseColor: 0x8a4ec8
+  }
+];

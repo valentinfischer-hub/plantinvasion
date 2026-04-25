@@ -263,6 +263,126 @@ function drawDesertFlower(g: Phaser.GameObjects.Graphics) {
   pix(g, 8, 6, 0xfcd95c);
 }
 
+
+
+function drawStein(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0x6e6e6e);
+  // Steinblock-Pattern
+  rect(g, 0, 4, T, 1, 0x4a4a4a);
+  rect(g, 0, 9, T, 1, 0x4a4a4a);
+  rect(g, 0, 14, T, 1, 0x4a4a4a);
+  rect(g, 5, 0, 1, 4, 0x4a4a4a);
+  rect(g, 11, 5, 1, 4, 0x4a4a4a);
+  rect(g, 7, 10, 1, 4, 0x4a4a4a);
+  pix(g, 3, 2, 0x8a8a8a);
+  pix(g, 8, 6, 0x8a8a8a);
+  pix(g, 12, 12, 0x8a8a8a);
+}
+
+function drawSchnee(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xe8eef5);
+  // Schnee-Sprenkel + leichter Schimmer
+  const dots = [[2,3],[7,5],[12,4],[5,9],[10,11],[3,13],[14,14],[8,15]];
+  for (const [x,y] of dots) {
+    pix(g, x, y, 0xc8d8e8);
+    pix(g, x+1, y-1, 0xffffff);
+  }
+}
+
+function drawEis(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xa8c8e8);
+  // Eis-Streifen
+  for (let y = 1; y < T; y += 4) {
+    rect(g, 1, y, T - 2, 1, 0xc8d8e8);
+  }
+  // Glanz-Punkte
+  pix(g, 4, 2, 0xffffff);
+  pix(g, 11, 6, 0xffffff);
+  pix(g, 7, 11, 0xffffff);
+  pix(g, 13, 14, 0xffffff);
+}
+
+function drawBergfichte(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xe8eef5);   // Schnee-Hintergrund
+  // Stamm
+  rect(g, 7, 11, 2, 5, 0x553e2d);
+  // Konische Spitze
+  rect(g, 6, 8, 4, 3, 0x2d4a1f);
+  rect(g, 5, 5, 6, 3, 0x4a6b28);
+  rect(g, 4, 2, 8, 3, 0x6e8b3a);
+  // Schnee-Spitzen
+  pix(g, 5, 2, 0xffffff);
+  pix(g, 10, 2, 0xffffff);
+  pix(g, 7, 5, 0xffffff);
+  pix(g, 8, 5, 0xffffff);
+}
+
+function drawFrostKristall(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xe8eef5);
+  // Kristall-Form
+  rect(g, 6, 4, 4, 8, 0xa8c8e8);
+  rect(g, 5, 5, 1, 6, 0xc8d8e8);
+  rect(g, 10, 5, 1, 6, 0xc8d8e8);
+  rect(g, 7, 3, 2, 1, 0xffffff);
+  rect(g, 7, 12, 2, 1, 0xffffff);
+  // Glanz
+  pix(g, 7, 6, 0xffffff);
+  pix(g, 8, 9, 0xffffff);
+}
+
+
+
+function drawStrandSand(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xfcd9a8);
+  // helle Sprenkel
+  const dots = [[2,3],[7,5],[12,4],[5,9],[10,11],[3,13],[14,14],[8,15]];
+  for (const [x,y] of dots) {
+    pix(g, x, y, 0xe3c478);
+    pix(g, x+1, y-1, 0xfff7d4);
+  }
+}
+
+function drawSalzwasser(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0x4ac8b8);
+  // Wellen mit Schaum
+  for (let y = 2; y < T; y += 4) {
+    rect(g, 1, y, 4, 1, 0x82d4c8);
+    rect(g, 9, y+2, 5, 1, 0x82d4c8);
+  }
+  pix(g, 6, 4, 0xffffff);
+  pix(g, 12, 10, 0xffffff);
+  pix(g, 4, 13, 0xffffff);
+}
+
+function drawMuschel(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xfcd9a8);    // Strand
+  // Muschel
+  rect(g, 5, 6, 6, 5, 0xff7eb8);
+  rect(g, 4, 7, 1, 3, 0xff7eb8);
+  rect(g, 11, 7, 1, 3, 0xff7eb8);
+  rect(g, 6, 5, 4, 1, 0xff5c5c);
+  rect(g, 6, 11, 4, 1, 0xff5c5c);
+  // Linien
+  pix(g, 7, 7, 0x8b3a4a);
+  pix(g, 8, 7, 0x8b3a4a);
+  pix(g, 7, 9, 0x8b3a4a);
+  pix(g, 8, 9, 0x8b3a4a);
+}
+
+function drawTreibgut(g: Phaser.GameObjects.Graphics) {
+  rect(g, 0, 0, T, T, 0xfcd9a8);   // Strand
+  // Holzklotz
+  rect(g, 3, 6, 10, 5, 0x8b6e4a);
+  rect(g, 3, 6, 10, 1, 0x553e2d);
+  rect(g, 3, 10, 10, 1, 0x553e2d);
+  // Knoten
+  rect(g, 5, 8, 1, 1, 0x553e2d);
+  rect(g, 9, 8, 1, 1, 0x553e2d);
+  // Algen drueber
+  rect(g, 4, 4, 1, 2, 0x4a8228);
+  rect(g, 11, 4, 1, 2, 0x4a8228);
+}
+
 const DRAWERS: Array<(g: Phaser.GameObjects.Graphics) => void> = [
   drawGrass,           // 0
   drawPath,            // 1
@@ -283,7 +403,16 @@ const DRAWERS: Array<(g: Phaser.GameObjects.Graphics) => void> = [
   drawSand,            // 16
   drawSandstone,       // 17
   drawDesertCactus,    // 18
-  drawDesertFlower     // 19
+  drawDesertFlower,    // 19
+  drawStein,           // 20
+  drawSchnee,          // 21
+  drawEis,             // 22
+  drawBergfichte,      // 23
+  drawFrostKristall,   // 24
+  drawStrandSand,      // 25
+  drawSalzwasser,      // 26
+  drawMuschel,         // 27
+  drawTreibgut         // 28
 ];
 
 export function generateTilesetTextures(scene: Phaser.Scene, baseKey: string = 'tile'): void {

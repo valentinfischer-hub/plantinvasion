@@ -2,7 +2,9 @@ import Phaser from 'phaser';
 import wurzelheim, { type MapDef } from '../data/maps/wurzelheim';
 import verdanto from '../data/maps/verdanto';
 import kaktoria from '../data/maps/kaktoria';
-import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
+import frostkamm from '../data/maps/frostkamm';
+import salzbucht from '../data/maps/salzbucht';
+import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
 import {
   TILE_SIZE,
   CAMERA_ZOOM,
@@ -23,7 +25,9 @@ const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14]);
 const MAPS: Record<string, MapDef> = {
   wurzelheim,
   verdanto,
-  kaktoria
+  kaktoria,
+  frostkamm,
+  salzbucht
 };
 
 function getEncounterPool(zone: string, tile: number): EncounterDef[] {
@@ -31,9 +35,9 @@ function getEncounterPool(zone: string, tile: number): EncounterDef[] {
     if (tile === 13) return VERDANTO_BROMELIEN;
     return VERDANTO_TALLGRASS;
   }
-  if (zone === 'kaktoria') {
-    return KAKTORIA_TALLGRASS;
-  }
+  if (zone === 'kaktoria') return KAKTORIA_TALLGRASS;
+  if (zone === 'frostkamm') return FROSTKAMM_TALLGRASS;
+  if (zone === 'salzbucht') return SALZBUCHT_TALLGRASS;
   return WURZELHEIM_TALLGRASS;
 }
 
@@ -330,12 +334,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.changeZone('wurzelheim', 14, this.map.height - 2, 'up');
       return;
     }
-    // Verdanto Sueden -> (Salzbucht V0.7)
+    // Verdanto Sueden -> Salzbucht Norden
     if (this.currentZone === 'verdanto' && tileY >= this.map.height - 1) {
-      this.dialog.open([
-        'Vor dir liegt die Meereskueste Salzbucht.',
-        '(In V0.7 freischaltbar)'
-      ]);
+      this.changeZone('salzbucht', tileX, 1, 'down');
+      return;
+    }
+    // Salzbucht Norden -> Verdanto Sueden
+    if (this.currentZone === 'salzbucht' && tileY <= 0) {
+      this.changeZone('verdanto', tileX, this.map.height - 2, 'up');
       return;
     }
     // Verdanto Osten -> Kaktoria West (durch Map-Edge an X=W-1)
@@ -348,12 +354,19 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.changeZone('verdanto', this.map.width - 2, tileY, 'left');
       return;
     }
-    // Kaktoria Norden -> (Frostkamm S-06+)
+    // Kaktoria Norden -> Frostkamm Sueden
     if (this.currentZone === 'kaktoria' && tileY <= 0) {
-      this.dialog.open([
-        'Vor dir liegt das Hochgebirge Frostkamm.',
-        '(In V0.7 freischaltbar)'
-      ]);
+      this.changeZone('frostkamm', tileX, this.map.height - 2, 'up');
+      return;
+    }
+    // Frostkamm Sueden -> Kaktoria Norden
+    if (this.currentZone === 'frostkamm' && tileY >= this.map.height - 1) {
+      this.changeZone('kaktoria', tileX, 1, 'down');
+      return;
+    }
+    // Frostkamm Norden -> (Glaciara V0.9)
+    if (this.currentZone === 'frostkamm' && tileY <= 0) {
+      this.dialog.open(['Vor dir liegt Glaciara, das Endgame-Biom.', '(In V0.9 freischaltbar)']);
       return;
     }
     void tileX;
@@ -397,7 +410,11 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       console.log('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'size:', pool.length);
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       sfx.dialogOpen();
-      const poolKey = this.currentZone === 'verdanto' ? (t === 13 ? 'verdanto-bromelien' : 'verdanto-tallgrass') : (this.currentZone === 'kaktoria' ? 'kaktoria-tallgrass' : 'wurzelheim-tallgrass');
+      let poolKey = 'wurzelheim-tallgrass';
+      if (this.currentZone === 'verdanto') poolKey = t === 13 ? 'verdanto-bromelien' : 'verdanto-tallgrass';
+      else if (this.currentZone === 'kaktoria') poolKey = 'kaktoria-tallgrass';
+      else if (this.currentZone === 'frostkamm') poolKey = 'frostkamm-tallgrass';
+      else if (this.currentZone === 'salzbucht') poolKey = 'salzbucht-tallgrass';
       this.scene.start('BattleScene', { poolKey });
       return;
     }

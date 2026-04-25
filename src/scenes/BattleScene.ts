@@ -8,7 +8,7 @@ import {
   effectivenessLabel,
   clampLevelToRegion
 } from '../systems/BattleEngine';
-import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, type EncounterDef } from '../data/encounters';
+import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, type EncounterDef } from '../data/encounters';
 import { getSpecies } from '../data/species';
 
 interface BattleSceneInitData {
@@ -19,6 +19,8 @@ function poolFromKey(key?: string): EncounterDef[] {
   if (key === 'verdanto-tallgrass') return VERDANTO_TALLGRASS;
   if (key === 'verdanto-bromelien') return VERDANTO_BROMELIEN;
   if (key === 'kaktoria-tallgrass') return KAKTORIA_TALLGRASS;
+  if (key === 'frostkamm-tallgrass') return FROSTKAMM_TALLGRASS;
+  if (key === 'salzbucht-tallgrass') return SALZBUCHT_TALLGRASS;
   return WURZELHEIM_TALLGRASS;
 }
 
@@ -168,6 +170,13 @@ export class BattleScene extends Phaser.Scene {
     this.updateBars();
     this.shakeSprites();
     sfx.bump();
+    // Damage-Floater
+    const firstTargetSprite = (r.defenderFirst === this.player) ? this.playerSprite : this.wildSprite;
+    this.spawnDamageFloater(firstTargetSprite, r.dmgFirst, r.critFirst);
+    if (r.dmgSecond > 0) {
+      const secondTargetSprite = (r.attackerFirst === this.player) ? this.playerSprite : this.wildSprite;
+      this.spawnDamageFloater(secondTargetSprite, r.dmgSecond, r.critSecond);
+    }
 
     if (r.battleOver) {
       this.over = true;
@@ -191,8 +200,27 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private shakeSprites(): void {
-    this.tweens.add({ targets: this.playerSprite, x: this.playerSprite.x + 6, duration: 50, yoyo: true });
-    this.tweens.add({ targets: this.wildSprite, x: this.wildSprite.x - 6, duration: 50, yoyo: true });
+    // Beide Sprites kurz shake mit Flash
+    this.tweens.add({ targets: this.playerSprite, x: '+=6', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.wildSprite, x: '-=6', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
+    // Flash Effect
+    this.cameras.main.flash(80, 100, 100, 100);
+  }
+
+  private spawnDamageFloater(target: Phaser.GameObjects.Rectangle, dmg: number, crit: boolean): void {
+    const color = crit ? '#ff5c5c' : '#ffffff';
+    const text = this.add.text(target.x, target.y - 20, `-${dmg}${crit ? '!' : ''}`, {
+      fontFamily: 'monospace', fontSize: crit ? '18px' : '14px', color,
+      stroke: '#000000', strokeThickness: 2
+    }).setOrigin(0.5).setDepth(1500);
+    this.tweens.add({
+      targets: text,
+      y: target.y - 60,
+      alpha: 0,
+      duration: 1100,
+      ease: 'Quad.easeOut',
+      onComplete: () => text.destroy()
+    });
   }
 
   private tryCapture(): void {
