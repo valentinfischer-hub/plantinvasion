@@ -61,7 +61,14 @@ export function newGame(): GameState {
     plants: [],
     coins: 100,
     gems: 0,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    overworld: {
+      tileX: 14,
+      tileY: 17,
+      facing: 'up',
+      zone: 'wurzelheim',
+      lastSceneVisited: 'OverworldScene'
+    }
   };
   const starter = createPlantOfSpecies('sunflower', state.plants);
   if (starter) state.plants.push(starter);
@@ -129,6 +136,23 @@ class GameStore {
 
   save(): void {
     saveGame(this.state);
+  }
+
+  setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GreenhouseScene' = 'OverworldScene'): void {
+    this.state.overworld = {
+      tileX,
+      tileY,
+      facing,
+      zone: 'wurzelheim',
+      lastSceneVisited: scene
+    };
+    this.save();
+  }
+
+  getOverworldPos() {
+    return this.state.overworld ?? {
+      tileX: 14, tileY: 17, facing: 'up' as const, zone: 'wurzelheim', lastSceneVisited: 'OverworldScene' as const
+    };
   }
 
   subscribe(fn: (s: GameState) => void): () => void {

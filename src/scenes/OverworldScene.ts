@@ -9,6 +9,7 @@ import { PlayerController, type CollisionChecker } from '../entities/PlayerContr
 import { NPC } from '../entities/NPC';
 import { DialogBox } from '../ui/DialogBox';
 import { generateTilesetTextures, getTileTextureKey } from '../assets/proceduralTileset';
+import { gameStore } from '../state/gameState';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10]);
@@ -37,6 +38,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private keyE!: Phaser.Input.Keyboard.Key;
   private keySpace!: Phaser.Input.Keyboard.Key;
   private debugText!: Phaser.GameObjects.Text;
+  private _saveAccum?: number;
 
   constructor() {
     super('OverworldScene');
@@ -48,13 +50,15 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Welt-Container fuer Tiles
     this.renderTiles();
 
-    // Player
+    // Player Spawn: vorzugsweise aus Save-State
+    const ow = gameStore.getOverworldPos();
     this.player = new PlayerController(
       this,
-      this.map.playerSpawn.tileX,
-      this.map.playerSpawn.tileY,
+      ow.tileX,
+      ow.tileY,
       this
     );
+    this.player.facing = ow.facing;
 
     // NPCs
     this.npcs = this.map.npcs.map((n) => new NPC(this, n));
@@ -95,6 +99,15 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
 
     this.player.update(time, delta);
+
+    // Periodische Position-Speicherung (alle ~2s wenn nicht moving)
+    if (!this.player.isMoving) {
+      this._saveAccum = (this._saveAccum ?? 0) + delta;
+      if (this._saveAccum > 2000) {
+        this._saveAccum = 0;
+        gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene');
+      }
+    }
 
     // Interact-Key
     if (Phaser.Input.Keyboard.JustDown(this.keyE) || Phaser.Input.Keyboard.JustDown(this.keySpace)) {
@@ -176,6 +189,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Tuer zum Garten
     if (t === 7) {
       console.log('[OverworldScene] door triggered, switching to GreenhouseScene');
+      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GreenhouseScene');
       this.scene.start('GreenhouseScene');
       return;
     }
