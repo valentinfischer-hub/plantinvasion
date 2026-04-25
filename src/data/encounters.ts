@@ -88,3 +88,91 @@ export function pickEncounter(pool: EncounterDef[], rng: () => number = Math.ran
 export function randomLevel(def: EncounterDef, rng: () => number = Math.random): number {
   return Math.floor(def.minLevel + rng() * (def.maxLevel - def.minLevel + 1));
 }
+
+
+export const VERDANTO_TALLGRASS: EncounterDef[] = [
+  {
+    slug: 'air-plant',
+    scientificName: 'Tillandsia recurvata',
+    commonName: 'Luftpflanze',
+    family: 'Bromeliaceae',
+    weight: 25,
+    minLevel: 4, maxLevel: 8,
+    baseColor: 0x9bc4e3
+  },
+  {
+    slug: 'rainforest-fern',
+    scientificName: 'Asplenium nidus',
+    commonName: 'Nestfarn',
+    family: 'Bromeliaceae',
+    weight: 25,
+    minLevel: 3, maxLevel: 6,
+    baseColor: 0x4a8228
+  },
+  {
+    slug: 'heliconia',
+    scientificName: 'Heliconia bihai',
+    commonName: 'Hummerklaue',
+    family: 'Bromeliaceae',
+    weight: 20,
+    minLevel: 4, maxLevel: 8,
+    baseColor: 0xff5c5c
+  },
+  {
+    slug: 'tropical-pitcher',
+    scientificName: 'Nepenthes alata',
+    commonName: 'Tropische Kannenpflanze',
+    family: 'Droseraceae',
+    weight: 15,
+    minLevel: 5, maxLevel: 8,
+    baseColor: 0x8b3a6b
+  },
+  {
+    slug: 'moonflower',
+    scientificName: 'Ipomoea alba',
+    commonName: 'Mondblume',
+    family: 'Solanaceae',
+    weight: 10,
+    minLevel: 5, maxLevel: 8,
+    baseColor: 0xfff7d4
+  },
+  {
+    slug: 'strangler-fig',
+    scientificName: 'Ficus aurea',
+    commonName: 'Wuergefeige',
+    family: 'Bromeliaceae',
+    weight: 5,
+    minLevel: 6, maxLevel: 9,
+    baseColor: 0x553e2d
+  }
+];
+
+export const VERDANTO_BROMELIEN: EncounterDef[] = [
+  {
+    slug: 'bromeliad',
+    scientificName: 'Aechmea fasciata',
+    commonName: 'Bromelie',
+    family: 'Bromeliaceae',
+    weight: 50,
+    minLevel: 4, maxLevel: 8,
+    baseColor: 0xff7eb8
+  },
+  {
+    slug: 'vanilla-orchid',
+    scientificName: 'Vanilla planifolia',
+    commonName: 'Vanille-Orchidee',
+    family: 'Orchidaceae',
+    weight: 30,
+    minLevel: 5, maxLevel: 9,
+    baseColor: 0xfcd95c
+  },
+  {
+    slug: 'air-plant',
+    scientificName: 'Tillandsia recurvata',
+    commonName: 'Luftpflanze',
+    family: 'Bromeliaceae',
+    weight: 20,
+    minLevel: 4, maxLevel: 8,
+    baseColor: 0x9bc4e3
+  }
+];

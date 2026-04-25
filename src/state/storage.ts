@@ -13,6 +13,8 @@ export interface PokedexState {
   captured: string[];       // species-slugs in Garden
 }
 
+export type InventoryState = Record<string, number>;
+
 export interface GameState {
   version: number;
   playerId: string;
@@ -22,10 +24,11 @@ export interface GameState {
   createdAt: number;
   overworld?: OverworldState;     // V2
   pokedex?: PokedexState;          // V3
+  inventory?: InventoryState;       // V4
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';   // Bewusst v1 als Datei-Name beibehalten, internal version-Field steuert
-export const SAVE_SCHEMA_VERSION = 3;
+export const SAVE_SCHEMA_VERSION = 4;
 
 const DEFAULT_OVERWORLD: OverworldState = {
   tileX: 14,
@@ -37,8 +40,14 @@ const DEFAULT_OVERWORLD: OverworldState = {
 
 function migrate(parsed: any): GameState | null {
   if (!parsed || typeof parsed !== 'object') return null;
+  if (parsed.version === 3) {
+    parsed.version = 4;
+    parsed.inventory = parsed.inventory ?? { 'basic-lure': 3, 'heal-tonic': 2 };
+    console.log('[storage] migrated save v3 -> v4');
+  }
   if (parsed.version === SAVE_SCHEMA_VERSION) {
     if (!parsed.pokedex) parsed.pokedex = { discovered: [], captured: [] };
+    if (!parsed.inventory) parsed.inventory = { 'basic-lure': 3, 'heal-tonic': 2 };
     // Backwards-compat: alte GreenhouseScene-Strings zu GardenScene migrieren
     if (parsed.overworld && (parsed.overworld as any).lastSceneVisited === 'GreenhouseScene') {
       (parsed.overworld as any).lastSceneVisited = 'GardenScene';
@@ -94,6 +103,7 @@ export function saveGame(state: GameState): void {
   try {
     if (!state.overworld) state.overworld = { ...DEFAULT_OVERWORLD };
     if (!state.pokedex) state.pokedex = { discovered: [], captured: [] };
+    if (!state.inventory) state.inventory = { 'basic-lure': 3, 'heal-tonic': 2 };
     state.version = SAVE_SCHEMA_VERSION;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {

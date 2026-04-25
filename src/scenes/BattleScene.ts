@@ -5,13 +5,20 @@ import {
   type BattleSide,
   makeStatsForLevel,
   runRound,
-  effectivenessLabel
+  effectivenessLabel,
+  clampLevelToRegion
 } from '../systems/BattleEngine';
-import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS } from '../data/encounters';
+import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, type EncounterDef } from '../data/encounters';
 import { getSpecies } from '../data/species';
 
 interface BattleSceneInitData {
-  pool?: 'wurzelheim-tallgrass';
+  poolKey?: string;
+}
+
+function poolFromKey(key?: string): EncounterDef[] {
+  if (key === 'verdanto-tallgrass') return VERDANTO_TALLGRASS;
+  if (key === 'verdanto-bromelien') return VERDANTO_BROMELIEN;
+  return WURZELHEIM_TALLGRASS;
 }
 
 export class BattleScene extends Phaser.Scene {
@@ -30,14 +37,18 @@ export class BattleScene extends Phaser.Scene {
   private nextRoundDelay = 1000;
   private lastRoundAt = 0;
   private xpReward = 0;
+  private capturedEnc?: { slug: string; rarity: number; level: number; atkBias: number; defBias: number; spdBias: number };
 
   constructor() {
     super('BattleScene');
   }
 
-  init(_data: BattleSceneInitData = {}) {
+  private poolKey: string = 'wurzelheim-tallgrass';
+
+  init(data: BattleSceneInitData = {}) {
     this.over = false;
     this.autoBattle = false;
+    this.poolKey = data.poolKey ?? 'wurzelheim-tallgrass';
   }
 
   create(): void {
@@ -64,9 +75,13 @@ export class BattleScene extends Phaser.Scene {
     };
 
     // Wild-Plant aus Encounter-Pool ziehen
-    const enc = pickEncounter(WURZELHEIM_TALLGRASS);
+    const pool = poolFromKey(this.poolKey);
+    const enc = pickEncounter(pool);
     gameStore.discoverSpecies(enc.slug);
-    const wildLevel = randomLevel(enc);
+    // Save fuer Capture spaeter
+    const familyMod = enc.family === 'Bromeliaceae' || enc.family === 'Asteraceae' ? 0 : 5;
+    const zone = gameStore.getOverworldPos().zone;
+    const wildLevel = clampLevelToRegion(randomLevel(enc), zone);
     this.wild = {
       name: enc.commonName,
       family: enc.family,
@@ -76,6 +91,7 @@ export class BattleScene extends Phaser.Scene {
       spriteColor: enc.baseColor
     };
     this.xpReward = 10 + 5 * wildLevel;
+    this.capturedEnc = { slug: enc.slug, rarity: 2, level: wildLevel, atkBias: familyMod, defBias: 0, spdBias: 0 };
 
     // UI
     // Wild oben
@@ -117,6 +133,7 @@ export class BattleScene extends Phaser.Scene {
       this.autoBattle = !this.autoBattle;
     });
     this.makeButton((width / 4) * 3, height - 24, 'Fluechten', '#fcd95c', () => this.tryRun());
+    this.makeButton(width / 2, height - 56, 'Fangen (Lure)', '#ff7eb8', () => this.tryCapture());
 
     this.updateBars();
     this.statusText.setText('Wilde Pflanze erscheint!');
@@ -175,6 +192,36 @@ export class BattleScene extends Phaser.Scene {
   private shakeSprites(): void {
     this.tweens.add({ targets: this.playerSprite, x: this.playerSprite.x + 6, duration: 50, yoyo: true });
     this.tweens.add({ targets: this.wildSprite, x: this.wildSprite.x - 6, duration: 50, yoyo: true });
+  }
+
+  private tryCapture(): void {
+    if (this.over) return;
+    const wildPct = this.wild.stats.hp / this.wild.stats.maxHp;
+    if (wildPct > 0.4) {
+      this.statusText.setText('Wilde Pflanze ist zu stark zum Fangen.\nReduziere ihre HP unter 40%.');
+      sfx.bump();
+      return;
+    }
+    if (!gameStore.hasItem('basic-lure')) {
+      this.statusText.setText('Du hast keine Lockstoffe!');
+      sfx.bump();
+      return;
+    }
+    gameStore.consumeItem('basic-lure');
+    // Capture-Rate: bis 80% bei R1, niedriger bei seltenen
+    const baseRate = 0.5 * (1 - wildPct) * 1.5;
+    const success = Math.random() < baseRate;
+    if (success && this.capturedEnc) {
+      gameStore.capturePlant(this.capturedEnc.slug, this.capturedEnc.level, this.capturedEnc.atkBias, this.capturedEnc.defBias, this.capturedEnc.spdBias);
+      this.statusText.setText(`${this.wild.name} wurde gefangen!`);
+      sfx.pickup();
+      this.over = true;
+      this.time.delayedCall(1500, () => this.endBattle('Gefangen!'));
+    } else {
+      this.statusText.setText('Fang-Versuch misslungen.');
+      sfx.bump();
+      this.runOneRound();
+    }
   }
 
   private tryRun(): void {

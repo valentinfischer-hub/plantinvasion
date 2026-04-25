@@ -47,11 +47,14 @@ export function calcDamage(
   defender: BattleSide,
   rng: () => number = Math.random
 ): { dmg: number; effectiveness: number; crit: boolean } {
-  const baseDmg = (attacker.stats.atk / Math.max(1, defender.stats.def)) * BASE_ATTACK_POWER * 5;
+  const ratio = Math.log2(1 + attacker.stats.atk / Math.max(1, defender.stats.def));
+  const baseDmg = ratio * BASE_ATTACK_POWER * 4;
   const effectiveness = familyMultiplier(attacker.family, defender.family);
   const crit = rng() < attacker.stats.spd / 1000;
   const critMod = crit ? 1.5 : 1;
-  const dmg = Math.max(1, Math.floor(baseDmg * effectiveness * critMod / 10));
+  const dmgRaw = baseDmg * effectiveness * critMod;
+  const cap = Math.floor(defender.stats.maxHp * 0.5);
+  const dmg = Math.max(1, Math.min(cap, Math.floor(dmgRaw)));
   return { dmg, effectiveness, crit };
 }
 
@@ -122,4 +125,25 @@ export function effectivenessLabel(eff: number): string {
   if (eff >= 1.5) return 'Sehr effektiv!';
   if (eff <= 0.5) return 'Wenig effektiv...';
   return '';
+}
+
+
+/**
+ * Region-Tier limitiert max-Level fuer Wild-Encounter und damit Stats-Decke.
+ */
+export const REGION_TIERS: Record<string, { tier: number; maxLevel: number }> = {
+  wurzelheim: { tier: 1, maxLevel: 5 },
+  verdanto: { tier: 2, maxLevel: 10 },
+  kaktoria: { tier: 3, maxLevel: 18 },
+  frostkamm: { tier: 4, maxLevel: 28 },
+  mordwald: { tier: 5, maxLevel: 38 },
+  salzbucht: { tier: 5, maxLevel: 38 },
+  magmabluete: { tier: 6, maxLevel: 50 },
+  glaciara: { tier: 7, maxLevel: 70 },
+  edenlost: { tier: 8, maxLevel: 100 }
+};
+
+export function clampLevelToRegion(level: number, zone: string): number {
+  const cap = REGION_TIERS[zone]?.maxLevel ?? 100;
+  return Math.min(Math.max(1, level), cap);
 }

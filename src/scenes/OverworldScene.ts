@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import wurzelheim, { type MapDef } from '../data/maps/wurzelheim';
 import verdanto from '../data/maps/verdanto';
-import { WURZELHEIM_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
+import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
 import {
   TILE_SIZE,
   CAMERA_ZOOM,
@@ -23,12 +23,15 @@ const MAPS: Record<string, MapDef> = {
   verdanto
 };
 
-const ENCOUNTER_POOLS: Record<string, EncounterDef[]> = {
-  wurzelheim: WURZELHEIM_TALLGRASS,
-  verdanto: WURZELHEIM_TALLGRASS    // V0.4 noch gleich, in V0.5 eigener Pool
-};
+function getEncounterPool(zone: string, tile: number): EncounterDef[] {
+  if (zone === 'verdanto') {
+    if (tile === 13) return VERDANTO_BROMELIEN;
+    return VERDANTO_TALLGRASS;
+  }
+  return WURZELHEIM_TALLGRASS;
+}
 
-void pickEncounter; void randomLevel; void ENCOUNTER_POOLS;
+void pickEncounter; void randomLevel;
 
 // Tile-Position -> Dialog-Daten fuer Building-Tueren in V0.3
 interface BuildingDoor {
@@ -55,6 +58,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private keyE!: Phaser.Input.Keyboard.Key;
   private keySpace!: Phaser.Input.Keyboard.Key;
   private keyP!: Phaser.Input.Keyboard.Key;
+  private keyM!: Phaser.Input.Keyboard.Key;
   private debugText!: Phaser.GameObjects.Text;
   private _saveAccum?: number;
   private interactHint!: Phaser.GameObjects.Text;
@@ -103,6 +107,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.keyP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+    this.keyM = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
 
     // Debug
     this.debugText = this.add.text(8, 8, '', {
@@ -163,6 +168,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       }
     }
 
+    // Markt-Hotkey
+    if (Phaser.Input.Keyboard.JustDown(this.keyM)) {
+      gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
+      this.scene.start('MarketScene');
+      return;
+    }
     // Pokedex-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyP)) {
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
@@ -178,7 +189,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Debug
     this.debugText.setText(
-      `${this.currentZone}  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E=talk, P=pokedex, Shift=run]`
+      `${this.currentZone}  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E=talk, P=pokedex, M=markt, Shift=run]`
     );
   }
 
@@ -317,11 +328,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Hohes Gras (Tile 2) oder Bromelien (Tile 13): Encounter-Trigger
     const encounterRate = t === 13 ? 0.10 : (t === 2 ? 0.05 : 0);
     if (encounterRate > 0 && Math.random() < encounterRate) {
-      const pool = ENCOUNTER_POOLS[this.currentZone] ?? WURZELHEIM_TALLGRASS;
+      const pool = getEncounterPool(this.currentZone, t);
       console.log('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'size:', pool.length);
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       sfx.dialogOpen();
-      this.scene.start('BattleScene');
+      const poolKey = this.currentZone === 'verdanto' ? (t === 13 ? 'verdanto-bromelien' : 'verdanto-tallgrass') : 'wurzelheim-tallgrass';
+      this.scene.start('BattleScene', { poolKey });
       return;
     }
   }

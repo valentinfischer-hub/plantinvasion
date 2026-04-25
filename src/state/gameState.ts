@@ -69,7 +69,8 @@ export function newGame(): GameState {
       zone: 'wurzelheim',
       lastSceneVisited: 'OverworldScene'
     },
-    pokedex: { discovered: [], captured: [] }
+    pokedex: { discovered: [], captured: [] },
+    inventory: { 'basic-lure': 3, 'heal-tonic': 2 }
   };
   const starter = createPlantOfSpecies('sunflower', state.plants);
   if (starter) state.plants.push(starter);
@@ -172,6 +173,77 @@ class GameStore {
 
   getPokedex() {
     return this.state.pokedex ?? { discovered: [], captured: [] };
+  }
+
+  getInventory(): Record<string, number> {
+    return this.state.inventory ?? {};
+  }
+
+  hasItem(slug: string): boolean {
+    return (this.state.inventory?.[slug] ?? 0) > 0;
+  }
+
+  consumeItem(slug: string): boolean {
+    if (!this.state.inventory) return false;
+    const c = this.state.inventory[slug] ?? 0;
+    if (c <= 0) return false;
+    this.state.inventory[slug] = c - 1;
+    if (this.state.inventory[slug] <= 0) delete this.state.inventory[slug];
+    this.save();
+    return true;
+  }
+
+  addItem(slug: string, amount = 1): void {
+    if (!this.state.inventory) this.state.inventory = {};
+    this.state.inventory[slug] = (this.state.inventory[slug] ?? 0) + amount;
+    this.save();
+  }
+
+  spendCoins(n: number): boolean {
+    if (this.state.coins < n) return false;
+    this.state.coins -= n;
+    this.save();
+    return true;
+  }
+
+  addCoins(n: number): void {
+    this.state.coins += n;
+    this.save();
+  }
+
+  capturePlant(slug: string, level: number, atkBias: number, defBias: number, spdBias: number): boolean {
+    // Plant in Garden hinzufuegen
+    const slot = (() => {
+      const occupied = new Set(this.state.plants.map((p) => `${p.gridX},${p.gridY}`));
+      for (let y = 0; y < GRID_ROWS; y++) {
+        for (let x = 0; x < GRID_COLUMNS; x++) {
+          if (!occupied.has(`${x},${y}`)) return { x, y };
+        }
+      }
+      return null;
+    })();
+    if (!slot) return false;
+    const seed = Math.floor(Math.random() * 1_000_000_000);
+    const now = Date.now();
+    const newPlant: Plant = {
+      id: 'p_' + Math.random().toString(36).slice(2, 10),
+      speciesSlug: slug,
+      stats: { atk: 50 + atkBias, def: 50 + defBias, spd: 50 + spdBias },
+      geneSeed: seed,
+      isMutation: false,
+      level,
+      xp: 0,
+      totalXp: 0,
+      bornAt: now,
+      lastWateredAt: now,
+      lastTickAt: now,
+      gridX: slot.x,
+      gridY: slot.y
+    };
+    this.state.plants.push(newPlant);
+    this.captureSpecies(slug);
+    this.save();
+    return true;
   }
 
   getOverworldPos() {

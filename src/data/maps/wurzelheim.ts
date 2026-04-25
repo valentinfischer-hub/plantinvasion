@@ -161,7 +161,8 @@ const wurzelheim: MapDef = {
       dialog: [
         'Anya: Willkommen in Wurzelheim, Botanikerin.',
         'Anya: Das Tagebuch deiner Grossmutter wartet im Hauseingang.',
-        'Anya: Bring mir spaeter eine Sonnenblume, ich tausche sie gegen ein Geschenk.'
+        'Anya: Bring mir spaeter eine Sonnenblume, ich tausche sie gegen ein Geschenk.',
+        'Anya: Druecke M wenn du mit mir handeln willst.'
       ]
     },
     {
