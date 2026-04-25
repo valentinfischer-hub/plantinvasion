@@ -33,6 +33,9 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     console.log('[BootScene] create called, switching to OverworldScene');
+    // Explicit stop+start, weil bei Phaser 3.90 scene.start aus create der Boot-Scene
+    // den Switch nicht zuverlaessig durchsetzt. Tool-Learning siehe brain/tech/tool_learnings.md
     this.scene.start('OverworldScene');
+    this.scene.stop('BootScene');
   }
 }

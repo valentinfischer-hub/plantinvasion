@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { BootScene } from './scenes/BootScene';
 import { OverworldScene } from './scenes/OverworldScene';
 import { GreenhouseScene } from './scenes/GreenhouseScene';
 
@@ -14,7 +13,7 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  scene: [BootScene, OverworldScene, GreenhouseScene]
+  scene: [OverworldScene, GreenhouseScene]
 };
 
 const game = new Phaser.Game(config);
