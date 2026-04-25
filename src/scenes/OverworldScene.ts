@@ -18,6 +18,7 @@ import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
 import { QUESTS, type QuestDef } from '../data/quests';
 import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
+import { TutorialOverlay } from '../ui/TutorialOverlay';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14]);
@@ -85,6 +86,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private interactHint!: Phaser.GameObjects.Text;
   private touch!: TouchKeysHandle;
   private prevTouchE = false;
+  private tutorial!: TutorialOverlay;
 
   constructor() {
     super('OverworldScene');
@@ -148,6 +150,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.touch = buildTouchControls(this);
     this.player.touch = this.touch;
 
+    // Tutorial-Overlay
+    this.tutorial = new TutorialOverlay(this);
+
     // Audio-Context wird erst nach erstem User-Input freigeschaltet (Browser-Policy).
     // Wir attachen daher die BGM-Start an den ersten Pointer- oder Key-Event.
     const startAudio = () => {
@@ -189,6 +194,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Update Interact-Hint
     this.updateInteractHint();
 
+    // Tutorial Auto-Advance
+    this.tutorial.checkAdvance({ tileX: this.player.tileX, tileY: this.player.tileY, facing: this.player.facing, isMoving: this.player.isMoving });
+
     // Periodische Position-Speicherung (alle ~2s wenn nicht moving)
     if (!this.player.isMoving) {
       this._saveAccum = (this._saveAccum ?? 0) + delta;
@@ -200,18 +208,21 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Quest-Log-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyQ)) {
+      this.tutorial?.markInteract('quest');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       this.scene.start('QuestLogScene');
       return;
     }
     // Markt-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyM)) {
+      this.tutorial?.markInteract('market');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       this.scene.start('MarketScene');
       return;
     }
     // Pokedex-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyP)) {
+      this.tutorial?.markInteract('pokedex');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       this.scene.start('PokedexScene');
       return;
@@ -258,6 +269,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // NPC?
     const npc = this.npcs.find((n) => n.data.tileX === front.tileX && n.data.tileY === front.tileY);
     if (npc) {
+      this.tutorial?.markInteract('npc');
       const lines = [...npc.data.dialog];
       // Quest-Logic: Suche Quest fuer diesen NPC
       const quest = QUESTS.find((qq) => qq.giverId === npc.data.id);

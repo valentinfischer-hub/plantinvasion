@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { loadGame, resetGame } from '../state/storage';
+import { loadGame } from '../state/storage';
+import { gameStore } from '../state/gameState';
 import { startAmbientBGM, sfx } from '../audio/sfxGenerator';
 
 /**
@@ -47,10 +48,8 @@ export class MenuScene extends Phaser.Scene {
       by += 60;
     }
     const _newGameBtn = this.makeButton(cx, by, save ? 'Neues Spiel' : 'Spiel starten', '#fcd95c', () => {
-      if (save) {
-        // Confirm (simpler: just do it, V0.3 add confirm-dialog)
-        resetGame();
-      }
+      // Reset gameStore-State direkt damit Tutorial sofort frisch startet
+      gameStore.resetToNewGame();
       sfx.dialogAdvance();
       startAmbientBGM();
       this.scene.start('OverworldScene');

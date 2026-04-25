@@ -18,6 +18,11 @@ export type InventoryState = Record<string, number>;
 
 export type QuestState = Record<string, 'pending' | 'active' | 'completed'>;
 
+export interface TutorialState {
+  step: number;       // 0=welcome, 1=move, 2=talk, 3=garden, 4=market, 5=done
+  done: boolean;
+}
+
 export interface GameState {
   version: number;
   playerId: string;
@@ -29,10 +34,11 @@ export interface GameState {
   pokedex?: PokedexState;          // V3
   inventory?: InventoryState;       // V4
   quests?: QuestState;               // V5
+  tutorial?: TutorialState;          // V6
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';   // Bewusst v1 als Datei-Name beibehalten, internal version-Field steuert
-export const SAVE_SCHEMA_VERSION = 6;          // V6 = Growth-System V0.2
+export const SAVE_SCHEMA_VERSION = 6;          // V6 = Growth-System V0.2 + Tutorial-State
 
 const DEFAULT_OVERWORLD: OverworldState = {
   tileX: 14,
@@ -81,7 +87,8 @@ function migrate(parsed: any): GameState | null {
     if (Array.isArray(parsed.plants)) {
       parsed.plants = parsed.plants.map(ensurePlantGrowthFields);
     }
-    console.log('[storage] migrated save v5 -> v6 (growth-system V0.2)');
+    parsed.tutorial = parsed.tutorial ?? { step: 5, done: true };  // bestehende Saves: Tutorial done
+    console.log('[storage] migrated save v5 -> v6 (growth-system V0.2 + tutorial)');
   }
   if (parsed.version === 4) {
     parsed.version = 5;
@@ -100,6 +107,7 @@ function migrate(parsed: any): GameState | null {
     if (Array.isArray(parsed.plants)) {
       parsed.plants = parsed.plants.map(ensurePlantGrowthFields);
     }
+    if (!parsed.tutorial) parsed.tutorial = { step: 5, done: true };
     // Backwards-compat: alte GreenhouseScene-Strings zu GardenScene migrieren
     if (parsed.overworld && (parsed.overworld as any).lastSceneVisited === 'GreenhouseScene') {
       (parsed.overworld as any).lastSceneVisited = 'GardenScene';
@@ -155,6 +163,7 @@ export function saveGame(state: GameState): void {
     if (!state.pokedex) state.pokedex = { discovered: [], captured: [] };
     if (!state.inventory) state.inventory = { 'basic-lure': 3, 'heal-tonic': 2 };
     if (!state.quests) state.quests = {};
+    if (!state.tutorial) state.tutorial = { step: 0, done: false };
     state.version = SAVE_SCHEMA_VERSION;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {

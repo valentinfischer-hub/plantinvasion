@@ -72,7 +72,8 @@ export function newGame(): GameState {
     },
     pokedex: { discovered: [], captured: [] },
     inventory: { 'basic-lure': 3, 'heal-tonic': 2 },
-    quests: {}
+    quests: {},
+    tutorial: { step: 0, done: false }
   };
   const starter = createPlantOfSpecies('sunflower', state.plants);
   if (starter) state.plants.push(starter);
@@ -176,6 +177,17 @@ class GameStore {
     saveGame(this.state);
   }
 
+  resetToNewGame(): void {
+    // resetGame() loescht Storage, dann newGame() erzeugt frischen State
+    this.state = newGame();
+    if (this.state.plants.length === 0) {
+      const starter = createPlantOfSpecies('sunflower', this.state.plants);
+      if (starter) this.state.plants.push(starter);
+    }
+    this.save();
+    this.notify();
+  }
+
   setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GardenScene' = 'OverworldScene', zone?: string): void {
     const currentZone = zone ?? this.state.overworld?.zone ?? 'wurzelheim';
     this.state.overworld = {
@@ -235,6 +247,25 @@ class GameStore {
   getActiveQuests(): string[] {
     if (!this.state.quests) return [];
     return Object.entries(this.state.quests).filter(([, s]) => s === 'active').map(([id]) => id);
+  }
+
+  getTutorial(): { step: number; done: boolean } {
+    return this.state.tutorial ?? { step: 5, done: true };
+  }
+
+  advanceTutorial(toStep: number): void {
+    if (!this.state.tutorial) this.state.tutorial = { step: 0, done: false };
+    if (this.state.tutorial.done) return;
+    this.state.tutorial.step = Math.max(this.state.tutorial.step, toStep);
+    if (this.state.tutorial.step >= 5) {
+      this.state.tutorial.done = true;
+    }
+    this.save();
+  }
+
+  skipTutorial(): void {
+    this.state.tutorial = { step: 5, done: true };
+    this.save();
   }
 
   getInventory(): Record<string, number> {
@@ -371,7 +402,7 @@ class GameStore {
     return () => this.listeners.delete(fn);
   }
 
-  private notify(): void {
+  public notify(): void {
     this.listeners.forEach((l) => l(this.state));
     this.save();
   }
