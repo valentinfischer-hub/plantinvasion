@@ -16,4 +16,5 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, GreenhouseScene]
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+(window as any).__game = game;

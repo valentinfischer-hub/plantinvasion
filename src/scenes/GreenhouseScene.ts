@@ -54,6 +54,7 @@ export class GreenhouseScene extends Phaser.Scene {
   }
 
   create(): void {
+    console.log('[GreenhouseScene] create called');
     const { width } = this.scale;
 
     // Hintergrund: Greenhouse-Look
@@ -191,7 +192,7 @@ export class GreenhouseScene extends Phaser.Scene {
     container.add(thirstIcon);
 
     container.setSize(TILE, TILE);
-    container.setInteractive({ draggable: true, useHandCursor: true });
+    container.setInteractive({ useHandCursor: true });
 
     container.on('pointerdown', () => {
       this.dragSource = { plantId: plant.id, startX: container.x, startY: container.y };
