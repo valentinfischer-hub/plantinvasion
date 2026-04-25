@@ -21,6 +21,7 @@ export class BootScene extends Phaser.Scene {
       status.setText(`loading ${Math.round(v * 100)}%`);
     });
 
+    // Plant-Sprites fuer GreenhouseScene
     const species = ['sunflower', 'spike-cactus', 'venus-flytrap', 'lavender', 'tomato-plant'];
     const stageFiles = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
     species.forEach((slug) => {
@@ -31,7 +32,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    console.log('[BootScene] create called, switching to GreenhouseScene');
-    this.scene.start('GreenhouseScene');
+    console.log('[BootScene] create called, switching to OverworldScene');
+    this.scene.start('OverworldScene');
   }
 }
