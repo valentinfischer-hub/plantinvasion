@@ -251,11 +251,22 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private tryClaimDailyLogin(): void {
     const r = gameStore.claimDailyLogin();
     if (!r.ok || !r.reward) return;
-    const { width, height } = this.scale;
-    const toast = this.add.text(width / 2, height - 60, `Tagesbelohnung: ${r.reward.label}`, {
-      fontFamily: 'monospace', fontSize: '12px', color: '#ffd166',
-      backgroundColor: '#1a1f1a', padding: { x: 12, y: 8 }
-    }).setOrigin(0.5).setDepth(2000).setScrollFactor(0);
+    const cam = this.cameras.main;
+    const z = cam.zoom || 1;
+    // Position durch zoom teilen, weil scrollFactor 0 nicht vom Camera-Zoom befreit.
+    // Scale 1/z gleicht Pixel-Skalierung der Schrift aus.
+    const toast = this.add
+      .text(cam.width / 2 / z, (cam.height - 60) / z, `Tagesbelohnung: ${r.reward.label}`, {
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        color: '#ffd166',
+        backgroundColor: '#1a1f1a',
+        padding: { x: 12, y: 8 }
+      })
+      .setOrigin(0.5)
+      .setDepth(2000)
+      .setScrollFactor(0)
+      .setScale(1 / z);
     this.tweens.add({
       targets: toast,
       alpha: 0,

@@ -56,7 +56,7 @@ export class MenuScene extends Phaser.Scene {
     });
     by += 60;
 
-    const _hint = this.add.text(cx, height - 24, 'v0.2 - Brave Browser empfohlen', {
+    const _hint = this.add.text(cx, height - 24, 'v0.7 - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
     void _hint; void _title; void _subtitle; void _newGameBtn;
