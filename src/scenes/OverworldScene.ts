@@ -8,24 +8,7 @@ import {
 import { PlayerController, type CollisionChecker } from '../entities/PlayerController';
 import { NPC } from '../entities/NPC';
 import { DialogBox } from '../ui/DialogBox';
-
-// Tile-Color-Map fuer Placeholder-Rendering bevor echtes Tileset existiert.
-// Index entspricht den Tile-Indices in wurzelheim.ts.
-const TILE_COLORS: Record<number, number> = {
-  0: 0x6abf3a,    // Gras
-  1: 0xb8945c,    // Weg
-  2: 0x4a8228,    // Hohes Gras
-  3: 0x4a78c8,    // Wasser
-  4: 0x2d5a1f,    // Baum
-  5: 0x8a6e4a,    // Building-Wand
-  6: 0x553e2d,    // Building-Dach
-  7: 0xd6a45c,    // Tuer-Garten
-  8: 0x4a3522,    // Tuer-Building (begehbar, triggert "kommt in V0.3"-Dialog)
-  9: 0xc94a4a,    // Marktstand
-  10: 0xe3c44a,   // Schild
-  11: 0x9be36e,   // Map-Edge Verdanto
-  12: 0xff7eb8    // Blumenbeet
-};
+import { generateTilesetTextures, getTileTextureKey } from '../assets/proceduralTileset';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10]);
@@ -157,19 +140,18 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private renderTiles(): void {
+    // Tileset-Texturen einmal generieren bevor Tiles erstellt werden
+    generateTilesetTextures(this, 'tile');
     const layer = this.add.container(0, 0);
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
         const t = this.map.tiles[y][x];
-        const color = TILE_COLORS[t] ?? 0xff00ff;
-        const rect = this.add.rectangle(
+        const sprite = this.add.image(
           x * TILE_SIZE + TILE_SIZE / 2,
           y * TILE_SIZE + TILE_SIZE / 2,
-          TILE_SIZE,
-          TILE_SIZE,
-          color
+          getTileTextureKey(t, 'tile')
         );
-        layer.add(rect);
+        layer.add(sprite);
       }
     }
     layer.setDepth(0);
