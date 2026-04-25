@@ -232,8 +232,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private showAchievementToast(slug: string): void {
     const def = getAchievement(slug);
     if (!def) return;
-    const { width } = this.scale;
-    const container = this.add.container(width / 2, 80).setScrollFactor(0).setDepth(2100);
+    const cam = this.cameras.main;
+    const z = cam.zoom || 1;
+    // Camera-Zoom-aware Position (siehe DialogBox.ts)
+    const container = this.add
+      .container(cam.width / 2 / z, 80 / z)
+      .setScrollFactor(0)
+      .setDepth(2100)
+      .setScale(1 / z);
     const bg = this.add.graphics();
     bg.fillStyle(0xffd166, 0.95);
     bg.fillRoundedRect(-160, -28, 320, 56, 8);
@@ -241,12 +247,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     bg.strokeRoundedRect(-160, -28, 320, 56, 8);
     container.add(bg);
     const title = this.add.text(0, -16, 'Achievement!', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#1a1f1a'
+      fontFamily: 'monospace', fontSize: '12px', color: '#1a1f1a'
     }).setOrigin(0.5, 0);
     const name = this.add.text(0, 4, def.name, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#1a1f1a'
+      fontFamily: 'monospace', fontSize: '14px', color: '#1a1f1a'
     }).setOrigin(0.5, 0);
     container.add([title, name]);
+    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(container);
     sfx.dialogOpen();
     this.tweens.add({
       targets: container,
@@ -276,6 +283,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       .setDepth(2000)
       .setScrollFactor(0)
       .setScale(1 / z);
+    // Verhindere Doppel-Rendering durch UI-Cam des Tutorial-Overlays
+    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(toast);
     this.tweens.add({
       targets: toast,
       alpha: 0,

@@ -174,6 +174,15 @@ export class TutorialOverlay {
     }
   }
 
+  /**
+   * Sorgt dafuer dass spaeter erstellte UI-Objekte (Toasts etc.) nicht
+   * doppelt von der UI-Cam gerendert werden. Nur Tutorial-Container soll
+   * die UI-Cam sehen.
+   */
+  public ignoreInUICam(obj: Phaser.GameObjects.GameObject): void {
+    if (this.uiCam) this.uiCam.ignore(obj);
+  }
+
   public destroy(): void {
     this.container.destroy();
     if (this.uiCam) {

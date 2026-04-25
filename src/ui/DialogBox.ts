@@ -4,11 +4,11 @@ import { sfx } from '../audio/sfxGenerator';
 /**
  * DialogBox - Camera-Zoom aware UI overlay.
  *
- * Bug-Fix 2026-04-25: Vorher wurde die Dialog-Box in OverworldScene
- * (cam.zoom = 2) ausserhalb des Sichtbereichs gerendert, weil
- * scrollFactor 0 nicht von der Camera-Zoom-Skalierung befreit.
- * Loesung: Container-Scale auf 1/zoom setzen, Position in
- * Camera-Pixel-Koordinaten umrechnen.
+ * 2026-04-25 Bug-Fix B-001/B-005: Vorher wurde die Dialog-Box in OverworldScene
+ * (cam.zoom = 2) ausserhalb des Sichtbereichs gerendert, weil scrollFactor 0
+ * nicht von der Camera-Zoom-Skalierung befreit. Loesung: Container-Scale auf
+ * 1/zoom setzen und Position in Camera-Pixel-Koordinaten umrechnen. WordWrap
+ * jetzt zoom-aware so dass Text im verkleinerten Container passt.
  */
 export class DialogBox {
   private container: Phaser.GameObjects.Container;
@@ -23,10 +23,10 @@ export class DialogBox {
   constructor(scene: Phaser.Scene) {
     const cam = scene.cameras.main;
     const z = cam.zoom || 1;
-    // Box in echten Canvas-Pixeln (Camera-Pixel-Koord) bemessen
+    // Box-Pixel-Dimensionen passend fuer das tatsaechlich gerenderte Bild
+    // (boxW * scale-1/z = (cam.width-40)/z echte Canvas-Pixel breit)
     const boxW = cam.width - 40;
     const boxH = 120;
-    // Position in Welt-Koord so umrechnen, dass nach zoom * (x,y) die Pixel passen
     const boxX = (cam.width / 2) / z;
     const boxY = (cam.height - boxH / 2 - 20) / z;
 
@@ -42,11 +42,12 @@ export class DialogBox {
       fontFamily: 'monospace',
       fontSize: '14px',
       color: '#ffffff',
+      // wordWrap-Width muss auf interne Box-Breite (NICHT Canvas-Pixel) zeigen
       wordWrap: { width: boxW - 24 }
     });
-    this.hint = scene.add.text(boxW / 2 - 90, boxH / 2 - 18, '[E] weiter', {
+    this.hint = scene.add.text(boxW / 2 - 90, boxH / 2 - 20, '[E] weiter', {
       fontFamily: 'monospace',
-      fontSize: '11px',
+      fontSize: '12px',
       color: '#9be36e'
     });
 
