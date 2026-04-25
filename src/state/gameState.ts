@@ -530,6 +530,54 @@ class GameStore {
     this.save();
   }
 
+
+  // === STORY-STATE ===
+  getStoryFlag(flag: string): boolean {
+    return !!(this.state as any).story?.flags?.[flag];
+  }
+
+  setStoryFlag(flag: string, value: boolean = true): void {
+    if (!(this.state as any).story) (this.state as any).story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    (this.state as any).story.flags[flag] = value;
+    this.save();
+  }
+
+  getCurrentAct(): number {
+    return (this.state as any).story?.currentAct ?? 0;
+  }
+
+  advanceAct(toAct: number): void {
+    if (!(this.state as any).story) (this.state as any).story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if (toAct > (this.state as any).story.currentAct) {
+      (this.state as any).story.currentAct = toAct;
+      this.save();
+    }
+  }
+
+  meetNpc(npcId: string): boolean {
+    if (!(this.state as any).story) (this.state as any).story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if ((this.state as any).story.metNpcs.includes(npcId)) return false;
+    (this.state as any).story.metNpcs.push(npcId);
+    this.save();
+    return true;
+  }
+
+  hasMetNpc(npcId: string): boolean {
+    return (this.state as any).story?.metNpcs?.includes(npcId) ?? false;
+  }
+
+  collectDiaryEntry(entryId: number): boolean {
+    if (!(this.state as any).story) (this.state as any).story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if ((this.state as any).story.diaryEntries.includes(entryId)) return false;
+    (this.state as any).story.diaryEntries.push(entryId);
+    this.save();
+    return true;
+  }
+
+  getDiaryEntries(): number[] {
+    return (this.state as any).story?.diaryEntries ?? [];
+  }
+
   setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GardenScene' = 'OverworldScene', zone?: string): void {
     const currentZone = zone ?? this.state.overworld?.zone ?? 'wurzelheim';
     this.state.overworld = {
