@@ -51,6 +51,14 @@ export class BattleScene extends Phaser.Scene {
     super('BattleScene');
   }
 
+  preload(): void {
+    if (!this.textures.exists('tile_tropical')) this.load.image('tile_tropical', 'assets/generated/tile_tropical.png');
+    if (!this.textures.exists('tile_flowerbed')) this.load.image('tile_flowerbed', 'assets/generated/tile_flowerbed.png');
+    if (!this.textures.exists('tile_grass')) this.load.image('tile_grass', 'assets/generated/tile_grass.png');
+    if (!this.textures.exists('tile_bromeliad')) this.load.image('tile_bromeliad', 'assets/generated/tile_bromeliad.png');
+    if (!this.textures.exists('tile_cactus')) this.load.image('tile_cactus', 'assets/generated/tile_cactus.png');
+  }
+
   init(data: BattleSceneInitData = {}) {
     this.over = false;
     this.poolKey = data.poolKey ?? 'wurzelheim-tallgrass';
@@ -110,7 +118,8 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(width / 2, 42, this.wild.family, {
       fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
     }).setOrigin(0.5);
-    this.wildSprite = this.add.sprite(width / 2, 110, 'tile_tropical');
+    const wildSpriteKey = this.pickWildSpriteKey(enc.slug);
+    this.wildSprite = this.add.sprite(width / 2, 110, wildSpriteKey);
     this.wildSprite.setDisplaySize(72, 72);
     this.wildHpBar = this.add.rectangle(width / 2, 162, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
@@ -159,6 +168,22 @@ export class BattleScene extends Phaser.Scene {
     void this.uiCam;
 
     (window as any).__battle = this;
+  }
+
+  private pickWildSpriteKey(slug: string): string {
+    const map: Record<string, string> = {
+      'bromeliad': 'tile_bromeliad',
+      'air-plant': 'tile_bromeliad',
+      'tropical-pitcher': 'tile_tropical',
+      'heliconia': 'tile_tropical',
+      'saguaro': 'tile_cactus',
+      'barrel-cactus': 'tile_cactus',
+      'common-daisy': 'tile_flowerbed',
+      'dandelion': 'tile_flowerbed',
+      'desert-rose': 'tile_desertflower'
+    };
+    const k = map[slug];
+    return k && this.textures.exists(k) ? k : 'tile_flowerbed';
   }
 
   private buildMoveButtons(): void {
