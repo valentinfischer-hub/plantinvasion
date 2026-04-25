@@ -4,12 +4,24 @@ import {
   stageOf,
   canBeWatered,
   waterCooldownRemaining,
-  isNeglected,
+  hydrationStatus,
+  hydrationMultiplier,
+  biomeMatchMultiplier,
+  hybridVigorMultiplier,
+  timeOfDayMultiplier,
+  stageMultiplier,
+  BASE_XP_PER_SEC,
   xpToNextLevel,
   isCrossable,
-  waterPlant
+  waterPlant,
+  isHarvestReady,
+  bloomProgress,
+  isBlooming,
+  TIER_COLORS,
+  TIER_THRESHOLDS,
+  tierForCareScore
 } from '../data/leveling';
-import { GROWTH_STAGE_NAMES, type Plant } from '../types/plant';
+import { GROWTH_STAGE_NAMES, QUALITY_TIERS, type Plant, type QualityTier } from '../types/plant';
 import { getSpecies } from '../data/species';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
@@ -22,8 +34,11 @@ interface PlantCard {
   sprite: Phaser.GameObjects.Image;
   levelText: Phaser.GameObjects.Text;
   xpBar: Phaser.GameObjects.Graphics;
+  hydrationBar: Phaser.GameObjects.Graphics;
   thirstIcon: Phaser.GameObjects.Text;
   bg: Phaser.GameObjects.Graphics;
+  harvestPulse?: Phaser.Tweens.Tween;
+  lastSeenStage: number;
 }
 
 export class GardenScene extends Phaser.Scene {
@@ -39,9 +54,7 @@ export class GardenScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // Sprites werden bereits in BootScene-Preload geladen (oder hier erneut)
-    Object.values(getSpecies('sunflower') ? {} : {}); // ensure import
-    // Fallback: lade alle 25 Sprites
+    Object.values(getSpecies('sunflower') ? {} : {});
     const species = ['sunflower', 'spike-cactus', 'venus-flytrap', 'lavender', 'tomato-plant'];
     species.forEach((slug) => {
       STAGE_FILES.forEach((stageFile, idx) => {
@@ -57,23 +70,19 @@ export class GardenScene extends Phaser.Scene {
     console.log('[GardenScene] create called');
     const { width } = this.scale;
 
-    // Hintergrund: Greenhouse-Look
     this.cameras.main.setBackgroundColor('#2d3a2a');
 
-    // Header
     this.headerText = this.add.text(width / 2, 16, '', {
       fontFamily: 'monospace',
       fontSize: '14px',
       color: '#9be36e'
     }).setOrigin(0.5, 0);
 
-    // Grid-Position berechnen
     const gridWidth = GRID_COLUMNS * (TILE + TILE_PAD) - TILE_PAD;
     const gridHeight = GRID_ROWS * (TILE + TILE_PAD) - TILE_PAD;
     this.gridOriginX = (width - gridWidth) / 2;
     this.gridOriginY = 60;
 
-    // Grid-Hintergrund
     const gridBg = this.add.graphics();
     gridBg.fillStyle(0x1a2418, 0.6);
     gridBg.fillRoundedRect(
@@ -95,7 +104,6 @@ export class GardenScene extends Phaser.Scene {
       }
     }
 
-    // Initial-Render
     this.renderPlants();
 
     // Tick-Loop: alle 1s
@@ -108,13 +116,10 @@ export class GardenScene extends Phaser.Scene {
       }
     });
 
-    // State-Subscription
     gameStore.subscribe(() => this.renderPlants());
 
-    // Initial Header
     this.refreshHeader();
 
-    // Cross-Hotkey: X kreuzt die ersten 2 Plants im State
     if (this.input.keyboard) {
       const crossKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
       crossKey.on('down', () => {
@@ -130,7 +135,6 @@ export class GardenScene extends Phaser.Scene {
           this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
         }
       });
-      // O fuer Overworld zurueck
       const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
       owKey.on('down', () => this.scene.start('OverworldScene'));
     }
@@ -150,6 +154,25 @@ export class GardenScene extends Phaser.Scene {
       duration: 1800,
       onComplete: () => { this.flashText?.destroy(); this.flashText = undefined; }
     });
+  }
+
+  private spawnStageUpBurst(x: number, y: number): void {
+    // Kleine Konfetti-Explosion mit Particles oder einfach mit kurzen Tween-Kreisen
+    for (let i = 0; i < 8; i++) {
+      const dot = this.add.circle(x, y, 3, 0xffd166, 1).setDepth(1500);
+      const angle = (i / 8) * Math.PI * 2;
+      const dist = 30 + Math.random() * 20;
+      this.tweens.add({
+        targets: dot,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist,
+        alpha: 0,
+        scale: 0.2,
+        duration: 700,
+        ease: 'Quad.easeOut',
+        onComplete: () => dot.destroy()
+      });
+    }
   }
 
   private refreshHeader(): void {
@@ -174,7 +197,6 @@ export class GardenScene extends Phaser.Scene {
       }
     });
 
-    // Entferne verschwundene Karten
     this.cards.forEach((card, id) => {
       if (!seenIds.has(id)) {
         card.container.destroy();
@@ -221,6 +243,9 @@ export class GardenScene extends Phaser.Scene {
     const xpBar = this.add.graphics();
     container.add(xpBar);
 
+    const hydrationBar = this.add.graphics();
+    container.add(hydrationBar);
+
     const thirstIcon = this.add.text(TILE / 2 - 10, -TILE / 2 + 4, '', {
       fontFamily: 'monospace',
       fontSize: '10px',
@@ -251,7 +276,6 @@ export class GardenScene extends Phaser.Scene {
     });
 
     container.on('pointerup', (p: Phaser.Input.Pointer) => {
-      // Klick (kein Drag): Detail oeffnen
       const dx = p.x - (this.dragSource?.startX ?? 0);
       const dy = p.y - (this.dragSource?.startY ?? 0);
       if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
@@ -259,7 +283,17 @@ export class GardenScene extends Phaser.Scene {
       }
     });
 
-    const card: PlantCard = { plant, container, sprite, levelText, xpBar, thirstIcon, bg };
+    const card: PlantCard = {
+      plant,
+      container,
+      sprite,
+      levelText,
+      xpBar,
+      hydrationBar,
+      thirstIcon,
+      bg,
+      lastSeenStage: stage
+    };
     this.updateCard(card, plant);
     return card;
   }
@@ -270,6 +304,12 @@ export class GardenScene extends Phaser.Scene {
     const key = `${plant.speciesSlug}-${stage}`;
     if (card.sprite.texture.key !== key && this.textures.exists(key)) {
       card.sprite.setTexture(key);
+    }
+
+    // Stage-Up-Burst
+    if (stage > card.lastSeenStage) {
+      this.spawnStageUpBurst(card.container.x, card.container.y);
+      card.lastSeenStage = stage;
     }
 
     const stageName = GROWTH_STAGE_NAMES[stage];
@@ -286,23 +326,65 @@ export class GardenScene extends Phaser.Scene {
     card.xpBar.fillStyle(plant.level >= 100 ? 0xffd166 : 0x9be36e, 1);
     card.xpBar.fillRoundedRect(barX, barY, Math.max(0, Math.min(1, ratio)) * barW, 4, 2);
 
-    // Thirst-Indicator
-    const cooldownLeft = waterCooldownRemaining(plant);
+    // Hydration-Bar (unter XP-Bar)
+    const hRatio = plant.hydration / 100;
+    const hBarY = TILE / 2 - 4;
+    card.hydrationBar.clear();
+    card.hydrationBar.fillStyle(0x182018, 1);
+    card.hydrationBar.fillRoundedRect(barX, hBarY, barW, 3, 1.5);
+    // Farbe je nach Status
+    const hStatus = hydrationStatus(plant);
+    const hColor =
+      hStatus === 'saftig' ? 0x4dafff :
+      hStatus === 'gut' ? 0x68b6e8 :
+      hStatus === 'durstig' ? 0xffd166 :
+      hStatus === 'trocken' ? 0xff8c42 : 0xff5555;
+    card.hydrationBar.fillStyle(hColor, 1);
+    card.hydrationBar.fillRoundedRect(barX, hBarY, Math.max(0, Math.min(1, hRatio)) * barW, 3, 1.5);
+
+    // Thirst-Indicator-Text
     const ready = canBeWatered(plant);
-    if (isNeglected(plant)) {
-      card.thirstIcon.setText('!').setColor('#ff5555');
+    if (hStatus === 'vertrocknet') {
+      card.thirstIcon.setText('!!').setColor('#ff5555');
+    } else if (hStatus === 'trocken') {
+      card.thirstIcon.setText('!').setColor('#ff8c42');
+    } else if (hStatus === 'durstig') {
+      card.thirstIcon.setText('~').setColor('#ffd166');
     } else if (ready) {
-      card.thirstIcon.setText('*').setColor('#5b8de8');
+      card.thirstIcon.setText('*').setColor('#4dafff');
     } else {
-      const min = Math.ceil(cooldownLeft / 60000);
-      card.thirstIcon.setText(`${min}m`).setColor('#999999');
+      card.thirstIcon.setText('').setColor('#999999');
     }
 
-    // Hintergrund-Glow je nach Stufe / kreuzungsreif
+    // Hintergrund-Glow je nach Quality-Tier oder kreuzungsreif oder Harvest-Ready
     card.bg.clear();
-    if (isCrossable(plant)) {
-      card.bg.lineStyle(2, 0xffd166, 0.7);
+    const qualityColor = plant.qualityTier ? TIER_COLORS[plant.qualityTier] : null;
+    if (isHarvestReady(plant)) {
+      // Pulsierender Gold-Rand wenn Ernte bereit
+      card.bg.lineStyle(3, 0xffd166, 0.95);
       card.bg.strokeRoundedRect(-TILE / 2 + 2, -TILE / 2 + 2, TILE - 4, TILE - 4, 6);
+      if (!card.harvestPulse) {
+        card.harvestPulse = this.tweens.add({
+          targets: card.bg,
+          alpha: { from: 0.5, to: 1.0 },
+          duration: 700,
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    } else {
+      if (card.harvestPulse) {
+        card.harvestPulse.stop();
+        card.harvestPulse = undefined;
+        card.bg.alpha = 1;
+      }
+      if (qualityColor && stage >= 3) {
+        card.bg.lineStyle(2, qualityColor, 0.7);
+        card.bg.strokeRoundedRect(-TILE / 2 + 2, -TILE / 2 + 2, TILE - 4, TILE - 4, 6);
+      } else if (isCrossable(plant)) {
+        card.bg.lineStyle(2, 0xffd166, 0.5);
+        card.bg.strokeRoundedRect(-TILE / 2 + 2, -TILE / 2 + 2, TILE - 4, TILE - 4, 6);
+      }
     }
   }
 
@@ -315,6 +397,19 @@ export class GardenScene extends Phaser.Scene {
     this.refreshHeader();
   }
 
+  private tierLabel(tier: QualityTier): string {
+    return tier.charAt(0).toUpperCase() + tier.slice(1);
+  }
+
+  private nextTierProgress(careScore: number): { next?: QualityTier; remaining: number } {
+    const order: QualityTier[] = ['common', 'fine', 'quality', 'premium', 'pristine'];
+    const current = tierForCareScore(careScore);
+    const idx = order.indexOf(current);
+    if (idx >= order.length - 1) return { remaining: 0 };
+    const next = order[idx + 1];
+    return { next, remaining: Math.max(0, TIER_THRESHOLDS[next] - careScore) };
+  }
+
   private openDetailPanel(plantId: string): void {
     if (this.detailPanel) {
       this.detailPanel.destroy();
@@ -325,8 +420,8 @@ export class GardenScene extends Phaser.Scene {
 
     const species = getSpecies(plant.speciesSlug);
     const { width, height } = this.scale;
-    const panelW = 300;
-    const panelH = 220;
+    const panelW = 320;
+    const panelH = 320;
 
     const container = this.add.container(width / 2, height / 2);
     const bg = this.add.graphics();
@@ -347,40 +442,135 @@ export class GardenScene extends Phaser.Scene {
     container.add(sci);
 
     const stage = stageOf(plant);
+    const hStatus = hydrationStatus(plant);
+    const zone = 'wurzelheim';
+    const xpPerSec =
+      BASE_XP_PER_SEC *
+      stageMultiplier(stage) *
+      Math.max(0, hydrationMultiplier(plant)) *
+      biomeMatchMultiplier(plant.speciesSlug, zone) *
+      hybridVigorMultiplier(plant) *
+      timeOfDayMultiplier();
     const lines = [
       `Stage: ${GROWTH_STAGE_NAMES[stage]}`,
       `Level: ${plant.level} / 100`,
       `XP: ${Math.floor(plant.xp)} / ${xpToNextLevel(plant.level)}`,
-      `Total XP: ${Math.floor(plant.totalXp)}`,
+      `Hydration: ${Math.floor(plant.hydration)}% (${hStatus})`,
+      `Wachstum: ${xpPerSec.toFixed(2)} XP/s`,
       ``,
       `ATK ${plant.stats.atk}  DEF ${plant.stats.def}  SPD ${plant.stats.spd}`,
+      `Generation: F${plant.generation}${plant.isMutation ? ' (Mutation)' : ''}`
     ];
     const stats = this.add.text(-panelW / 2 + 14, -panelH / 2 + 50, lines.join('\n'), {
       fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc'
     });
     container.add(stats);
 
+    // Quality-Tier-Anzeige
+    const tierY = -panelH / 2 + 188;
+    if (plant.qualityTier) {
+      const color = `#${TIER_COLORS[plant.qualityTier].toString(16).padStart(6, '0')}`;
+      const tierText = this.add.text(-panelW / 2 + 14, tierY, `Tier: ${this.tierLabel(plant.qualityTier)}`, {
+        fontFamily: 'monospace', fontSize: '11px', color
+      });
+      container.add(tierText);
+    } else {
+      const np = this.nextTierProgress(plant.careScore);
+      const careText = this.add.text(-panelW / 2 + 14, tierY,
+        np.next
+          ? `Care: ${Math.floor(plant.careScore)} (${np.remaining.toFixed(0)} bis ${this.tierLabel(np.next)})`
+          : `Care: ${Math.floor(plant.careScore)}`,
+        { fontFamily: 'monospace', fontSize: '11px', color: '#bbbbbb' }
+      );
+      container.add(careText);
+      const hint = this.add.text(-panelW / 2 + 14, tierY + 14,
+        'Tier wird bei Adult fixiert', { fontFamily: 'monospace', fontSize: '8px', color: '#666666' });
+      container.add(hint);
+    }
+
+    // Quality-Stars
+    const starsY = tierY + 32;
+    const tierIdx = plant.qualityTier
+      ? QUALITY_TIERS.indexOf(plant.qualityTier) + 1
+      : 0;
+    for (let i = 0; i < 5; i++) {
+      const filled = i < tierIdx;
+      const star = this.add.text(-panelW / 2 + 14 + i * 14, starsY, filled ? '*' : '.', {
+        fontFamily: 'monospace', fontSize: '14px',
+        color: filled
+          ? (plant.qualityTier ? `#${TIER_COLORS[plant.qualityTier].toString(16).padStart(6, '0')}` : '#dcdcdc')
+          : '#444444'
+      });
+      container.add(star);
+    }
+
+    // Bloom-Progress (wenn Blooming)
+    if (isBlooming(plant)) {
+      const bp = bloomProgress(plant);
+      const bpY = starsY + 22;
+      const bpText = this.add.text(-panelW / 2 + 14, bpY,
+        plant.pendingHarvest ? 'Ernte bereit!' : `Bloom: ${Math.floor(bp * 100)}%`,
+        { fontFamily: 'monospace', fontSize: '11px', color: plant.pendingHarvest ? '#ffd166' : '#bbbbbb' }
+      );
+      container.add(bpText);
+    }
+
     // Wasser-Button
-    const btnY = panelH / 2 - 36;
     const ready = canBeWatered(plant);
-    const btnLabel = ready ? 'Giessen (+5 XP)' : `Cooldown ${Math.ceil(waterCooldownRemaining(plant) / 60000)}m`;
-    const btn = this.add.text(0, btnY, btnLabel, {
+    const btnLabelW = ready
+      ? (plant.hydration < 50 ? 'Giessen (+5 XP, +Care)' : 'Giessen (+5 XP)')
+      : `Wasser CD ${Math.ceil(waterCooldownRemaining(plant) / 1000)}s`;
+    const waterBtn = this.add.text(-90, panelH / 2 - 30, btnLabelW, {
       fontFamily: 'monospace',
-      fontSize: '12px',
+      fontSize: '11px',
       color: ready ? '#1a1f1a' : '#888888',
-      backgroundColor: ready ? '#9be36e' : '#3a3a3a',
-      padding: { left: 12, right: 12, top: 6, bottom: 6 }
+      backgroundColor: ready ? '#5b8de8' : '#3a3a3a',
+      padding: { left: 10, right: 10, top: 6, bottom: 6 }
     }).setOrigin(0.5);
-    if (ready) btn.setInteractive({ useHandCursor: true });
-    btn.on('pointerdown', () => {
+    if (ready) waterBtn.setInteractive({ useHandCursor: true });
+    waterBtn.on('pointerdown', () => {
       if (!canBeWatered(plant)) return;
       gameStore.updatePlant(plant.id, (p) => {
         const { plant: updated } = waterPlant(p);
         return updated;
       });
-      this.openDetailPanel(plant.id); // re-render
+      this.openDetailPanel(plant.id);
     });
-    container.add(btn);
+    container.add(waterBtn);
+
+    // Harvest-Button (nur Blooming + ready)
+    if (isHarvestReady(plant)) {
+      const harvestBtn = this.add.text(90, panelH / 2 - 30, 'Ernten', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        color: '#1a1f1a',
+        backgroundColor: '#ffd166',
+        padding: { left: 14, right: 14, top: 6, bottom: 6 }
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      harvestBtn.on('pointerdown', () => {
+        const result = gameStore.harvestPlant(plant.id);
+        if (result.ok) {
+          const parts = [`+${result.coins} Coin`];
+          if (result.seedSlug) parts.push(`+1 ${result.seedSlug} Samen`);
+          if (result.pollen) parts.push(`+1 Pristine-Pollen`);
+          this.showFlash(`Ernte: ${parts.join(', ')}`, '#ffd166');
+          this.openDetailPanel(plant.id);
+        } else {
+          this.showFlash(result.reason ?? 'Ernte fehlgeschlagen', '#ff8c42');
+        }
+      });
+      container.add(harvestBtn);
+    } else if (isBlooming(plant)) {
+      const lockBtn = this.add.text(90, panelH / 2 - 30,
+        `Ernte ${Math.floor(bloomProgress(plant) * 100)}%`, {
+        fontFamily: 'monospace',
+        fontSize: '10px',
+        color: '#888888',
+        backgroundColor: '#2a2a2a',
+        padding: { left: 12, right: 12, top: 6, bottom: 6 }
+      }).setOrigin(0.5);
+      container.add(lockBtn);
+    }
 
     // Close-Button
     const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {

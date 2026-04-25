@@ -4,6 +4,9 @@ import type { PlantSpecies } from '../types/plant';
  * V1 Start-Pflanzen (5 Spezies).
  * Generische Game-Pflanzen die das Sprite-Modell perfekt kennt.
  * Stat-Bias laut Charakter-Rolle pro Spezies.
+ *
+ * V0.4: preferredBiomes/wrongBiomes fuer Growth-V0.2-Biom-Match-Multiplier.
+ * Garten in Wurzelheim ist neutraler Default (1.0x).
  */
 export const STARTER_SPECIES: readonly PlantSpecies[] = [
   {
@@ -17,7 +20,9 @@ export const STARTER_SPECIES: readonly PlantSpecies[] = [
     spdBias: 5,
     description:
       'Klassische Sonnenblume mit grossem gelbem Bluetenkopf. Allrounder mit ausgewogenen Werten.',
-    spriteSeedPrefix: 'sunflower'
+    spriteSeedPrefix: 'sunflower',
+    preferredBiomes: ['wurzelheim', 'verdanto'],
+    wrongBiomes: ['frostkamm']
   },
   {
     slug: 'spike-cactus',
@@ -30,7 +35,9 @@ export const STARTER_SPECIES: readonly PlantSpecies[] = [
     spdBias: -10,
     description:
       'Stachelkugel-Kaktus mit Defensiv-Spezialisierung. Hoher DEF, niedrige Speed.',
-    spriteSeedPrefix: 'spike_cactus'
+    spriteSeedPrefix: 'spike_cactus',
+    preferredBiomes: ['kaktoria'],
+    wrongBiomes: ['mordwald', 'verdanto']
   },
   {
     slug: 'venus-flytrap',
@@ -43,7 +50,9 @@ export const STARTER_SPECIES: readonly PlantSpecies[] = [
     spdBias: 5,
     description:
       'Karnivore Pflanze mit Schnappfallen. Glass-Cannon mit hohem ATK.',
-    spriteSeedPrefix: 'venus_flytrap'
+    spriteSeedPrefix: 'venus_flytrap',
+    preferredBiomes: ['mordwald', 'verdanto'],
+    wrongBiomes: ['kaktoria', 'salzbucht']
   },
   {
     slug: 'lavender',
@@ -56,7 +65,9 @@ export const STARTER_SPECIES: readonly PlantSpecies[] = [
     spdBias: 20,
     description:
       'Aromatische Heilpflanze mit hoher Speed. Hit-and-Run-Angreifer.',
-    spriteSeedPrefix: 'lavender'
+    spriteSeedPrefix: 'lavender',
+    preferredBiomes: ['wurzelheim', 'kaktoria'],
+    wrongBiomes: ['salzbucht']
   },
   {
     slug: 'tomato-plant',
@@ -69,7 +80,9 @@ export const STARTER_SPECIES: readonly PlantSpecies[] = [
     spdBias: 0,
     description:
       'Robuste Nutzpflanze mit roten Fruechten. Support-Pflanze, Heilung in V2.',
-    spriteSeedPrefix: 'tomato_plant'
+    spriteSeedPrefix: 'tomato_plant',
+    preferredBiomes: ['wurzelheim', 'verdanto'],
+    wrongBiomes: ['frostkamm']
   }
 ] as const;
 

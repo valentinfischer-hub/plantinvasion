@@ -1,4 +1,5 @@
 import type { Plant } from '../types/plant';
+import { defaultGrowthFields } from '../data/leveling';
 
 export interface OverworldState {
   tileX: number;
@@ -31,7 +32,7 @@ export interface GameState {
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';   // Bewusst v1 als Datei-Name beibehalten, internal version-Field steuert
-export const SAVE_SCHEMA_VERSION = 5;
+export const SAVE_SCHEMA_VERSION = 6;          // V6 = Growth-System V0.2
 
 const DEFAULT_OVERWORLD: OverworldState = {
   tileX: 14,
@@ -41,8 +42,47 @@ const DEFAULT_OVERWORLD: OverworldState = {
   lastSceneVisited: 'OverworldScene'
 };
 
+/**
+ * Backfill der V0.2 Growth-Felder fuer alle Pflanzen.
+ * Hydration startet bei 100 (frische Frische), careScore bei 0.
+ * Generation wird aus parentIds und isMutation abgeleitet.
+ */
+function ensurePlantGrowthFields(plant: any): Plant {
+  const defaults = defaultGrowthFields();
+  const generation =
+    typeof plant.generation === 'number'
+      ? plant.generation
+      : plant.parentAId
+        ? (plant.isMutation ? 1 : 1)
+        : 0;
+  return {
+    ...defaults,
+    generation,
+    ...plant,
+    // Defaults nur als Fallback ueberschreibt
+    hydration: typeof plant.hydration === 'number' ? plant.hydration : defaults.hydration,
+    careScore: typeof plant.careScore === 'number' ? plant.careScore : defaults.careScore,
+    pendingHarvest: typeof plant.pendingHarvest === 'boolean' ? plant.pendingHarvest : defaults.pendingHarvest,
+    consecutiveDryHours:
+      typeof plant.consecutiveDryHours === 'number'
+        ? plant.consecutiveDryHours
+        : defaults.consecutiveDryHours,
+    highestStageReached:
+      typeof plant.highestStageReached === 'number'
+        ? plant.highestStageReached
+        : defaults.highestStageReached
+  } as Plant;
+}
+
 function migrate(parsed: any): GameState | null {
   if (!parsed || typeof parsed !== 'object') return null;
+  if (parsed.version === 5) {
+    parsed.version = 6;
+    if (Array.isArray(parsed.plants)) {
+      parsed.plants = parsed.plants.map(ensurePlantGrowthFields);
+    }
+    console.log('[storage] migrated save v5 -> v6 (growth-system V0.2)');
+  }
   if (parsed.version === 4) {
     parsed.version = 5;
     parsed.quests = parsed.quests ?? {};
@@ -57,16 +97,17 @@ function migrate(parsed: any): GameState | null {
     if (!parsed.pokedex) parsed.pokedex = { discovered: [], captured: [] };
     if (!parsed.inventory) parsed.inventory = { 'basic-lure': 3, 'heal-tonic': 2 };
     if (!parsed.quests) parsed.quests = {};
+    if (Array.isArray(parsed.plants)) {
+      parsed.plants = parsed.plants.map(ensurePlantGrowthFields);
+    }
     // Backwards-compat: alte GreenhouseScene-Strings zu GardenScene migrieren
     if (parsed.overworld && (parsed.overworld as any).lastSceneVisited === 'GreenhouseScene') {
       (parsed.overworld as any).lastSceneVisited = 'GardenScene';
     }
-    // Falls overworld fehlt, default setzen
     if (!parsed.overworld) parsed.overworld = { ...DEFAULT_OVERWORLD };
     return parsed as GameState;
   }
   if (parsed.version === 2) {
-    // V2 -> V3: pokedex hinzufuegen
     parsed.version = 3;
     parsed.pokedex = parsed.pokedex ?? { discovered: [], captured: [] };
     if (parsed.plants) {
@@ -75,14 +116,14 @@ function migrate(parsed: any): GameState | null {
       parsed.pokedex.discovered = Array.from(new Set([...(parsed.pokedex.discovered ?? []), ...ownedSpecies]));
     }
     console.log('[storage] migrated save v2 -> v3');
-    return parsed as GameState;
+    // Recurse durch die hoeheren Migrations
+    return migrate(parsed);
   }
   if (parsed.version === 1) {
-    // V1 -> V3: overworld-Default + pokedex
     const v3: GameState = {
-      version: SAVE_SCHEMA_VERSION,
+      version: 3,
       playerId: parsed.playerId,
-      plants: parsed.plants ?? [],
+      plants: (parsed.plants ?? []).map(ensurePlantGrowthFields),
       coins: parsed.coins ?? 0,
       gems: parsed.gems ?? 0,
       createdAt: parsed.createdAt ?? Date.now(),
@@ -90,7 +131,7 @@ function migrate(parsed: any): GameState | null {
       pokedex: { discovered: [], captured: [] }
     };
     console.log('[storage] migrated save v1 -> v3');
-    return v3;
+    return migrate(v3);
   }
   console.warn('[storage] unknown save-version, discarding', parsed.version);
   return null;

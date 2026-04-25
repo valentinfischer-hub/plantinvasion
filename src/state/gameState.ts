@@ -1,6 +1,6 @@
 import type { Plant } from '../types/plant';
 import { rollStarterStats, crossStats, rollMutation } from '../data/genetics';
-import { tickPlant } from '../data/leveling';
+import { tickPlant, defaultGrowthFields, harvestPlant, isHarvestReady } from '../data/leveling';
 import { getSpecies } from '../data/species';
 import { loadGame, saveGame, SAVE_SCHEMA_VERSION, type GameState } from './storage';
 
@@ -46,7 +46,8 @@ export function createPlantOfSpecies(speciesSlug: string, plants: Plant[]): Plan
     lastWateredAt: now,
     lastTickAt: now,
     gridX: slot.x,
-    gridY: slot.y
+    gridY: slot.y,
+    ...defaultGrowthFields()
   };
 }
 
@@ -98,11 +99,12 @@ class GameStore {
     return this.state;
   }
 
-  /** Wendet einen Tick auf alle Pflanzen an, returniert geupdated state. */
+  /** Wendet einen Tick auf alle Pflanzen an. Garten ist immer neutrale Zone "wurzelheim". */
   tick(now = Date.now()): void {
     let mutated = false;
+    const zone = 'wurzelheim'; // Garten ist Heimat-Garden, neutrales Biom-Match
     this.state.plants = this.state.plants.map((p) => {
-      const updated = tickPlant(p, now);
+      const updated = tickPlant(p, { zone, now });
       if (updated !== p) mutated = true;
       return updated;
     });
@@ -112,6 +114,39 @@ class GameStore {
   updatePlant(plantId: string, fn: (p: Plant) => Plant): void {
     this.state.plants = this.state.plants.map((p) => (p.id === plantId ? fn(p) : p));
     this.notify();
+  }
+
+  /**
+   * Erntet eine Blooming-Pflanze. Gibt success + output zurueck.
+   * Coins werden direkt addiert, Samen kommen ins Inventar.
+   */
+  harvestPlant(plantId: string): {
+    ok: boolean;
+    coins: number;
+    seedSlug?: string;
+    pollen: boolean;
+    reason?: string;
+  } {
+    const plant = this.state.plants.find((p) => p.id === plantId);
+    if (!plant) return { ok: false, coins: 0, pollen: false, reason: 'Pflanze nicht gefunden' };
+    if (!isHarvestReady(plant)) return { ok: false, coins: 0, pollen: false, reason: 'Noch nicht reif' };
+    const { plant: updated, output } = harvestPlant(plant);
+    this.state.plants = this.state.plants.map((p) => (p.id === plantId ? updated : p));
+    if (output.coins > 0) this.state.coins += output.coins;
+    if (output.seedSpeciesSlug) {
+      const seedItem = `seed-${output.seedSpeciesSlug}`;
+      this.addItem(seedItem, 1);
+    }
+    if (output.pollenChance) {
+      this.addItem('pristine-pollen', 1);
+    }
+    this.notify();
+    return {
+      ok: true,
+      coins: output.coins,
+      seedSlug: output.seedSpeciesSlug,
+      pollen: output.pollenChance
+    };
   }
 
   movePlant(plantId: string, x: number, y: number): boolean {
@@ -262,7 +297,8 @@ class GameStore {
     const mutation = rollMutation(seed);
     const stats = crossStats(a.stats, b.stats, seed, mutation.isMutation);
     const now = Date.now();
-    // Inherit speciesSlug von parentA, V0.5 expand to family-mix
+    // Generation = max(parent.generation) + 1
+    const childGeneration = Math.max(a.generation ?? 0, b.generation ?? 0) + 1;
     const child: Plant = {
       id: 'p_' + Math.random().toString(36).slice(2, 10),
       speciesSlug: a.speciesSlug,
@@ -278,7 +314,9 @@ class GameStore {
       lastWateredAt: now,
       lastTickAt: now,
       gridX: slot.x,
-      gridY: slot.y
+      gridY: slot.y,
+      ...defaultGrowthFields(),
+      generation: childGeneration
     };
     this.state.plants.push(child);
     this.state.coins -= COST;
@@ -288,7 +326,6 @@ class GameStore {
   }
 
   capturePlant(slug: string, level: number, atkBias: number, defBias: number, spdBias: number): boolean {
-    // Plant in Garden hinzufuegen
     const slot = (() => {
       const occupied = new Set(this.state.plants.map((p) => `${p.gridX},${p.gridY}`));
       for (let y = 0; y < GRID_ROWS; y++) {
@@ -314,7 +351,8 @@ class GameStore {
       lastWateredAt: now,
       lastTickAt: now,
       gridX: slot.x,
-      gridY: slot.y
+      gridY: slot.y,
+      ...defaultGrowthFields()
     };
     this.state.plants.push(newPlant);
     this.captureSpecies(slug);
