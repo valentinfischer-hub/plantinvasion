@@ -19,12 +19,13 @@ import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
 import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
+import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
 import { QUESTS, type QuestDef } from '../data/quests';
 import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
-const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43]);
+const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43, 50, 51]);
 
 const MAPS: Record<string, MapDef> = {
   wurzelheim,
@@ -266,8 +267,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       targetY = npc.sprite.y - 8;
     } else {
       const t = this.getTile(front.tileX, front.tileY);
-      // Schild, Markstand oder Building-Tuer
-      if (t === 10 || t === 9 || t === 8 || t === 7) {
+      // Schild, Markstand, Building-Tuer, Forage-Tile, oder Hidden-Spot
+      const hidden = findHiddenSpot(this.currentZone, front.tileX, front.tileY);
+      const onHidden = hidden && !(gameStore.get().collectedHiddenSpots ?? []).includes(`${hidden.zone}:${hidden.tileX}:${hidden.tileY}`);
+      if (t === 10 || t === 9 || t === 8 || t === 7 || isForageTile(t) || onHidden) {
         show = true;
         targetX = front.tileX * TILE_SIZE + TILE_SIZE / 2;
         targetY = front.tileY * TILE_SIZE + TILE_SIZE / 2 - 8;
@@ -284,6 +287,25 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // NPC?
     const npc = this.npcs.find((n) => n.data.tileX === front.tileX && n.data.tileY === front.tileY);
     if (npc) {
+      // Berry-Master: Daily-Free-Seed-Dialog
+      if (npc.data.id === 'bertram-berrymaster') {
+        this.tutorial?.markInteract('npc');
+        const r = gameStore.claimBerryMaster();
+        if (r.ok) {
+          const slug = r.itemSlug?.replace('seed-', '') ?? 'Samen';
+          this.dialog.open([
+            'Bertram: Schau, was ich heute fuer dich habe.',
+            `Du erhaeltst: 1 ${slug} Samen!`,
+            'Bertram: Komm morgen wieder.'
+          ]);
+        } else {
+          this.dialog.open([
+            'Bertram: Heute schon vorbeigeschaut, gell?',
+            r.reason ?? 'Komm morgen wieder.'
+          ]);
+        }
+        return;
+      }
       this.tutorial?.markInteract('npc');
       const lines = [...npc.data.dialog];
       // Quest-Logic: Suche Quest fuer diesen NPC
@@ -326,6 +348,27 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         'Marktstand: (Markt-Mechanik kommt in V0.3)'
       ]);
       return;
+    }
+    // Forage-Tile? (Tile 50 Bush, 51 WildPlant)
+    if (t === FORAGE_TILE_BUSH || t === FORAGE_TILE_WILDPLANT) {
+      const result = gameStore.forageTile(this.currentZone, front.tileX, front.tileY);
+      if (result.ok) {
+        sfx.dialogOpen();
+        this.dialog.open([result.toast ?? 'Du hast etwas gefunden!']);
+      } else {
+        this.dialog.open([result.reason ?? 'Hier ist gerade nichts.']);
+      }
+      return;
+    }
+    // Hidden-Spot? (versteckte Position auf normalem Tile)
+    const spot = findHiddenSpot(this.currentZone, front.tileX, front.tileY);
+    if (spot) {
+      const result = gameStore.searchHiddenSpot(this.currentZone, front.tileX, front.tileY);
+      if (result.ok) {
+        sfx.dialogOpen();
+        this.dialog.open(['Du findest etwas Verstecktes!', result.toast ?? '+1 Item']);
+        return;
+      }
     }
     // Building-Tuer?
     const door = BUILDING_DOORS.find((d) => d.tileX === front.tileX && d.tileY === front.tileY);
@@ -392,7 +435,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
   private isDecoTile(t: number): boolean {
     // Tiles die auf top of base layer sollen
-    return [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 23, 24, 27, 28, 31, 32, 33, 34, 41, 42, 43, 44, 45].includes(t);
+    return [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 23, 24, 27, 28, 31, 32, 33, 34, 41, 42, 43, 44, 45, 50, 51].includes(t);
   }
 
   private getTile(x: number, y: number): number {

@@ -4,6 +4,15 @@ import { tickPlant, defaultGrowthFields, harvestPlant, isHarvestReady } from '..
 import { getSpecies } from '../data/species';
 import { applyItemToPlant, nextSoilTier, SOIL_COSTS, SOIL_MUTATION_BONUS } from '../data/boosters';
 import { getItem, isSeedItem, speciesSlugFromSeed } from '../data/items';
+import { findRecipe } from '../data/hybridRecipes';
+import {
+  FORAGE_COOLDOWN_MS,
+  rollForagePool,
+  rollHiddenSpotLoot,
+  rollBattleDrop,
+  findHiddenSpot,
+  hiddenSpotKey
+} from '../data/foraging';
 import { loadGame, saveGame, SAVE_SCHEMA_VERSION, type GameState } from './storage';
 
 export const GRID_COLUMNS = 4;
@@ -266,6 +275,71 @@ class GameStore {
     return SOIL_MUTATION_BONUS[tier];
   }
 
+  // =========================================================
+  // Foraging V0.2 (Pokemon-Style)
+  // =========================================================
+
+  /** Forage-Tile-Loot. Cooldown gilt pro Tile via Key "zone:x:y". */
+  forageTile(zone: string, tileX: number, tileY: number, now = Date.now()): { ok: boolean; reason?: string; itemSlug?: string; toast?: string } {
+    if (!this.state.forageTilesCooldown) this.state.forageTilesCooldown = {};
+    const key = `${zone}:${tileX}:${tileY}`;
+    const lastAt = this.state.forageTilesCooldown[key] ?? 0;
+    if (now - lastAt < FORAGE_COOLDOWN_MS) {
+      const remMin = Math.ceil((FORAGE_COOLDOWN_MS - (now - lastAt)) / 60000);
+      return { ok: false, reason: `Schon abgeerntet (${remMin}m)` };
+    }
+    const drop = rollForagePool(zone);
+    this.addItem(drop.itemSlug, 1);
+    this.state.forageTilesCooldown[key] = now;
+    this.notify();
+    return { ok: true, itemSlug: drop.itemSlug, toast: drop.toastLabel };
+  }
+
+  /** Hidden-Spot-Loot. One-shot pro Save. */
+  searchHiddenSpot(zone: string, tileX: number, tileY: number): { ok: boolean; reason?: string; itemSlug?: string; coins?: number; toast?: string } {
+    const spot = findHiddenSpot(zone, tileX, tileY);
+    if (!spot) return { ok: false };
+    const key = hiddenSpotKey(spot);
+    if (!this.state.collectedHiddenSpots) this.state.collectedHiddenSpots = [];
+    if (this.state.collectedHiddenSpots.includes(key)) {
+      return { ok: false };
+    }
+    const loot = rollHiddenSpotLoot(zone);
+    if (loot.itemSlug === 'coins' && loot.coins) {
+      this.addCoins(loot.coins);
+    } else {
+      this.addItem(loot.itemSlug, 1);
+    }
+    this.state.collectedHiddenSpots.push(key);
+    this.notify();
+    return { ok: true, itemSlug: loot.itemSlug, coins: loot.coins, toast: loot.toastLabel };
+  }
+
+  /** Battle-Drop nach gewonnener Wild-Battle. */
+  applyBattleDrop(speciesSlug: string): { itemSlug?: string; coins?: number } {
+    const drop = rollBattleDrop(speciesSlug);
+    if (drop.itemSlug) this.addItem(drop.itemSlug, 1);
+    if (drop.coins) this.addCoins(drop.coins);
+    return drop;
+  }
+
+  /** Berry-Master-NPC: einmal pro Real-Time-Tag einen Free-Seed. */
+  claimBerryMaster(now = Date.now()): { ok: boolean; reason?: string; itemSlug?: string } {
+    const last = this.state.lastBerryMasterAt ?? 0;
+    if (now - last < 24 * 60 * 60 * 1000) {
+      const remH = Math.ceil((24 * 60 * 60 * 1000 - (now - last)) / 3600000);
+      return { ok: false, reason: `Komm in ${remH}h zurueck` };
+    }
+    const dex = this.getPokedex();
+    const pool = dex.discovered.length > 0 ? dex.discovered : ['sunflower', 'fern', 'mint', 'rose', 'tulip'];
+    const slug = pool[Math.floor(Math.random() * pool.length)];
+    const itemSlug = `seed-${slug}`;
+    this.addItem(itemSlug, 1);
+    this.state.lastBerryMasterAt = now;
+    this.save();
+    return { ok: true, itemSlug };
+  }
+
   updatePlant(plantId: string, fn: (p: Plant) => Plant): void {
     this.state.plants = this.state.plants.map((p) => (p.id === plantId ? fn(p) : p));
     this.notify();
@@ -524,14 +598,24 @@ class GameStore {
     if (!slot) return { ok: false, reason: 'Kein freier Slot' };
     // Cross
     const seed = Math.floor(Math.random() * 1_000_000_000);
-    const mutation = rollMutation(seed);
+    // Hybrid-Recipe-Check: bestimmt childSlug und Mutation-Bonus
+    const recipe = findRecipe(a.speciesSlug, b.speciesSlug);
+    const childSlug = recipe ? recipe.childSlug : a.speciesSlug;
+    // Soil-Mutation-Bonus + Recipe-Bonus + Hybrid-Booster-Item
+    const soilBonus = SOIL_MUTATION_BONUS[this.getSoilTier(slot.x, slot.y)];
+    const recipeBonus = recipe?.mutationBonus ?? 0;
+    const hybridBoost = this.hasItem('hybrid-booster') ? 0.05 : 0;
+    if (hybridBoost > 0) this.consumeItem('hybrid-booster');
+    const baseMutationChance = 0.08;
+    const totalMutationChance = baseMutationChance + soilBonus + recipeBonus + hybridBoost;
+    const mutation = rollMutation(seed, totalMutationChance);
     const stats = crossStats(a.stats, b.stats, seed, mutation.isMutation);
     const now = Date.now();
     // Generation = max(parent.generation) + 1
     const childGeneration = Math.max(a.generation ?? 0, b.generation ?? 0) + 1;
     const child: Plant = {
       id: 'p_' + Math.random().toString(36).slice(2, 10),
-      speciesSlug: a.speciesSlug,
+      speciesSlug: childSlug,
       stats,
       geneSeed: seed,
       parentAId: a.id,

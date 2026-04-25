@@ -53,6 +53,10 @@ export interface GameState {
   marketShopRoster?: MarketShopRoster;
   // V8: Story-State
   story?: StoryState;
+  // V8: Foraging V0.2
+  forageTilesCooldown?: Record<string, number>;     // "zone:x:y" -> ms
+  collectedHiddenSpots?: string[];                  // "zone:x:y"
+  lastBerryMasterAt?: number;                       // ms
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
@@ -114,7 +118,10 @@ function migrate(parsed: any): GameState | null {
   if (parsed.version === 7) {
     parsed.version = 8;
     parsed.story = parsed.story ?? { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    console.log('[storage] migrated save v7 -> v8 (storyline)');
+    if (!parsed.forageTilesCooldown) parsed.forageTilesCooldown = {};
+    if (!Array.isArray(parsed.collectedHiddenSpots)) parsed.collectedHiddenSpots = [];
+    if (typeof parsed.lastBerryMasterAt !== 'number') parsed.lastBerryMasterAt = 0;
+    console.log('[storage] migrated save v7 -> v8 (storyline + foraging V0.2)');
   }
   if (parsed.version === 6) {
     parsed.version = 7;
@@ -161,6 +168,9 @@ function migrate(parsed: any): GameState | null {
     if (typeof parsed.lastDailyLoginAt !== 'number') parsed.lastDailyLoginAt = 0;
     if (typeof parsed.marketShopRosterDay !== 'number') parsed.marketShopRosterDay = -1;
     if (!parsed.marketShopRoster) parsed.marketShopRoster = { seedSlugs: [], boosterSlugs: [] };
+    if (!parsed.forageTilesCooldown) parsed.forageTilesCooldown = {};
+    if (!Array.isArray(parsed.collectedHiddenSpots)) parsed.collectedHiddenSpots = [];
+    if (typeof parsed.lastBerryMasterAt !== 'number') parsed.lastBerryMasterAt = 0;
     if (parsed.overworld && (parsed.overworld as any).lastSceneVisited === 'GreenhouseScene') {
       (parsed.overworld as any).lastSceneVisited = 'GardenScene';
     }
@@ -218,6 +228,9 @@ export function saveGame(state: GameState): void {
     if (typeof state.lastDailyLoginAt !== 'number') state.lastDailyLoginAt = 0;
     if (typeof state.marketShopRosterDay !== 'number') state.marketShopRosterDay = -1;
     if (!state.marketShopRoster) state.marketShopRoster = { seedSlugs: [], boosterSlugs: [] };
+    if (!state.forageTilesCooldown) state.forageTilesCooldown = {};
+    if (!Array.isArray(state.collectedHiddenSpots)) state.collectedHiddenSpots = [];
+    if (typeof state.lastBerryMasterAt !== 'number') state.lastBerryMasterAt = 0;
     state.version = SAVE_SCHEMA_VERSION;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {

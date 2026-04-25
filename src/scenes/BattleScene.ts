@@ -276,8 +276,18 @@ export class BattleScene extends Phaser.Scene {
     if (outcome.battleOver) {
       this.over = true;
       this.time.delayedCall(2000, () => {
-        if (outcome.winner === this.player) this.endBattle(`Sieg! +${this.xpReward} XP`);
-        else this.endBattle('Deine Pflanze ist erschoepft.');
+        if (outcome.winner === this.player) {
+          // Battle-Drop V0.2: 25% Seed, 10% Coins
+          let dropMsg = '';
+          if (this.capturedEnc?.slug) {
+            const drop = gameStore.applyBattleDrop(this.capturedEnc.slug);
+            if (drop.itemSlug) dropMsg += ` +1 ${drop.itemSlug}`;
+            if (drop.coins) dropMsg += ` +${drop.coins} Coins`;
+          }
+          this.endBattle(`Sieg! +${this.xpReward} XP${dropMsg}`);
+        } else {
+          this.endBattle('Deine Pflanze ist erschoepft.');
+        }
       });
     } else {
       this.time.delayedCall(1500, () => {

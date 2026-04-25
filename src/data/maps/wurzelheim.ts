@@ -144,6 +144,13 @@ tiles[16][19] = 12;
 // Schild bei Player-Haus (Tile 10)
 tiles[7][6] = 10;
 
+
+// Forage-Tiles V0.2 (Berry-Bushes 50, Wildplants 51)
+if (tiles[3]?.[3] !== undefined && tiles[3][3] !== 4) tiles[3][3] = 50;
+if (tiles[3]?.[24] !== undefined && tiles[3][24] !== 4) tiles[3][24] = 50;
+if (tiles[10]?.[3] !== undefined && tiles[10][3] !== 4) tiles[10][3] = 51;
+if (tiles[14]?.[24] !== undefined && tiles[14][24] !== 4) tiles[14][24] = 51;
+
 const wurzelheim: MapDef = {
   width: W,
   height: H,
@@ -189,6 +196,18 @@ const wurzelheim: MapDef = {
         'Clara: Bist du bereit, das System zu lernen?',
         'Clara: Pflanzen kreuzt man nicht einfach so.',
         'Clara: Komm in die Akademie wenn du den ersten Pokedex-Eintrag hast.'
+      ]
+    },
+    {
+      id: 'bertram-berrymaster',
+      name: 'Bertram (Beerenmeister)',
+      tileX: 8,
+      tileY: 14,
+      facing: 'down',
+      color: 0xb86ee3,
+      dialog: [
+        'Bertram: Ah, der wandernde Botaniker! Ich habe heute einen frischen Samen fuer dich.',
+        'Bertram: Komm jeden Tag vorbei, ich gebe dir was Neues mit.'
       ]
     }
   ]

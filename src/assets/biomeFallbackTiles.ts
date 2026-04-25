@@ -172,6 +172,40 @@ function drawSulfurSpring(g: Phaser.GameObjects.Graphics) {
 }
 
 // =========================================================
+// Forage-Tiles (V0.2)
+// =========================================================
+
+function drawBerryBush(g: Phaser.GameObjects.Graphics) {
+  // Wiesengrasiger Hintergrund
+  rect(g, 0, 0, T, T, 0x6abf3a);
+  // Bush-Body
+  rect(g, 3, 6, 10, 8, 0x4a8228);
+  rect(g, 3, 5, 10, 1, 0x6abf3a);
+  rect(g, 4, 14, 8, 1, 0x2d4f15);
+  // Beeren
+  rect(g, 5, 8, 1, 1, 0xc94d6e);
+  rect(g, 9, 7, 1, 1, 0xc94d6e);
+  rect(g, 11, 10, 1, 1, 0xc94d6e);
+  rect(g, 6, 11, 1, 1, 0xff5c5c);
+  rect(g, 8, 9, 1, 1, 0xff5c5c);
+  rect(g, 10, 12, 1, 1, 0xff5c5c);
+}
+
+function drawWildplant(g: Phaser.GameObjects.Graphics) {
+  // Erde-Boden
+  rect(g, 0, 0, T, T, 0x6abf3a);
+  rect(g, 4, 12, 8, 4, 0x553e2d);
+  // Pflanze
+  rect(g, 7, 5, 2, 8, 0x4a6b28);
+  rect(g, 5, 4, 6, 2, 0x4a8228);
+  rect(g, 4, 5, 8, 2, 0x4a8228);
+  rect(g, 6, 3, 4, 1, 0x6abf3a);
+  // Blueten-Tipps
+  pix(g, 5, 3, 0xffd166);
+  pix(g, 10, 4, 0xff7eb8);
+}
+
+// =========================================================
 // Public API
 // =========================================================
 
@@ -188,7 +222,10 @@ const FALLBACK_DRAWERS: Record<string, (g: Phaser.GameObjects.Graphics) => void>
   tile_basalt: drawBasalt,
   tile_charredstump: drawCharredStump,
   tile_pyrophytgrass: drawPyrophytGrass,
-  tile_sulfurspring: drawSulfurSpring
+  tile_sulfurspring: drawSulfurSpring,
+  // Forage-Tiles
+  tile_berrybush: drawBerryBush,
+  tile_wildplant: drawWildplant
 };
 
 /**

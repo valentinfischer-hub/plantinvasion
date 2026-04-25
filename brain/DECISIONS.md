@@ -58,6 +58,20 @@ Append-only Log strategischer Entscheidungen. Jeder Eintrag hat Datum, Entscheid
 
 **Begruendung**: Bereits installiert, Repo lebt, Switching-Costs zu hoch. Phaser kann alles was wir brauchen (Tile-Movement, Sprite-Animation, Audio, Input-Handling).
 
+### D-022 Storyline V1: 7-Akt Hero-Journey (revidiert D-006)
+**Entscheidung**: Story von "Light-Plot" auf vollwertigen 7-Akt-Hero-Journey-Plot ausgebaut. ca 20h Hauptstory plus 30h Side-Content.
+
+**Begruendung**: User-Wunsch fuer mehr Story-Tiefe und Quest-Adventure-Gefuehl. Hero-Journey ist Public-Domain-Konzept (Joseph Campbell 1949), funktioniert universal.
+
+**Konsequenz**: D-006 Light-Plot wird durch D-022 ersetzt. brain/design/storyline.md mit allen Akten, Charakteren (alle frei erfunden: Tilda Wurzelreich, Iris Salbeyen, Caspar Verodynicus, Magmus Rex), 24 Story-Quests, Save-V8 mit StoryState. NPC Iris in Wurzelheim implementiert. 5 Story-Items hinzugefuegt. 7 Boss-Encounter geplant: captain-schimmelpilz, mangrove-tyrann, pitcher-of-death, magmus-rex, frostmother-glaziella, verodynicus 3-Phasen-Final.
+
+### D-023 Visuelle Inspiration: Stardew Valley plus Pokemon
+**Entscheidung**: Optik orientiert sich offiziell an Stardew Valley (Farb-Palette, UI-Stil, Tile-Pattern). Battle-UI orientiert sich an Pokemon. Beides nur als Inspiration, keine Asset-Kopie.
+
+**Begruendung**: User-Referenzen YouTube Stardew-Valley-Speedrun und Pokemon-Emerald-Speedrun. Konsistenz im Cozy-RPG-Genre wichtig fuer Wiedererkennungswert.
+
+**Konsequenz**: brain/research/visual_inspiration_stardew.md dokumentiert Art-Direction. PixelLab-Prompts mit "stardew valley pixel art 32x32" Suffix. S-09 plant Day-Night-Cycle, Saison-System, Wetter-Effekte als naechste visuelle Erweiterungen.
+
 ### D-020 Battle-System V2: Pokemon-Style mit Move-Auswahl (revidiert D-002)
 **Entscheidung**: Auto-Battle wurde abgeschafft. Stattdessen Pokemon-Style turn-based Battle mit Move-Auswahl. Jede Pflanze hat 4 Moves, 33 Attacken-Datenbank, Status-Effekte, Stat-Modifikatoren.
 
@@ -120,6 +134,20 @@ Append-only Log strategischer Entscheidungen. Jeder Eintrag hat Datum, Entscheid
 **Begruendung**: Schneller Ship ohne PixelLab-Cost-Hit. Tiles sehen 16x16 Pixel-Art-typisch aus, passen zu existierenden Stardew-Style-Sprites. Beim Pinselstrich-Upgrade in S-09 Phase 1 (Mordwald-Polish) werden die Procedural-Sprites durch PNG-Assets ersetzt, ohne Code-Aenderungen.
 
 **Konsequenz**: 11 neue Texture-Keys (5 Mordwald, 6 Magmabluete) in `src/assets/biomeFallbackTiles.ts`. Registry-Update in `spriteRegistry.ts`. Loader skipt diese Keys beim PNG-Load (FALLBACK_TILE_KEYS-Filter).
+
+### D-022 Seed-Acquisition V0.2 plus Hybrid-Crossings plus 50+ Spezies (2026-04-25)
+**Entscheidung**: Pokemon-Style Foraging-System mit 4 neuen Mechaniken: Forage-Tiles (Bushes/Wildplants mit 1h-Cooldown-Loot), Hidden-Item-Spots (5 pro Biom, one-shot pro Save), Battle-Drops (25% Seed nach Wild-Sieg), Berry-Master-NPC Bertram in Wurzelheim (Daily-Free-Seed). Zusaetzlich 10 Hybrid-Recipes: spezifische 2-Eltern-Crossings erzeugen NEUE Spezies mit gemischter visueller Palette.
+
+**Begruendung**: User-Feedback "Pflanzensamen sollen auf verschiedene Arten gefunden werden, mindestens 50 Spezies, kreuzbare Hybriden mit Mix-Look". Pokemon-Inspiration aus YouTube-Speedrun-Video (Hoenn-Region-Beerensystem). Foraging gibt taegliche Casual-Loops, Hidden-Spots geben Erkundungs-Anreiz, Battle-Drops belohnen Battle-Spieler, Berry-Master ist Login-Hook. Hybrid-Recipes machen Crossing zum Sammler-Spiel mit klaren Zielen.
+
+**Konsequenz**: 35+ neue Spezies in species.ts (Total 51 Basis + 10 Hybrid = 61). Save-Migration v7 -> v8 mit Foraging-State (forageTilesCooldown, collectedHiddenSpots, lastBerryMasterAt). Neue Files: src/data/foraging.ts, src/data/hybridRecipes.ts. OverworldScene-tryInteract erweitert (Forage-Detection, Hidden-Spot-Detection, Berry-Master-Spezial-Dialog). BattleScene-Win-Path mit applyBattleDrop. Procedural-Plant-Sprite-Generator mit 61 Paletten und 4 Archetypen (flower, cactus, tree, sukkulent, carnivore, aquatic, fern). 14 von 14 Bash-Tests PASS.
+
+### D-024 Seed-Acquisition V0.2 (Pokemon-Style Foraging) plus 50+ Spezies plus 10 Hybrid-Recipes (2026-04-25)
+**Entscheidung**: Pokemon-Style Foraging-System mit 4 neuen Mechaniken: Forage-Tiles (Bushes/Wildplants mit 1h-Cooldown-Loot), Hidden-Item-Spots (5 pro Biom, one-shot pro Save), Battle-Drops (25% Seed nach Wild-Sieg), Berry-Master-NPC Bertram in Wurzelheim (Daily-Free-Seed). Zusaetzlich 10 Hybrid-Recipes: spezifische 2-Eltern-Crossings erzeugen NEUE Spezies mit gemischter visueller Palette.
+
+**Begruendung**: User-Feedback "Pflanzensamen sollen auf verschiedene Arten gefunden werden, mindestens 50 Spezies, kreuzbare Hybriden mit Mix-Look". Pokemon-Inspiration aus YouTube-Speedrun-Video (Hoenn-Region-Beerensystem). Foraging gibt taegliche Casual-Loops, Hidden-Spots geben Erkundungs-Anreiz, Battle-Drops belohnen Battle-Spieler, Berry-Master ist Login-Hook. Hybrid-Recipes machen Crossing zum Sammler-Spiel mit klaren Zielen.
+
+**Konsequenz**: 35+ neue Spezies in species.ts (Total 51 Basis + 10 Hybrid = 61). Save-Migration v7 -> v8 mit Foraging-State (forageTilesCooldown, collectedHiddenSpots, lastBerryMasterAt). Neue Files: src/data/foraging.ts, src/data/hybridRecipes.ts. OverworldScene-tryInteract erweitert (Forage-Detection, Hidden-Spot-Detection, Berry-Master-Spezial-Dialog). BattleScene-Win-Path mit applyBattleDrop. Procedural-Plant-Sprite-Generator mit 61 Paletten und 7 Archetypen. 14 von 14 Bash-Tests PASS.
 
 ### D-021 Booster-System V0.1 plus Seed-Acquisition plus 10 neue Spezies (2026-04-25)
 **Entscheidung**: Wachstums-Erweiterung um 9 Booster-Items (Vulkan-Asche, Premium-Duenger, Sumpf-Pollen, Pristine-Pollen, Sun-Lamp, Sprinkler, Hybrid-Booster, Bronze/Silver/Gold-Erde) plus Seed-Items pro Spezies plus Daily-Login-Reward plus Markt-Daily-Roster. 10 neue plantbare Spezies (Rose, Aloe Vera, Orchid, Fern, Mint, Iris, Snapdragon, Water Lily, Daffodil, Coneflower).

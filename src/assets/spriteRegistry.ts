@@ -54,7 +54,10 @@ export const TILE_SPRITE_KEYS: Record<number, string> = {
   42: 'tile_basalt',
   43: 'tile_charredstump',
   44: 'tile_pyrophytgrass',
-  45: 'tile_sulfurspring'
+  45: 'tile_sulfurspring',
+  // Forage-Tiles (V0.2 Foraging)
+  50: 'tile_berrybush',
+  51: 'tile_wildplant'
 };
 
 export const PLAYER_SPRITE_KEYS = {
