@@ -395,6 +395,52 @@ class GameStore {
     return this.state.pokedex ?? { discovered: [], captured: [] };
   }
 
+  getStoryFlag(flag: string): boolean {
+    return !!this.state.story?.flags[flag];
+  }
+
+  setStoryFlag(flag: string, value: boolean = true): void {
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    this.state.story.flags[flag] = value;
+    this.save();
+  }
+
+  getCurrentAct(): number {
+    return this.state.story?.currentAct ?? 0;
+  }
+
+  advanceAct(toAct: number): void {
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if (toAct > this.state.story.currentAct) {
+      this.state.story.currentAct = toAct;
+      this.save();
+    }
+  }
+
+  meetNpc(npcId: string): boolean {
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if (this.state.story.metNpcs.includes(npcId)) return false;
+    this.state.story.metNpcs.push(npcId);
+    this.save();
+    return true;
+  }
+
+  hasMetNpc(npcId: string): boolean {
+    return this.state.story?.metNpcs.includes(npcId) ?? false;
+  }
+
+  collectDiaryEntry(entryId: number): boolean {
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if (this.state.story.diaryEntries.includes(entryId)) return false;
+    this.state.story.diaryEntries.push(entryId);
+    this.save();
+    return true;
+  }
+
+  getDiaryEntries(): number[] {
+    return this.state.story?.diaryEntries ?? [];
+  }
+
   getQuestState(questId: string): 'pending' | 'active' | 'completed' {
     return this.state.quests?.[questId] ?? 'pending';
   }

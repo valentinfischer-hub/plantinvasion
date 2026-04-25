@@ -17,6 +17,13 @@ export interface PokedexState {
 export type InventoryState = Record<string, number>;
 export type QuestState = Record<string, 'pending' | 'active' | 'completed'>;
 
+export interface StoryState {
+  flags: Record<string, boolean>;
+  currentAct: number;             // 0-7 (0 = pre-game, 1-7 = active acts)
+  metNpcs: string[];              // npc-ids met
+  diaryEntries: number[];         // collected diary-page IDs
+}
+
 export interface TutorialState {
   step: number;       // 0=welcome, 1=move, 2=talk, 3=garden, 4=market, 5=done
   done: boolean;
@@ -44,10 +51,12 @@ export interface GameState {
   lastDailyLoginAt?: number;
   marketShopRosterDay?: number;
   marketShopRoster?: MarketShopRoster;
+  // V8: Story-State
+  story?: StoryState;
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
-export const SAVE_SCHEMA_VERSION = 7;
+export const SAVE_SCHEMA_VERSION = 8;
 
 const DEFAULT_OVERWORLD: OverworldState = {
   tileX: 14,
@@ -102,6 +111,11 @@ function ensurePlantGrowthFields(plant: any): Plant {
 
 function migrate(parsed: any): GameState | null {
   if (!parsed || typeof parsed !== 'object') return null;
+  if (parsed.version === 7) {
+    parsed.version = 8;
+    parsed.story = parsed.story ?? { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    console.log('[storage] migrated save v7 -> v8 (storyline)');
+  }
   if (parsed.version === 6) {
     parsed.version = 7;
     if (Array.isArray(parsed.plants)) {

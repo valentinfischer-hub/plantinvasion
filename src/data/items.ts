@@ -208,7 +208,48 @@ function buildSeedItems(): ItemDef[] {
   return items;
 }
 
-export const ITEMS: ItemDef[] = [...STATIC_ITEMS, ...buildSeedItems()];
+export const ITEMS: ItemDef[] = [
+  {
+    slug: 'tilda-diary',
+    kind: 'compost',  // generic kind, not consumable
+    name: 'Tildas Tagebuch',
+    description: 'Das Forschungstagebuch deiner Grossmutter. Zentrales Story-Item.',
+    buyPrice: 0,
+    sellPrice: 0
+  },
+  {
+    slug: 'iris-staff',
+    kind: 'boost',
+    name: 'Iris-Eichenstab',
+    description: 'Stab aus Eichenholz von Iris. +10% Crit-Rate im Battle.',
+    buyPrice: 0,
+    sellPrice: 0
+  },
+  {
+    slug: 'sun-amulet',
+    kind: 'boost',
+    name: 'Tildas Sonnenamulett',
+    description: 'Goldenes Amulett mit Sonnenmotiv. +20% XP nach Kaempfen.',
+    buyPrice: 0,
+    sellPrice: 0
+  },
+  {
+    slug: 'eden-key',
+    kind: 'compost',
+    name: 'Eden-Schluessel',
+    description: 'Symbol-Sammlung der 7 Verbuendeten. Oeffnet Eden Lost.',
+    buyPrice: 0,
+    sellPrice: 0
+  },
+  {
+    slug: 'verodyne-document',
+    kind: 'compost',
+    name: 'Verodyne-Dokument',
+    description: 'Beweisstueck gegen Verodyne Corporation.',
+    buyPrice: 0,
+    sellPrice: 0
+  },
+...STATIC_ITEMS, ...buildSeedItems()];
 
 export function getItem(slug: string): ItemDef | undefined {
   return ITEMS.find((i) => i.slug === slug);

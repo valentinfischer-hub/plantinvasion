@@ -71,7 +71,11 @@ export const NPC_SPRITE_KEYS: Record<string, string> = {
   lyra: 'npc_lyra',
   'durst-kaktus-meister': 'npc_durst',
   'eira-bergfuehrerin': 'npc_eira',
-  'finn-fischer': 'npc_finn'
+  'finn-fischer': 'npc_finn',
+  'iris-salbeyen': 'npc_clara',
+  'tilda-grandma': 'npc_clara',
+  'morag-sumpfklang': 'npc_lyra',
+  'pyra-glutblute': 'npc_durst'
 };
 
 export function getAllSpriteFiles(): { key: string; file: string }[] {
