@@ -20,14 +20,31 @@ const TILE_COLORS: Record<number, number> = {
   5: 0x8a6e4a,    // Building-Wand
   6: 0x553e2d,    // Building-Dach
   7: 0xd6a45c,    // Tuer-Garten
-  8: 0x4a3522,    // Tuer-Building
+  8: 0x4a3522,    // Tuer-Building (begehbar, triggert "kommt in V0.3"-Dialog)
   9: 0xc94a4a,    // Marktstand
   10: 0xe3c44a,   // Schild
   11: 0x9be36e,   // Map-Edge Verdanto
   12: 0xff7eb8    // Blumenbeet
 };
 
+// Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10]);
+
+// Tile-Position -> Dialog-Daten fuer Building-Tueren in V0.3
+interface BuildingDoor {
+  tileX: number;
+  tileY: number;
+  dialog: string[];
+}
+const BUILDING_DOORS: BuildingDoor[] = [
+  // Markthalle
+  { tileX: 20, tileY: 6, dialog: ['Markthalle: Heute geschlossen.', 'Markthalle: (Voll funktional in V0.3)'] },
+  { tileX: 21, tileY: 6, dialog: ['Markthalle: Heute geschlossen.', 'Markthalle: (Voll funktional in V0.3)'] },
+  // Botanik-Akademie
+  { tileX: 6, tileY: 15, dialog: ['Botanik-Akademie: Die Tuer ist verschlossen.', 'Akademie: Komm zurueck wenn du den ersten Pokedex-Eintrag hast.'] },
+  // NPC-Wohnhaus
+  { tileX: 21, tileY: 15, dialog: ['NPC-Wohnhaus: Niemand zuhause.', '(Privater Bereich, V0.3)'] }
+];
 
 export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private map: MapDef = wurzelheim;
@@ -103,7 +120,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Debug
     this.debugText.setText(
-      `Wurzelheim  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}`
+      `Wurzelheim  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E/Space=interact, Shift=run]`
     );
   }
 
@@ -129,6 +146,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         'Marktstand: Heute frischer Honig und Sonnenblumen-Samen.',
         'Marktstand: (Markt-Mechanik kommt in V0.3)'
       ]);
+      return;
+    }
+    // Building-Tuer?
+    const door = BUILDING_DOORS.find((d) => d.tileX === front.tileX && d.tileY === front.tileY);
+    if (door) {
+      this.dialog.open(door.dialog);
       return;
     }
   }
