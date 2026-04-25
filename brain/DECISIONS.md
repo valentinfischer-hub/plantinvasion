@@ -58,6 +58,13 @@ Append-only Log strategischer Entscheidungen. Jeder Eintrag hat Datum, Entscheid
 
 **Begruendung**: Bereits installiert, Repo lebt, Switching-Costs zu hoch. Phaser kann alles was wir brauchen (Tile-Movement, Sprite-Animation, Audio, Input-Handling).
 
+### D-020 Battle-System V2: Pokemon-Style mit Move-Auswahl (revidiert D-002)
+**Entscheidung**: Auto-Battle wurde abgeschafft. Stattdessen Pokemon-Style turn-based Battle mit Move-Auswahl. Jede Pflanze hat 4 Moves, 33 Attacken-Datenbank, Status-Effekte, Stat-Modifikatoren.
+
+**Begruendung**: Auto-Battle war Cognitive-Low aber auch Spannungs-Low. User wuenscht aktive Spielentscheidungen, mehr Spass beim Kaempfen. Pokemon-Formel ist bewaehrt und passt zum Cozy-Sammler-Vibe.
+
+**Konsequenz**: D-002 Auto-Battle wird durch D-020 ersetzt. moves.ts, BattleEngine.applyMove/runMoveRound, BattleScene mit 4 Move-Buttons. Status: welk, vergiftet, schlaf, wurzeln, pilz. Wild-AI mit 70/20/10 random/damage-best/status-Verteilung.
+
 ### D-017 Crossing V0.1 mit X-Hotkey statt UI-Mode-Toggle
 **Entscheidung**: Crossing wird mit X-Hotkey getriggert, kreuzt die ersten beiden Pflanzen im State. Kein UI-Mode-Toggle in V0.1.
 
@@ -114,7 +121,14 @@ Append-only Log strategischer Entscheidungen. Jeder Eintrag hat Datum, Entscheid
 
 **Konsequenz**: 11 neue Texture-Keys (5 Mordwald, 6 Magmabluete) in `src/assets/biomeFallbackTiles.ts`. Registry-Update in `spriteRegistry.ts`. Loader skipt diese Keys beim PNG-Load (FALLBACK_TILE_KEYS-Filter).
 
-### D-019 Growth-System V0.2 (Aufwachsystem-Rework, 2026-04-25)
+### D-021 Booster-System V0.1 plus Seed-Acquisition plus 10 neue Spezies (2026-04-25)
+**Entscheidung**: Wachstums-Erweiterung um 9 Booster-Items (Vulkan-Asche, Premium-Duenger, Sumpf-Pollen, Pristine-Pollen, Sun-Lamp, Sprinkler, Hybrid-Booster, Bronze/Silver/Gold-Erde) plus Seed-Items pro Spezies plus Daily-Login-Reward plus Markt-Daily-Roster. 10 neue plantbare Spezies (Rose, Aloe Vera, Orchid, Fern, Mint, Iris, Snapdragon, Water Lily, Daffodil, Coneflower).
+
+**Begruendung**: User-Feedback "mehr Wege Pflanzen zu bekommen, mehr Optionen zu staerken, mehr Spezies". Aktive Pflege belohnen (Booster-Stack), Sammler-Anreiz (mehr Pokedex-Eintraege), Wirtschafts-Loop (Coin-Sink fuer Booster vs. Bloom-Income). Procedural-Plant-Sprites in `proceduralPlantSprites.ts` machen die 10 neuen Spezies ohne PixelLab-Cost spielbar.
+
+**Konsequenz**: Save-Migration v6 -> v7 mit Backfill (activeBoosters: [], gardenSlots default normal, lastDailyLoginAt: 0, marketShopRoster). Plant-Type um activeBoosters erweitert. GardenScene: Saeen-Header-Button (Hotkey S), Booster-Apply-Modal, Soil-Upgrade-Button, Active-Booster-Anzeige im Detail. 14 von 14 Unit-Tests PASS (Multiplikator-Stack, Soil-Tiers, Booster-Expiry, Tier-Pollen-Roll). Markt-Shop-UI verschoben auf naechsten Sprint.
+
+### D-011 Existing Greenhouse-Codebase wird als Heimatgarten erhalten
 **Entscheidung**: Sprint 0 plus Sprint 1 Code (Greenhouse-Grid, 5 Starter-Pflanzen, XP-Curve, Save-System) bleibt erhalten. Wird in S-03 zu Sub-Scene "GardenScene" innerhalb des Heimatdorfs Wurzelheim. Tile-Movement und Worldmap werden drumherum gebaut, nicht statt dessen.
 
 **Begruendung**: Existing Code laeuft live auf plantinvasion.netlify.app, hat funktionierende Mechaniken die wir brauchen (Wachstum, XP, Stats, Save). Wegwerfen waere Verlust an Working-Code. Pivot bedeutet Erweiterung nach aussen, nicht Reset nach innen. Existing 5 Pflanzen werden Tutorial-Pflanzen, restliche 195 kommen iterativ.

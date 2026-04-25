@@ -17,6 +17,8 @@ brain/
 ├── design/                     (Game-Design-Dokumente)
 │   ├── GDD.md                  (Game Design Document, kanonisch)
 │   ├── growth_system.md       (Aufwachsystem V0.2: Hydration, Quality-Tier, Bloom)
+│   ├── booster_system.md      (Booster-Items V0.1, Soil-Tiers)
+│   ├── seed_acquisition.md     (Seed-Items, Daily-Login, Markt-Roster)
 │   ├── biome_mordwald.md       (Karnivoren-Sumpf-Biom V0.1)
 │   ├── biome_magmabluete.md    (Vulkan-Pyrophyt-Biom V0.1)
 │   ├── endgame.md              (Endgame V0.1, Mythical, Verodyne, Eden Lost)

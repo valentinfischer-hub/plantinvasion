@@ -1,5 +1,13 @@
-import type { GrowthStage, Plant, QualityTier } from '../types/plant';
+import type { GrowthStage, Plant, QualityTier, SoilTier } from '../types/plant';
 import { getSpecies } from './species';
+import {
+  xpBoosterMultiplier,
+  hasActiveSunLamp,
+  hasActiveSprinkler,
+  pruneExpired,
+  SOIL_XP_MULTIPLIER,
+  SOIL_HYDRATION_DECAY_FACTOR
+} from './boosters';
 
 /**
  * Leveling-System V0.4 (Growth V0.2)
@@ -226,6 +234,7 @@ export function rollHarvest(plant: Plant): HarvestOutput {
 export interface TickContext {
   zone: string;
   now: number;
+  soilTier?: SoilTier;
 }
 
 export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant {
@@ -234,13 +243,21 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
       ? { zone: 'wurzelheim', now: ctxOrNow }
       : ctxOrNow ?? { zone: 'wurzelheim', now: Date.now() };
   const { now, zone } = ctx;
+  const soilTier: SoilTier = ctx.soilTier ?? 'normal';
 
   const dtMs = now - plant.lastTickAt;
   if (dtMs <= 0) return { ...plant, lastTickAt: now };
 
+  // Booster-Cleanup zuerst
+  plant = pruneExpired(plant, now);
+
   const dtSec = dtMs / 1000;
-  // Hydration sinkt
-  let hydration = Math.max(0, plant.hydration - DEHYDRATION_PER_SEC * dtSec);
+  // Hydration sinkt - Soil-Tier kann Decay verlangsamen, Sprinkler haelt min 80
+  const decayFactor = SOIL_HYDRATION_DECAY_FACTOR[soilTier];
+  let hydration = Math.max(0, plant.hydration - DEHYDRATION_PER_SEC * dtSec * decayFactor);
+  if (hasActiveSprinkler(plant, now)) {
+    hydration = Math.max(hydration, 80);
+  }
   // Tracking trockene Stunden
   const wasDry = plant.hydration < 5;
   let consecutiveDryHours = wasDry
@@ -254,12 +271,17 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
 
   // XP-Delta berechnen
   const hydMult = hydrationMultiplier({ ...plant, hydration });
+  const todMult = hasActiveSunLamp(plant, now) ? 1.0 : timeOfDayMultiplier(now);
+  const boosterMult = xpBoosterMultiplier(plant, now);
+  const soilMult = SOIL_XP_MULTIPLIER[soilTier];
   const xpPerSec = BASE_XP_PER_SEC *
     stageMultiplier(stageOf(plant)) *
     biomeMatchMultiplier(plant.speciesSlug, zone) *
     hybridVigorMultiplier(plant) *
-    timeOfDayMultiplier(now) *
-    hydMult;
+    todMult *
+    hydMult *
+    boosterMult *
+    soilMult;
 
   const xpDelta = xpPerSec * dtSec;
 
@@ -403,6 +425,7 @@ export function defaultGrowthFields(): Pick<
   | 'pendingHarvest'
   | 'consecutiveDryHours'
   | 'highestStageReached'
+  | 'activeBoosters'
 > {
   return {
     hydration: HYDRATION_MAX,
@@ -410,6 +433,7 @@ export function defaultGrowthFields(): Pick<
     generation: 0,
     pendingHarvest: false,
     consecutiveDryHours: 0,
-    highestStageReached: 0
+    highestStageReached: 0,
+    activeBoosters: []
   };
 }

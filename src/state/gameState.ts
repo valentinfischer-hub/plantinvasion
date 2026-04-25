@@ -1,7 +1,9 @@
-import type { Plant } from '../types/plant';
+import type { GardenSlotMeta, Plant, SoilTier } from '../types/plant';
 import { rollStarterStats, crossStats, rollMutation } from '../data/genetics';
 import { tickPlant, defaultGrowthFields, harvestPlant, isHarvestReady } from '../data/leveling';
 import { getSpecies } from '../data/species';
+import { applyItemToPlant, nextSoilTier, SOIL_COSTS, SOIL_MUTATION_BONUS } from '../data/boosters';
+import { getItem, isSeedItem, speciesSlugFromSeed } from '../data/items';
 import { loadGame, saveGame, SAVE_SCHEMA_VERSION, type GameState } from './storage';
 
 export const GRID_COLUMNS = 4;
@@ -70,14 +72,27 @@ export function newGame(): GameState {
       zone: 'wurzelheim',
       lastSceneVisited: 'OverworldScene'
     },
-    pokedex: { discovered: [], captured: [] },
-    inventory: { 'basic-lure': 3, 'heal-tonic': 2 },
+    pokedex: { discovered: ['sunflower'], captured: ['sunflower'] },
+    inventory: { 'basic-lure': 3, 'heal-tonic': 2, 'compost-tea': 2, 'seed-fern': 1 },
     quests: {},
-    tutorial: { step: 0, done: false }
+    gardenSlots: defaultGardenSlots(),
+    lastDailyLoginAt: 0,
+    marketShopRosterDay: 0,
+    marketShopRoster: { seedSlugs: [], boosterSlugs: [] }
   };
   const starter = createPlantOfSpecies('sunflower', state.plants);
   if (starter) state.plants.push(starter);
   return state;
+}
+
+export function defaultGardenSlots(): GardenSlotMeta[] {
+  const slots: GardenSlotMeta[] = [];
+  for (let y = 0; y < GRID_ROWS; y++) {
+    for (let x = 0; x < GRID_COLUMNS; x++) {
+      slots.push({ x, y, soilTier: 'normal' });
+    }
+  }
+  return slots;
 }
 
 /**
@@ -103,13 +118,152 @@ class GameStore {
   /** Wendet einen Tick auf alle Pflanzen an. Garten ist immer neutrale Zone "wurzelheim". */
   tick(now = Date.now()): void {
     let mutated = false;
-    const zone = 'wurzelheim'; // Garten ist Heimat-Garden, neutrales Biom-Match
+    const zone = 'wurzelheim';
     this.state.plants = this.state.plants.map((p) => {
-      const updated = tickPlant(p, { zone, now });
+      const soilTier = this.getSoilTier(p.gridX, p.gridY);
+      const updated = tickPlant(p, { zone, now, soilTier });
       if (updated !== p) mutated = true;
       return updated;
     });
     if (mutated) this.notify();
+  }
+
+  // =========================================================
+  // Booster + Seed + Soil
+  // =========================================================
+
+  getGardenSlots(): GardenSlotMeta[] {
+    if (!this.state.gardenSlots || this.state.gardenSlots.length === 0) {
+      this.state.gardenSlots = defaultGardenSlots();
+    }
+    return this.state.gardenSlots;
+  }
+
+  getSoilTier(gridX: number, gridY: number): SoilTier {
+    const slot = this.getGardenSlots().find((s) => s.x === gridX && s.y === gridY);
+    return slot?.soilTier ?? 'normal';
+  }
+
+  upgradeSoil(gridX: number, gridY: number): { ok: boolean; reason?: string; newTier?: SoilTier } {
+    const slot = this.getGardenSlots().find((s) => s.x === gridX && s.y === gridY);
+    if (!slot) return { ok: false, reason: 'Slot nicht gefunden' };
+    const next = nextSoilTier(slot.soilTier);
+    if (!next) return { ok: false, reason: 'Bereits Gold-Tier' };
+    const cost = SOIL_COSTS[next];
+    if (this.state.coins < cost) return { ok: false, reason: `Brauchst ${cost} Coins` };
+    this.state.coins -= cost;
+    slot.soilTier = next;
+    this.notify();
+    return { ok: true, newTier: next };
+  }
+
+  applyItemToPlant(plantId: string, itemSlug: string): { ok: boolean; reason?: string; message?: string } {
+    if (!this.hasItem(itemSlug)) return { ok: false, reason: 'Item nicht im Inventar' };
+    const plant = this.state.plants.find((p) => p.id === plantId);
+    if (!plant) return { ok: false, reason: 'Pflanze nicht gefunden' };
+    const result = applyItemToPlant(plant, itemSlug);
+    if (!result.ok) return { ok: false, reason: result.reason };
+    this.state.plants = this.state.plants.map((p) => (p.id === plantId ? result.plant : p));
+    this.consumeItem(itemSlug);
+    this.notify();
+    return { ok: true, message: result.message };
+  }
+
+  /**
+   * Saet einen Seed-Item ein und erstellt eine neue Pflanze (Stage 0).
+   * Item wird konsumiert.
+   */
+  plantSeed(seedSlug: string): { ok: boolean; reason?: string; plant?: Plant } {
+    if (!isSeedItem(seedSlug)) return { ok: false, reason: 'Kein Seed-Item' };
+    if (!this.hasItem(seedSlug)) return { ok: false, reason: 'Seed nicht im Inventar' };
+    const speciesSlug = speciesSlugFromSeed(seedSlug);
+    if (!speciesSlug) return { ok: false, reason: 'Ungueltiger Seed-Slug' };
+    const plant = createPlantOfSpecies(speciesSlug, this.state.plants);
+    if (!plant) return { ok: false, reason: 'Kein freier Slot oder unbekannte Spezies' };
+    this.state.plants.push(plant);
+    this.consumeItem(seedSlug);
+    this.captureSpecies(speciesSlug);
+    this.notify();
+    return { ok: true, plant };
+  }
+
+  /**
+   * Daily-Login-Reward. Gibt true zurueck wenn ein Reward heute schon verfuegbar ist.
+   * State wird aktualisiert, Reward in Inventar oder Coins.
+   */
+  claimDailyLogin(now = Date.now()): { ok: boolean; reward?: { label: string; coins?: number; itemSlug?: string } } {
+    const last = this.state.lastDailyLoginAt ?? 0;
+    if (now - last < 24 * 60 * 60 * 1000) {
+      return { ok: false };
+    }
+    const roll = Math.random();
+    let reward: { label: string; coins?: number; itemSlug?: string };
+    if (roll < 0.5) {
+      const coins = 50 + Math.floor(Math.random() * 100);
+      reward = { label: `+${coins} Coins`, coins };
+      this.addCoins(coins);
+    } else if (roll < 0.8) {
+      // Random seed aus discovered-Pool
+      const dex = this.getPokedex();
+      const pool = dex.captured.length > 0 ? dex.captured : ['sunflower'];
+      const slug = pool[Math.floor(Math.random() * pool.length)];
+      const itemSlug = `seed-${slug}`;
+      this.addItem(itemSlug, 1);
+      reward = { label: `1x ${itemSlug}`, itemSlug };
+    } else if (roll < 0.95) {
+      const boosters = ['volcano-ash', 'swamp-pollen', 'compost-tea'];
+      const slug = boosters[Math.floor(Math.random() * boosters.length)];
+      this.addItem(slug, 1);
+      reward = { label: `1x ${slug}`, itemSlug: slug };
+    } else {
+      this.addItem('pristine-pollen', 1);
+      reward = { label: '1x Pristine-Pollen', itemSlug: 'pristine-pollen' };
+    }
+    this.state.lastDailyLoginAt = now;
+    this.save();
+    return { ok: true, reward };
+  }
+
+  /**
+   * Markt-Shop-Roster. Aktualisiert taeglich auf Basis des Real-Time-Tags.
+   */
+  getMarketShopRoster(now = Date.now()): { seedSlugs: string[]; boosterSlugs: string[] } {
+    const dayIndex = Math.floor((now - this.state.createdAt) / (24 * 60 * 60 * 1000));
+    if (this.state.marketShopRosterDay !== dayIndex || !this.state.marketShopRoster) {
+      const dex = this.getPokedex();
+      const seedPool = dex.discovered.length > 0 ? dex.discovered : ['sunflower', 'fern', 'mint'];
+      // Zufaellig 5 Seeds (mit Wiederholung-Toleranz wenn pool < 5)
+      const seedSlugs: string[] = [];
+      for (let i = 0; i < 5; i++) {
+        const slug = seedPool[Math.floor(Math.random() * seedPool.length)];
+        seedSlugs.push(`seed-${slug}`);
+      }
+      const boosterPool = ['compost-tea', 'volcano-ash', 'swamp-pollen', 'sun-lamp', 'sprinkler'];
+      const boosterSlugs: string[] = [];
+      for (let i = 0; i < 2; i++) {
+        boosterSlugs.push(boosterPool[Math.floor(Math.random() * boosterPool.length)]);
+      }
+      this.state.marketShopRoster = { seedSlugs, boosterSlugs };
+      this.state.marketShopRosterDay = dayIndex;
+      this.save();
+    }
+    return this.state.marketShopRoster;
+  }
+
+  buyShopItem(itemSlug: string): { ok: boolean; reason?: string } {
+    const item = getItem(itemSlug);
+    if (!item) return { ok: false, reason: 'Item unbekannt' };
+    if (this.state.coins < item.buyPrice) return { ok: false, reason: `Brauchst ${item.buyPrice} Coins` };
+    this.state.coins -= item.buyPrice;
+    this.addItem(itemSlug, 1);
+    this.notify();
+    return { ok: true };
+  }
+
+  // -------- Helpers fuer Mutation-Bonus aus Soil --------
+  getMutationBonusForSlot(gridX: number, gridY: number): number {
+    const tier = this.getSoilTier(gridX, gridY);
+    return SOIL_MUTATION_BONUS[tier];
   }
 
   updatePlant(plantId: string, fn: (p: Plant) => Plant): void {
@@ -178,7 +332,6 @@ class GameStore {
   }
 
   resetToNewGame(): void {
-    // resetGame() loescht Storage, dann newGame() erzeugt frischen State
     this.state = newGame();
     if (this.state.plants.length === 0) {
       const starter = createPlantOfSpecies('sunflower', this.state.plants);
@@ -186,6 +339,25 @@ class GameStore {
     }
     this.save();
     this.notify();
+  }
+
+  getTutorial(): { step: number; done: boolean } {
+    return this.state.tutorial ?? { step: 5, done: true };
+  }
+
+  advanceTutorial(toStep: number): void {
+    if (!this.state.tutorial) this.state.tutorial = { step: 0, done: false };
+    if (this.state.tutorial.done) return;
+    this.state.tutorial.step = Math.max(this.state.tutorial.step, toStep);
+    if (this.state.tutorial.step >= 5) {
+      this.state.tutorial.done = true;
+    }
+    this.save();
+  }
+
+  skipTutorial(): void {
+    this.state.tutorial = { step: 5, done: true };
+    this.save();
   }
 
   setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GardenScene' = 'OverworldScene', zone?: string): void {
@@ -247,25 +419,6 @@ class GameStore {
   getActiveQuests(): string[] {
     if (!this.state.quests) return [];
     return Object.entries(this.state.quests).filter(([, s]) => s === 'active').map(([id]) => id);
-  }
-
-  getTutorial(): { step: number; done: boolean } {
-    return this.state.tutorial ?? { step: 5, done: true };
-  }
-
-  advanceTutorial(toStep: number): void {
-    if (!this.state.tutorial) this.state.tutorial = { step: 0, done: false };
-    if (this.state.tutorial.done) return;
-    this.state.tutorial.step = Math.max(this.state.tutorial.step, toStep);
-    if (this.state.tutorial.step >= 5) {
-      this.state.tutorial.done = true;
-    }
-    this.save();
-  }
-
-  skipTutorial(): void {
-    this.state.tutorial = { step: 5, done: true };
-    this.save();
   }
 
   getInventory(): Record<string, number> {
@@ -402,7 +555,7 @@ class GameStore {
     return () => this.listeners.delete(fn);
   }
 
-  public notify(): void {
+  private notify(): void {
     this.listeners.forEach((l) => l(this.state));
     this.save();
   }

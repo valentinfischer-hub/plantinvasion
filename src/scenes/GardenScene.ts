@@ -23,6 +23,9 @@ import {
 } from '../data/leveling';
 import { GROWTH_STAGE_NAMES, QUALITY_TIERS, type Plant, type QualityTier } from '../types/plant';
 import { getSpecies } from '../data/species';
+import { generateAllPlantStages } from '../assets/proceduralPlantSprites';
+import { listActiveBoosters, boosterRemainingMs } from '../data/boosters';
+import { isSeedItem, getItem } from '../data/items';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -54,9 +57,9 @@ export class GardenScene extends Phaser.Scene {
   }
 
   preload(): void {
-    Object.values(getSpecies('sunflower') ? {} : {});
-    const species = ['sunflower', 'spike-cactus', 'venus-flytrap', 'lavender', 'tomato-plant'];
-    species.forEach((slug) => {
+    // PNG-Stage-Sprites fuer Spezies mit existierendem Asset-Set
+    const pngSpecies = ['sunflower', 'spike-cactus', 'venus-flytrap', 'lavender', 'tomato-plant'];
+    pngSpecies.forEach((slug) => {
       STAGE_FILES.forEach((stageFile, idx) => {
         const key = `${slug}-${idx}`;
         if (!this.textures.exists(key)) {
@@ -69,6 +72,9 @@ export class GardenScene extends Phaser.Scene {
   create(): void {
     console.log('[GardenScene] create called');
     const { width } = this.scale;
+
+    // Procedural-Plant-Sprites fuer Spezies ohne PNG (V0.5 erweiterte Pokedex)
+    generateAllPlantStages(this);
 
     this.cameras.main.setBackgroundColor('#2d3a2a');
 
@@ -137,7 +143,78 @@ export class GardenScene extends Phaser.Scene {
       });
       const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
       owKey.on('down', () => this.scene.start('OverworldScene'));
+
+      // S = Seed-Plant-Modal
+      const seedKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+      seedKey.on('down', () => this.openSeedPlantModal());
     }
+
+    // Header-Button "Pflanze einsaeen"
+    const seedBtn = this.add.text(width - 70, 14, 'Saeen', {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#1a1f1a',
+      backgroundColor: '#9be36e',
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
+    seedBtn.on('pointerdown', () => this.openSeedPlantModal());
+  }
+
+  private openSeedPlantModal(): void {
+    if (this.detailPanel) {
+      this.detailPanel.destroy();
+      this.detailPanel = undefined;
+    }
+    const inv = gameStore.getInventory();
+    const seedSlugs = Object.keys(inv).filter((k) => isSeedItem(k) && (inv[k] ?? 0) > 0);
+    if (seedSlugs.length === 0) {
+      this.showFlash('Keine Samen im Inventar', '#ff7e7e');
+      return;
+    }
+    const { width, height } = this.scale;
+    const panelW = 320;
+    const panelH = Math.min(380, 80 + seedSlugs.length * 26);
+    const container = this.add.container(width / 2, height / 2);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x1a1f1a, 0.96);
+    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    bg.lineStyle(2, 0x9be36e, 0.8);
+    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    container.add(bg);
+    const title = this.add.text(0, -panelH / 2 + 12, 'Pflanze einsaeen', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
+    }).setOrigin(0.5, 0);
+    container.add(title);
+    seedSlugs.forEach((slug, i) => {
+      const item = getItem(slug);
+      const label = `${item?.name ?? slug} (${inv[slug]})`;
+      const btn = this.add.text(-panelW / 2 + 14, -panelH / 2 + 38 + i * 26, label, {
+        fontFamily: 'monospace', fontSize: '11px',
+        color: '#dcdcdc',
+        backgroundColor: '#2a3325',
+        padding: { left: 8, right: 8, top: 4, bottom: 4 }
+      }).setInteractive({ useHandCursor: true });
+      btn.on('pointerdown', () => {
+        const result = gameStore.plantSeed(slug);
+        if (result.ok) {
+          this.showFlash(`${item?.name ?? slug} eingesaeet`, '#9be36e');
+          container.destroy();
+          this.detailPanel = undefined;
+        } else {
+          this.showFlash(result.reason ?? 'Fehlgeschlagen', '#ff7e7e');
+        }
+      });
+      container.add(btn);
+    });
+    const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {
+      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
+    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    close.on('pointerdown', () => {
+      container.destroy();
+      this.detailPanel = undefined;
+    });
+    container.add(close);
+    this.detailPanel = container;
   }
 
   private flashText?: Phaser.GameObjects.Text;
@@ -515,6 +592,30 @@ export class GardenScene extends Phaser.Scene {
       container.add(bpText);
     }
 
+    // Active Boosters auflisten
+    const activeBoosters = listActiveBoosters(plant);
+    const boostY = starsY + (isBlooming(plant) ? 42 : 22);
+    if (activeBoosters.length > 0) {
+      const labels = activeBoosters.map((b) => {
+        const remMin = Math.round(boosterRemainingMs(b) / 60000);
+        const tag = b.type === 'xp' ? `${b.multiplier}x XP` :
+                    b.type === 'sun-lamp' ? 'Sun-Lamp' : 'Sprinkler';
+        return `${tag} (${remMin}m)`;
+      });
+      const boostText = this.add.text(-panelW / 2 + 14, boostY, `Boost: ${labels.join(', ')}`, {
+        fontFamily: 'monospace', fontSize: '10px', color: '#ffd166'
+      });
+      container.add(boostText);
+    }
+
+    // Soil-Tier Anzeige + Upgrade-Button
+    const soilTier = gameStore.getSoilTier(plant.gridX, plant.gridY);
+    const soilY = boostY + (activeBoosters.length > 0 ? 14 : 0);
+    const soilText = this.add.text(-panelW / 2 + 14, soilY, `Soil: ${soilTier}`, {
+      fontFamily: 'monospace', fontSize: '10px', color: '#bbbbbb'
+    });
+    container.add(soilText);
+
     // Wasser-Button
     const ready = canBeWatered(plant);
     const btnLabelW = ready
@@ -572,6 +673,34 @@ export class GardenScene extends Phaser.Scene {
       container.add(lockBtn);
     }
 
+    // Booster-Apply-Button
+    const boosterBtn = this.add.text(-90, panelH / 2 - 56, 'Booster anwenden', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#1a1f1a',
+      backgroundColor: '#ffd166',
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    boosterBtn.on('pointerdown', () => {
+      this.openBoosterApplyModal(plant.id);
+    });
+    container.add(boosterBtn);
+
+    // Soil-Upgrade-Button
+    const soilBtn = this.add.text(90, panelH / 2 - 56, 'Soil upgraden', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#1a1f1a',
+      backgroundColor: '#b86ee3',
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    soilBtn.on('pointerdown', () => {
+      const result = gameStore.upgradeSoil(plant.gridX, plant.gridY);
+      if (result.ok) {
+        this.showFlash(`Soil aufgeruestet zu ${result.newTier}`, '#b86ee3');
+        this.openDetailPanel(plant.id);
+      } else {
+        this.showFlash(result.reason ?? 'Soil-Upgrade fehlgeschlagen', '#ff7e7e');
+      }
+    });
+    container.add(soilBtn);
+
     // Close-Button
     const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {
       fontFamily: 'monospace', fontSize: '14px', color: '#888888'
@@ -582,6 +711,70 @@ export class GardenScene extends Phaser.Scene {
     });
     container.add(close);
 
+    this.detailPanel = container;
+  }
+
+  private openBoosterApplyModal(plantId: string): void {
+    if (this.detailPanel) {
+      this.detailPanel.destroy();
+      this.detailPanel = undefined;
+    }
+    const inv = gameStore.getInventory();
+    const applicableKinds = ['fertilizer', 'care-pollen', 'tier-pollen', 'sun-lamp', 'sprinkler', 'compost'];
+    const slugs = Object.keys(inv).filter((k) => {
+      const item = getItem(k);
+      return item && applicableKinds.includes(item.kind) && (inv[k] ?? 0) > 0;
+    });
+    if (slugs.length === 0) {
+      this.showFlash('Keine Booster im Inventar', '#ff7e7e');
+      this.openDetailPanel(plantId);
+      return;
+    }
+    const { width, height } = this.scale;
+    const panelW = 320;
+    const panelH = Math.min(360, 80 + slugs.length * 28);
+    const container = this.add.container(width / 2, height / 2);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x1a1f1a, 0.96);
+    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    bg.lineStyle(2, 0xffd166, 0.8);
+    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    container.add(bg);
+    const title = this.add.text(0, -panelH / 2 + 12, 'Booster anwenden', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#ffd166'
+    }).setOrigin(0.5, 0);
+    container.add(title);
+    slugs.forEach((slug, i) => {
+      const item = getItem(slug);
+      const label = `${item?.name ?? slug} (${inv[slug]})`;
+      const btn = this.add.text(-panelW / 2 + 14, -panelH / 2 + 38 + i * 28, label, {
+        fontFamily: 'monospace', fontSize: '11px',
+        color: '#dcdcdc',
+        backgroundColor: '#2a3325',
+        padding: { left: 8, right: 8, top: 4, bottom: 4 }
+      }).setInteractive({ useHandCursor: true });
+      btn.on('pointerdown', () => {
+        const r = gameStore.applyItemToPlant(plantId, slug);
+        if (r.ok) {
+          this.showFlash(r.message ?? 'Angewendet', '#ffd166');
+          container.destroy();
+          this.detailPanel = undefined;
+          this.openDetailPanel(plantId);
+        } else {
+          this.showFlash(r.reason ?? 'Fehlgeschlagen', '#ff7e7e');
+        }
+      });
+      container.add(btn);
+    });
+    const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {
+      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
+    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    close.on('pointerdown', () => {
+      container.destroy();
+      this.detailPanel = undefined;
+      this.openDetailPanel(plantId);
+    });
+    container.add(close);
     this.detailPanel = container;
   }
 }

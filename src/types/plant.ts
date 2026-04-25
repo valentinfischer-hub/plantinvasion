@@ -1,5 +1,5 @@
 /**
- * Plant-Typdefinitionen fuer Plantinvasion V0.4 (Growth-System V0.2)
+ * Plant-Typdefinitionen fuer Plantinvasion V0.5 (Growth-System V0.2 + Booster-System V0.1)
  */
 
 export type StatTriple = {
@@ -16,6 +16,20 @@ export type Rarity = 1 | 2 | 3 | 4 | 5;
 export type QualityTier = 'common' | 'fine' | 'quality' | 'premium' | 'pristine';
 export const QUALITY_TIERS: readonly QualityTier[] = ['common', 'fine', 'quality', 'premium', 'pristine'] as const;
 
+export type SoilTier = 'normal' | 'bronze' | 'silver' | 'gold';
+export const SOIL_TIERS: readonly SoilTier[] = ['normal', 'bronze', 'silver', 'gold'] as const;
+
+export type BoosterType = 'xp' | 'sun-lamp' | 'sprinkler';
+
+export interface ActiveBooster {
+  type: BoosterType;
+  startedAt: number;       // ms
+  durationMs: number;
+  multiplier?: number;     // bei xp-Boostern
+  /** Optional: Item-Slug der den Booster ausgeloest hat. */
+  fromItem?: string;
+}
+
 export interface PlantSpecies {
   slug: string;
   scientificName: string;
@@ -27,7 +41,7 @@ export interface PlantSpecies {
   spdBias: number;
   description: string;
   spriteSeedPrefix: string;
-  /** Bevorzugte Biome (Wachstums-Boost). Default: ['wurzelheim'] (neutraler Garden). */
+  /** Bevorzugte Biome (Wachstums-Boost). */
   preferredBiomes?: string[];
   /** Falsche Biome (Wachstums-Penalty). */
   wrongBiomes?: string[];
@@ -47,26 +61,35 @@ export interface Plant {
   nickname?: string;
 
   // Wachstum + XP
-  level: number;          // 1-100
-  xp: number;             // XP innerhalb des aktuellen Levels
-  totalXp: number;        // Gesamt-XP fuer Statistik
+  level: number;
+  xp: number;
+  totalXp: number;
 
   // Lifecycle
-  bornAt: number;         // ms timestamp
-  lastWateredAt: number;  // ms timestamp letzte Bewaesserung
-  lastTickAt: number;     // ms timestamp fuer XP-Akkumulation
+  bornAt: number;
+  lastWateredAt: number;
+  lastTickAt: number;
 
   // Growth-V0.2: Hydration und Care
-  hydration: number;             // 0-100, sinkt mit Zeit
-  careScore: number;             // 0+, akkumuliert ueber Pflege-Aktionen
-  qualityTier?: QualityTier;     // gesetzt sobald Adult-Stage erreicht
-  generation: number;            // 0 = Wild/Starter, 1 = F1-Hybrid, 2+ = F2+
-  lastBloomedAt?: number;        // ms timestamp letztes Bloom-Cycle-Reset
-  pendingHarvest: boolean;       // true wenn Bloom-Output bereit zum Ernten
-  consecutiveDryHours: number;   // Tracking fuer Stage-Down-Risk
-  highestStageReached: GrowthStage; // fuer Stage-Up-Animation und Tier-Snapshot
+  hydration: number;
+  careScore: number;
+  qualityTier?: QualityTier;
+  generation: number;
+  lastBloomedAt?: number;
+  pendingHarvest: boolean;
+  consecutiveDryHours: number;
+  highestStageReached: GrowthStage;
+
+  // Booster-V0.1
+  activeBoosters: ActiveBooster[];
 
   // UI
   gridX: number;
   gridY: number;
+}
+
+export interface GardenSlotMeta {
+  x: number;
+  y: number;
+  soilTier: SoilTier;
 }
