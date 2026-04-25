@@ -1,8 +1,8 @@
 import type { PlantFamily } from '../data/encounters';
+import { getMove, defaultMovesForFamily, type MoveDef, type StatusEffect } from '../data/moves';
 
 /**
- * Battle-Engine V0.1 mit 1v1 Auto-Battle und Type-Chart.
- * Damage-Formel und Family-Multiplier siehe brain/design/battle_system.md.
+ * Battle-Engine V0.2 mit Pokemon-Style Move-Selection plus Status-Effects.
  */
 
 export interface BattleStats {
@@ -13,6 +13,17 @@ export interface BattleStats {
   spd: number;
 }
 
+export interface ActiveStatus {
+  effect: StatusEffect;
+  turnsLeft: number;
+}
+
+export interface StatModifier {
+  stat: 'atk' | 'def' | 'spd';
+  mult: number;
+  turnsLeft: number;
+}
+
 export interface BattleSide {
   name: string;
   family: PlantFamily;
@@ -20,6 +31,10 @@ export interface BattleSide {
   level: number;
   isPlayer: boolean;
   spriteColor: number;
+  moveSlugs: string[];
+  statuses: ActiveStatus[];
+  modifiers: StatModifier[];
+  spriteKey?: string;
 }
 
 const TYPE_CHART: Record<PlantFamily, Partial<Record<PlantFamily, number>>> = {
@@ -36,101 +51,206 @@ const TYPE_CHART: Record<PlantFamily, Partial<Record<PlantFamily, number>>> = {
   Mythical: { Mythical: 1.5 }
 };
 
-const BASE_ATTACK_POWER = 25;
-
 export function familyMultiplier(attacker: PlantFamily, defender: PlantFamily): number {
   return TYPE_CHART[attacker]?.[defender] ?? 1.0;
 }
 
-export function calcDamage(
-  attacker: BattleSide,
-  defender: BattleSide,
-  rng: () => number = Math.random
-): { dmg: number; effectiveness: number; crit: boolean } {
-  const ratio = Math.log2(1 + attacker.stats.atk / Math.max(1, defender.stats.def));
-  const baseDmg = ratio * BASE_ATTACK_POWER * 4;
-  const effectiveness = familyMultiplier(attacker.family, defender.family);
-  const crit = rng() < attacker.stats.spd / 1000;
-  const critMod = crit ? 1.5 : 1;
-  const dmgRaw = baseDmg * effectiveness * critMod;
-  const cap = Math.floor(defender.stats.maxHp * 0.5);
-  const dmg = Math.max(1, Math.min(cap, Math.floor(dmgRaw)));
-  return { dmg, effectiveness, crit };
+/** Effektive Stat unter Beruecksichtigung von Modifikatoren. */
+export function effectiveStat(side: BattleSide, stat: 'atk' | 'def' | 'spd'): number {
+  let base = side.stats[stat];
+  for (const m of side.modifiers) {
+    if (m.stat === stat) base *= m.mult;
+  }
+  // Status-Effekte
+  if (side.statuses.some((s) => s.effect === 'wilted') && stat === 'atk') base *= 0.75;
+  if (side.statuses.some((s) => s.effect === 'fungus') && stat === 'def') base *= 0.7;
+  return Math.max(1, Math.floor(base));
 }
 
-export interface RoundResult {
-  attackerFirst: BattleSide;
-  defenderFirst: BattleSide;
-  dmgFirst: number;
-  effectivenessFirst: number;
-  critFirst: boolean;
-  dmgSecond: number;
-  effectivenessSecond: number;
-  critSecond: boolean;
+export function hasStatus(side: BattleSide, effect: StatusEffect): boolean {
+  return side.statuses.some((s) => s.effect === effect);
+}
+
+export interface MoveResult {
+  attacker: BattleSide;
+  defender: BattleSide;
+  move: MoveDef;
+  hit: boolean;
+  dmg: number;
+  effectiveness: number;
+  crit: boolean;
+  status?: StatusEffect;
+  selfHeal?: number;
+  log: string;
+}
+
+export function applyMove(attacker: BattleSide, defender: BattleSide, move: MoveDef, rng: () => number = Math.random): MoveResult {
+  let log = `${attacker.name} setzt ${move.name} ein!`;
+
+  // Schlaf: Zug verloren
+  if (hasStatus(attacker, 'asleep')) {
+    return {
+      attacker, defender, move,
+      hit: false, dmg: 0, effectiveness: 1, crit: false,
+      log: `${attacker.name} schlaeft tief und kann nicht angreifen.`
+    };
+  }
+
+  // Accuracy
+  if (rng() > move.accuracy) {
+    return {
+      attacker, defender, move,
+      hit: false, dmg: 0, effectiveness: 1, crit: false,
+      log: `${log} Verfehlt!`
+    };
+  }
+
+  // Damage
+  let dmg = 0;
+  let effectiveness = 1;
+  let crit = false;
+  if (move.power > 0) {
+    const atk = effectiveStat(attacker, 'atk');
+    const def = effectiveStat(defender, 'def');
+    const ratio = Math.log2(1 + atk / Math.max(1, def));
+    effectiveness = familyMultiplier(attacker.family, defender.family);
+    crit = rng() < attacker.stats.spd / 600;
+    const critMod = crit ? 1.5 : 1;
+    const baseDmg = ratio * move.power * 1.2;
+    const cap = Math.floor(defender.stats.maxHp * 0.55);
+    dmg = Math.max(1, Math.min(cap, Math.floor(baseDmg * effectiveness * critMod)));
+    defender.stats.hp = Math.max(0, defender.stats.hp - dmg);
+    log += `\n${dmg} Schaden${crit ? ' (KRITISCH!)' : ''}`;
+    if (effectiveness > 1) log += ' - Sehr effektiv!';
+    else if (effectiveness < 1) log += ' - Wenig effektiv...';
+  }
+
+  // Self-Heal
+  let selfHeal = 0;
+  if (move.heal && move.heal > 0) {
+    selfHeal = Math.floor(attacker.stats.maxHp * move.heal);
+    attacker.stats.hp = Math.min(attacker.stats.maxHp, attacker.stats.hp + selfHeal);
+    log += `\n${attacker.name} regeneriert ${selfHeal} HP.`;
+  }
+
+  // Self-Boost
+  if (move.selfBoost) {
+    attacker.modifiers.push({ stat: move.selfBoost.stat, mult: move.selfBoost.mult, turnsLeft: move.selfBoost.turns });
+    const direction = move.selfBoost.mult > 1 ? 'steigt' : 'sinkt';
+    log += `\n${move.selfBoost.stat.toUpperCase()} von ${attacker.name} ${direction}.`;
+  }
+
+  // Enemy-Debuff
+  if (move.enemyDebuff) {
+    defender.modifiers.push({ stat: move.enemyDebuff.stat, mult: move.enemyDebuff.mult, turnsLeft: move.enemyDebuff.turns });
+    log += `\n${move.enemyDebuff.stat.toUpperCase()} von ${defender.name} sinkt.`;
+  }
+
+  // Status
+  let appliedStatus: StatusEffect | undefined;
+  if (move.status && rng() < move.status.chance) {
+    if (!defender.statuses.some((s) => s.effect === move.status!.effect)) {
+      defender.statuses.push({ effect: move.status.effect, turnsLeft: move.status.turns ?? 3 });
+      appliedStatus = move.status.effect;
+      log += `\n${defender.name} ist nun ${statusName(move.status.effect)}!`;
+    }
+  }
+
+  return {
+    attacker, defender, move,
+    hit: true, dmg, effectiveness, crit,
+    status: appliedStatus, selfHeal, log
+  };
+}
+
+export function statusName(s: StatusEffect): string {
+  switch (s) {
+    case 'wilted': return 'welk';
+    case 'pests': return 'von Schaedlingen befallen';
+    case 'poisoned': return 'vergiftet';
+    case 'asleep': return 'eingeschlafen';
+    case 'rooted': return 'gefangen in Wurzeln';
+    case 'fungus': return 'pilzbefallen';
+    case 'frostbite': return 'erfroren';
+  }
+}
+
+/**
+ * Tickt Status-Effekte am Ende einer Runde (HP-Damage, Turn-Decrement, Cleanup).
+ */
+export function tickStatuses(side: BattleSide): string[] {
+  const logs: string[] = [];
+  for (const status of side.statuses) {
+    if (status.effect === 'poisoned' || status.effect === 'pests') {
+      const dmg = Math.floor(side.stats.maxHp * 0.08);
+      side.stats.hp = Math.max(0, side.stats.hp - dmg);
+      logs.push(`${side.name} verliert ${dmg} HP durch ${statusName(status.effect)}.`);
+    }
+    status.turnsLeft -= 1;
+  }
+  side.statuses = side.statuses.filter((s) => s.turnsLeft > 0);
+  for (const m of side.modifiers) m.turnsLeft -= 1;
+  side.modifiers = side.modifiers.filter((m) => m.turnsLeft > 0);
+  return logs;
+}
+
+/**
+ * Round-Auswertung: beide Sides waehlen Move, dann Initiative-Reihenfolge.
+ */
+export interface RoundOutcome {
+  results: MoveResult[];
+  tickLogs: string[];
   battleOver: boolean;
   winner?: BattleSide;
-  loser?: BattleSide;
 }
 
-export function runRound(player: BattleSide, wild: BattleSide, rng: () => number = Math.random): RoundResult {
-  // Initiative durch SPD
-  const playerFirst = player.stats.spd >= wild.stats.spd;
+export function runMoveRound(
+  player: BattleSide,
+  wild: BattleSide,
+  playerMoveSlug: string,
+  wildMoveSlug: string,
+  rng: () => number = Math.random
+): RoundOutcome {
+  const playerMove = getMove(playerMoveSlug);
+  const wildMove = getMove(wildMoveSlug);
+  if (!playerMove || !wildMove) {
+    return { results: [], tickLogs: ['Move nicht gefunden.'], battleOver: false };
+  }
+
+  const playerPriority = playerMove.priority;
+  const wildPriority = wildMove.priority;
+  let playerFirst = false;
+  if (playerPriority !== wildPriority) {
+    playerFirst = playerPriority > wildPriority;
+  } else {
+    playerFirst = effectiveStat(player, 'spd') >= effectiveStat(wild, 'spd');
+  }
+
+  const results: MoveResult[] = [];
   const a1 = playerFirst ? player : wild;
   const d1 = playerFirst ? wild : player;
-  const r1 = calcDamage(a1, d1, rng);
-  d1.stats.hp = Math.max(0, d1.stats.hp - r1.dmg);
+  const m1 = playerFirst ? playerMove : wildMove;
+  results.push(applyMove(a1, d1, m1, rng));
 
-  let dmgSecond = 0, effSecond = 0, critSecond = false;
   if (d1.stats.hp > 0) {
     const a2 = d1;
     const d2 = a1;
-    const r2 = calcDamage(a2, d2, rng);
-    d2.stats.hp = Math.max(0, d2.stats.hp - r2.dmg);
-    dmgSecond = r2.dmg;
-    effSecond = r2.effectiveness;
-    critSecond = r2.crit;
+    const m2 = playerFirst ? wildMove : playerMove;
+    results.push(applyMove(a2, d2, m2, rng));
   }
+
+  const tickLogs: string[] = [];
+  if (player.stats.hp > 0) tickLogs.push(...tickStatuses(player));
+  if (wild.stats.hp > 0) tickLogs.push(...tickStatuses(wild));
 
   const battleOver = player.stats.hp <= 0 || wild.stats.hp <= 0;
   const winner = battleOver ? (player.stats.hp > 0 ? player : wild) : undefined;
-  const loser = battleOver ? (player.stats.hp > 0 ? wild : player) : undefined;
 
-  return {
-    attackerFirst: a1,
-    defenderFirst: d1,
-    dmgFirst: r1.dmg,
-    effectivenessFirst: r1.effectiveness,
-    critFirst: r1.crit,
-    dmgSecond,
-    effectivenessSecond: effSecond,
-    critSecond,
-    battleOver,
-    winner,
-    loser
-  };
+  return { results, tickLogs, battleOver, winner };
 }
 
-export function makeStatsForLevel(level: number, atkBias = 0, defBias = 0, spdBias = 0): BattleStats {
-  const hp = 30 + level * 10;
-  return {
-    hp,
-    maxHp: hp,
-    atk: Math.max(5, 15 + level * 5 + atkBias),
-    def: Math.max(5, 12 + level * 4 + defBias),
-    spd: Math.max(5, 14 + level * 4 + spdBias)
-  };
-}
+// === Scenario / Setup ===
 
-export function effectivenessLabel(eff: number): string {
-  if (eff >= 1.5) return 'Sehr effektiv!';
-  if (eff <= 0.5) return 'Wenig effektiv...';
-  return '';
-}
-
-
-/**
- * Region-Tier limitiert max-Level fuer Wild-Encounter und damit Stats-Decke.
- */
 export const REGION_TIERS: Record<string, { tier: number; maxLevel: number }> = {
   wurzelheim: { tier: 1, maxLevel: 5 },
   verdanto: { tier: 2, maxLevel: 10 },
@@ -146,4 +266,68 @@ export const REGION_TIERS: Record<string, { tier: number; maxLevel: number }> = 
 export function clampLevelToRegion(level: number, zone: string): number {
   const cap = REGION_TIERS[zone]?.maxLevel ?? 100;
   return Math.min(Math.max(1, level), cap);
+}
+
+export function makeStatsForLevel(level: number, atkBias = 0, defBias = 0, spdBias = 0): BattleStats {
+  const hp = 35 + level * 12;
+  return {
+    hp,
+    maxHp: hp,
+    atk: Math.max(5, 18 + level * 5 + atkBias),
+    def: Math.max(5, 14 + level * 4 + defBias),
+    spd: Math.max(5, 16 + level * 4 + spdBias)
+  };
+}
+
+export function effectivenessLabel(eff: number): string {
+  if (eff >= 1.5) return 'Sehr effektiv!';
+  if (eff <= 0.5) return 'Wenig effektiv...';
+  return '';
+}
+
+/** Build a BattleSide given family and level. */
+export function makeBattleSide(opts: {
+  name: string;
+  family: PlantFamily;
+  level: number;
+  isPlayer: boolean;
+  spriteColor?: number;
+  spriteKey?: string;
+  moveSlugs?: string[];
+  atkBias?: number;
+  defBias?: number;
+  spdBias?: number;
+}): BattleSide {
+  const moveSlugs = opts.moveSlugs ?? defaultMovesForFamily(opts.family);
+  return {
+    name: opts.name,
+    family: opts.family,
+    level: opts.level,
+    isPlayer: opts.isPlayer,
+    spriteColor: opts.spriteColor ?? 0x9be36e,
+    spriteKey: opts.spriteKey,
+    moveSlugs: moveSlugs.slice(0, 4),
+    stats: makeStatsForLevel(opts.level, opts.atkBias, opts.defBias, opts.spdBias),
+    statuses: [],
+    modifiers: []
+  };
+}
+
+/**
+ * Wild AI: einfacher Move-Picker.
+ * - 70% random move, 20% damage-best, 10% status-move falls vorhanden
+ */
+export function pickWildMove(wild: BattleSide, rng: () => number = Math.random): string {
+  const r = rng();
+  const moves = wild.moveSlugs.map(getMove).filter(Boolean) as MoveDef[];
+  if (moves.length === 0) return 'tackle';
+  if (r < 0.2) {
+    // damage-best
+    const dmgMoves = moves.filter((m) => m.power > 0).sort((a, b) => b.power - a.power);
+    if (dmgMoves[0]) return dmgMoves[0].slug;
+  } else if (r < 0.3) {
+    const statusMoves = moves.filter((m) => m.status);
+    if (statusMoves.length > 0) return statusMoves[Math.floor(rng() * statusMoves.length)].slug;
+  }
+  return moves[Math.floor(rng() * moves.length)].slug;
 }

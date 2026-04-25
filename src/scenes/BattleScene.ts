@@ -3,13 +3,16 @@ import { gameStore } from '../state/gameState';
 import { sfx } from '../audio/sfxGenerator';
 import {
   type BattleSide,
-  makeStatsForLevel,
-  runRound,
+  makeBattleSide,
+  runMoveRound,
+  clampLevelToRegion,
+  pickWildMove,
   effectivenessLabel,
-  clampLevelToRegion
+  statusName
 } from '../systems/BattleEngine';
 import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, type EncounterDef } from '../data/encounters';
 import { getSpecies } from '../data/species';
+import { getMove, defaultMovesForFamily, type MoveDef } from '../data/moves';
 
 interface BattleSceneInitData {
   poolKey?: string;
@@ -32,159 +35,242 @@ export class BattleScene extends Phaser.Scene {
   private playerHpText!: Phaser.GameObjects.Text;
   private wildHpText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
-  private autoBattle = false;
+  private statusTextWild!: Phaser.GameObjects.Text;
+  private statusTextPlayer!: Phaser.GameObjects.Text;
   private over = false;
-  private playerSprite!: Phaser.GameObjects.Rectangle;
-  private wildSprite!: Phaser.GameObjects.Rectangle;
-  private actionButtons: Phaser.GameObjects.Container[] = [];
-  private nextRoundDelay = 1000;
-  private lastRoundAt = 0;
+  private playerSprite!: Phaser.GameObjects.Sprite;
+  private wildSprite!: Phaser.GameObjects.Sprite;
+  private moveButtons: Phaser.GameObjects.Container[] = [];
+  private waitingForInput = false;
   private xpReward = 0;
-  private capturedEnc?: { slug: string; rarity: number; level: number; atkBias: number; defBias: number; spdBias: number };
+  private capturedEnc?: { slug: string; rarity: number; level: number };
+  private poolKey: string = 'wurzelheim-tallgrass';
+  private uiCam!: Phaser.Cameras.Scene2D.Camera;
 
   constructor() {
     super('BattleScene');
   }
 
-  private poolKey: string = 'wurzelheim-tallgrass';
-
   init(data: BattleSceneInitData = {}) {
     this.over = false;
-    this.autoBattle = false;
     this.poolKey = data.poolKey ?? 'wurzelheim-tallgrass';
   }
 
   create(): void {
     const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor('#2d3a2a');
+    this.cameras.main.setBackgroundColor('#1f3327');
+    this.uiCam = this.cameras.add(0, 0, width, height);
+    this.uiCam.setZoom(1);
 
-    // Setup Player-Plant aus gameStore (erste Plant)
+    // Setup Player-Plant
     const state = gameStore.get();
     const playerPlant = state.plants[0];
     if (!playerPlant) {
-      // Sollte nicht passieren weil Starter-Plant immer da ist
       this.endBattle('Keine Pflanze im Garten zum Kaempfen.');
       return;
     }
     const speciesP = getSpecies(playerPlant.speciesSlug);
-    const playerLevel = playerPlant.level;
-    this.player = {
+    this.player = makeBattleSide({
       name: speciesP?.commonName ?? playerPlant.speciesSlug,
       family: 'Asteraceae',
-      stats: makeStatsForLevel(playerLevel, playerPlant.stats.atk - 50, playerPlant.stats.def - 50, playerPlant.stats.spd - 50),
-      level: playerLevel,
+      level: playerPlant.level,
       isPlayer: true,
-      spriteColor: 0x9be36e
-    };
+      spriteColor: 0x9be36e,
+      atkBias: playerPlant.stats.atk - 50,
+      defBias: playerPlant.stats.def - 50,
+      spdBias: playerPlant.stats.spd - 50
+    });
 
-    // Wild-Plant aus Encounter-Pool ziehen
+    // Wild-Plant aus Encounter-Pool
     const pool = poolFromKey(this.poolKey);
     const enc = pickEncounter(pool);
     gameStore.discoverSpecies(enc.slug);
-    // Save fuer Capture spaeter
-    const familyMod = enc.family === 'Bromeliaceae' || enc.family === 'Asteraceae' ? 0 : 5;
     const zone = gameStore.getOverworldPos().zone;
     const wildLevel = clampLevelToRegion(randomLevel(enc), zone);
-    this.wild = {
+    this.wild = makeBattleSide({
       name: enc.commonName,
       family: enc.family,
-      stats: makeStatsForLevel(wildLevel),
       level: wildLevel,
       isPlayer: false,
-      spriteColor: enc.baseColor
-    };
+      spriteColor: enc.baseColor,
+      moveSlugs: defaultMovesForFamily(enc.family)
+    });
     this.xpReward = 10 + 5 * wildLevel;
-    this.capturedEnc = { slug: enc.slug, rarity: 2, level: wildLevel, atkBias: familyMod, defBias: 0, spdBias: 0 };
+    this.capturedEnc = { slug: enc.slug, rarity: 2, level: wildLevel };
 
-    // UI
+    // Battle-Background-Bereich (heller fuer Gegner, dunkler fuer Spieler)
+    const bgTop = this.add.rectangle(width / 2, height / 4, width, height / 2, 0x4a8228, 0.4).setOrigin(0.5);
+    const bgBot = this.add.rectangle(width / 2, height * 3 / 4, width, height / 2, 0x2d4a1f, 0.5).setOrigin(0.5);
+    void bgTop; void bgBot;
+
     // Wild oben
-    this.add.text(width / 2, 30, `${this.wild.name} L${this.wild.level}`, {
+    this.add.text(width / 2, 24, `${this.wild.name} (Lv${this.wild.level})`, {
       fontFamily: 'monospace', fontSize: '14px', color: '#ffffff'
     }).setOrigin(0.5);
-    this.add.text(width / 2, 50, this.wild.family, {
+    this.add.text(width / 2, 42, this.wild.family, {
       fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
     }).setOrigin(0.5);
-    this.wildSprite = this.add.rectangle(width / 2, 130, 64, 64, this.wild.spriteColor)
-      .setStrokeStyle(2, 0x000000);
-    this.wildHpBar = this.add.rectangle(width / 2, 180, 200, 12, 0x6abf3a)
+    this.wildSprite = this.add.sprite(width / 2, 110, 'tile_tropical');
+    this.wildSprite.setDisplaySize(72, 72);
+    this.wildHpBar = this.add.rectangle(width / 2, 162, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
-    this.wildHpText = this.add.text(width / 2, 200, '', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#ffffff'
+    this.wildHpText = this.add.text(width / 2, 180, '', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ffffff'
+    }).setOrigin(0.5);
+    this.statusTextWild = this.add.text(width / 2, 196, '', {
+      fontFamily: 'monospace', fontSize: '9px', color: '#fcd95c'
     }).setOrigin(0.5);
 
     // Player unten
-    this.add.text(width / 2, height - 200, `${this.player.name} L${this.player.level}`, {
+    this.add.text(width / 2, height - 248, `${this.player.name} (Lv${this.player.level})`, {
       fontFamily: 'monospace', fontSize: '14px', color: '#9be36e'
     }).setOrigin(0.5);
-    this.playerSprite = this.add.rectangle(width / 2, height - 130, 64, 64, this.player.spriteColor)
-      .setStrokeStyle(2, 0x000000);
-    this.playerHpBar = this.add.rectangle(width / 2, height - 80, 200, 12, 0x6abf3a)
+    this.add.text(width / 2, height - 230, this.player.family, {
+      fontFamily: 'monospace', fontSize: '10px', color: '#82d44e'
+    }).setOrigin(0.5);
+    this.playerSprite = this.add.sprite(width / 2, height - 170, 'tile_flowerbed');
+    this.playerSprite.setDisplaySize(80, 80);
+    this.playerHpBar = this.add.rectangle(width / 2, height - 118, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
-    this.playerHpText = this.add.text(width / 2, height - 60, '', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#ffffff'
+    this.playerHpText = this.add.text(width / 2, height - 100, '', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ffffff'
+    }).setOrigin(0.5);
+    this.statusTextPlayer = this.add.text(width / 2, height - 84, '', {
+      fontFamily: 'monospace', fontSize: '9px', color: '#fcd95c'
     }).setOrigin(0.5);
 
     // Status / Round-Log
-    this.statusText = this.add.text(width / 2, height / 2 - 10, '', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#ffd13a',
-      align: 'center'
+    this.statusText = this.add.text(width / 2, height / 2 - 8, 'Was soll deine Pflanze tun?', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#fcd95c',
+      align: 'center', wordWrap: { width: width - 40 }
     }).setOrigin(0.5);
 
-    // Action-Buttons unten
-    this.makeButton(width / 4, height - 24, 'Angreifen', '#ff7e7e', () => this.runOneRound());
-    this.makeButton(width / 2, height - 24, 'Auto', '#9be36e', () => {
-      this.autoBattle = !this.autoBattle;
-    });
-    this.makeButton((width / 4) * 3, height - 24, 'Fluechten', '#fcd95c', () => this.tryRun());
-    this.makeButton(width / 2, height - 56, 'Fangen (Lure)', '#ff7eb8', () => this.tryCapture());
+    // Move-Buttons
+    this.buildMoveButtons();
+    // Run + Capture buttons (small row)
+    this.makeSmallButton(width / 4, 32, 'Fluechten', '#fcd95c', () => this.tryRun());
+    this.makeSmallButton((width / 4) * 3, 32, 'Fangen', '#ff7eb8', () => this.tryCapture());
 
     this.updateBars();
-    this.statusText.setText('Wilde Pflanze erscheint!');
     sfx.dialogOpen();
+    this.waitingForInput = true;
+
+    // Camera-Routing fuer UI: keine zoom Probleme da Battle-Cam zoom 1 ist
+    void this.uiCam;
+
     (window as any).__battle = this;
   }
 
-  update(time: number, _delta: number): void {
-    if (this.over) return;
-    if (this.autoBattle && time - this.lastRoundAt > this.nextRoundDelay) {
-      this.runOneRound();
+  private buildMoveButtons(): void {
+    const { width, height } = this.scale;
+    const moves = this.player.moveSlugs.map(getMove).filter(Boolean) as MoveDef[];
+    const slotW = (width - 40) / 2;
+    const slotH = 36;
+    for (let i = 0; i < 4; i++) {
+      const m = moves[i];
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = 20 + col * slotW + slotW / 2;
+      const y = height - 50 + row * (slotH + 4);
+
+      const c = this.add.container(x, y);
+      const bg = this.add.rectangle(0, 0, slotW - 4, slotH, 0x000000, 0.85)
+        .setStrokeStyle(2, m ? 0x9be36e : 0x444444)
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: !!m });
+      const nameTxt = this.add.text(-slotW / 2 + 8, -10, m ? m.name : '-', {
+        fontFamily: 'monospace', fontSize: '11px', color: m ? '#ffffff' : '#666666'
+      });
+      const detailTxt = this.add.text(-slotW / 2 + 8, 4, m ? `${m.power > 0 ? `Power ${m.power}` : 'Status'} | ${Math.round(m.accuracy * 100)}%` : '', {
+        fontFamily: 'monospace', fontSize: '9px', color: '#9be36e'
+      });
+      if (m) {
+        bg.on('pointerdown', () => {
+          bg.setFillStyle(0x9be36e, 0.3);
+        });
+        bg.on('pointerup', () => {
+          bg.setFillStyle(0x000000, 0.85);
+          this.onMoveSelected(m);
+        });
+        bg.on('pointerout', () => {
+          bg.setFillStyle(0x000000, 0.85);
+        });
+      }
+      c.add([bg, nameTxt, detailTxt]);
+      this.moveButtons.push(c);
     }
   }
 
-  private runOneRound(): void {
-    if (this.over) return;
-    const r = runRound(this.player, this.wild);
-    this.lastRoundAt = this.time.now;
+  private makeSmallButton(x: number, y: number, label: string, color: string, onClick: () => void): void {
+    const c = this.add.container(x, y);
+    const w = 88;
+    const h = 22;
+    const bg = this.add.rectangle(0, 0, w, h, 0x000000, 0.85)
+      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(color).color)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    const txt = this.add.text(0, 0, label, {
+      fontFamily: 'monospace', fontSize: '10px', color
+    }).setOrigin(0.5);
+    bg.on('pointerup', () => {
+      bg.setFillStyle(0x000000, 0.85);
+      onClick();
+    });
+    bg.on('pointerdown', () => bg.setFillStyle(Phaser.Display.Color.HexStringToColor(color).color, 0.3));
+    bg.on('pointerout', () => bg.setFillStyle(0x000000, 0.85));
+    c.add([bg, txt]);
+  }
+
+  private onMoveSelected(playerMove: MoveDef): void {
+    if (!this.waitingForInput || this.over) return;
+    this.waitingForInput = false;
+    const wildMoveSlug = pickWildMove(this.wild);
+    const outcome = runMoveRound(this.player, this.wild, playerMove.slug, wildMoveSlug);
+
     let log = '';
-    log += `${r.attackerFirst.name} greift an: -${r.dmgFirst} HP`;
-    const ef1 = effectivenessLabel(r.effectivenessFirst);
-    if (ef1) log += `  ${ef1}`;
-    if (r.critFirst) log += '  KRIT!';
-    if (r.dmgSecond > 0) {
-      log += `\n${r.defenderFirst.name} kontert: -${r.dmgSecond} HP`;
-      const ef2 = effectivenessLabel(r.effectivenessSecond);
-      if (ef2) log += `  ${ef2}`;
-      if (r.critSecond) log += '  KRIT!';
-    }
-    this.statusText.setText(log);
+    for (const r of outcome.results) log += r.log + '\n';
+    for (const tl of outcome.tickLogs) log += tl + '\n';
+
+    this.statusText.setText(log.trim());
     this.updateBars();
     this.shakeSprites();
     sfx.bump();
+
     // Damage-Floater
-    const firstTargetSprite = (r.defenderFirst === this.player) ? this.playerSprite : this.wildSprite;
-    this.spawnDamageFloater(firstTargetSprite, r.dmgFirst, r.critFirst);
-    if (r.dmgSecond > 0) {
-      const secondTargetSprite = (r.attackerFirst === this.player) ? this.playerSprite : this.wildSprite;
-      this.spawnDamageFloater(secondTargetSprite, r.dmgSecond, r.critSecond);
+    for (const r of outcome.results) {
+      if (r.dmg > 0) {
+        const target = (r.defender === this.player) ? this.playerSprite : this.wildSprite;
+        this.spawnDamageFloater(target, r.dmg, r.crit, effectivenessLabel(r.effectiveness));
+      }
+      if (r.selfHeal && r.selfHeal > 0) {
+        const target = (r.attacker === this.player) ? this.playerSprite : this.wildSprite;
+        this.spawnHealFloater(target, r.selfHeal);
+      }
     }
 
-    if (r.battleOver) {
+    if (outcome.battleOver) {
       this.over = true;
-      this.time.delayedCall(1500, () => {
-        if (r.winner === this.player) this.endBattle(`Sieg! +${this.xpReward} XP`);
+      this.time.delayedCall(2000, () => {
+        if (outcome.winner === this.player) this.endBattle(`Sieg! +${this.xpReward} XP`);
         else this.endBattle('Deine Pflanze ist erschoepft.');
       });
+    } else {
+      this.time.delayedCall(1500, () => {
+        this.statusText.setText('Was soll deine Pflanze tun?');
+        this.waitingForInput = true;
+      });
     }
+  }
+
+  update(_time: number, _delta: number): void {
+    // status-Anzeige live updaten
+    this.statusTextWild.setText(this.formatStatuses(this.wild));
+    this.statusTextPlayer.setText(this.formatStatuses(this.player));
+  }
+
+  private formatStatuses(side: BattleSide): string {
+    if (side.statuses.length === 0) return '';
+    return side.statuses.map((s) => `[${statusName(s.effect)}]`).join(' ');
   }
 
   private updateBars(): void {
@@ -200,31 +286,36 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private shakeSprites(): void {
-    // Beide Sprites kurz shake mit Flash
     this.tweens.add({ targets: this.playerSprite, x: '+=6', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
     this.tweens.add({ targets: this.wildSprite, x: '-=6', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
-    // Flash Effect
     this.cameras.main.flash(80, 100, 100, 100);
   }
 
-  private spawnDamageFloater(target: Phaser.GameObjects.Rectangle, dmg: number, crit: boolean): void {
+  private spawnDamageFloater(target: Phaser.GameObjects.Sprite, dmg: number, crit: boolean, effLabel: string): void {
     const color = crit ? '#ff5c5c' : '#ffffff';
     const text = this.add.text(target.x, target.y - 20, `-${dmg}${crit ? '!' : ''}`, {
-      fontFamily: 'monospace', fontSize: crit ? '18px' : '14px', color,
+      fontFamily: 'monospace', fontSize: crit ? '20px' : '15px', color,
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(1500);
+    this.tweens.add({ targets: text, y: target.y - 60, alpha: 0, duration: 1100, ease: 'Quad.easeOut', onComplete: () => text.destroy() });
+    if (effLabel) {
+      const eff = this.add.text(target.x, target.y, effLabel, {
+        fontFamily: 'monospace', fontSize: '10px', color: '#fcd95c', stroke: '#000', strokeThickness: 2
+      }).setOrigin(0.5).setDepth(1499);
+      this.tweens.add({ targets: eff, y: target.y - 40, alpha: 0, duration: 1500, onComplete: () => eff.destroy() });
+    }
+  }
+
+  private spawnHealFloater(target: Phaser.GameObjects.Sprite, amt: number): void {
+    const text = this.add.text(target.x, target.y - 20, `+${amt}`, {
+      fontFamily: 'monospace', fontSize: '14px', color: '#9be36e',
       stroke: '#000000', strokeThickness: 2
     }).setOrigin(0.5).setDepth(1500);
-    this.tweens.add({
-      targets: text,
-      y: target.y - 60,
-      alpha: 0,
-      duration: 1100,
-      ease: 'Quad.easeOut',
-      onComplete: () => text.destroy()
-    });
+    this.tweens.add({ targets: text, y: target.y - 50, alpha: 0, duration: 1000, onComplete: () => text.destroy() });
   }
 
   private tryCapture(): void {
-    if (this.over) return;
+    if (this.over || !this.waitingForInput) return;
     const wildPct = this.wild.stats.hp / this.wild.stats.maxHp;
     if (wildPct > 0.4) {
       this.statusText.setText('Wilde Pflanze ist zu stark zum Fangen.\nReduziere ihre HP unter 40%.');
@@ -237,11 +328,10 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     gameStore.consumeItem('basic-lure');
-    // Capture-Rate: bis 80% bei R1, niedriger bei seltenen
     const baseRate = 0.5 * (1 - wildPct) * 1.5;
     const success = Math.random() < baseRate;
     if (success && this.capturedEnc) {
-      gameStore.capturePlant(this.capturedEnc.slug, this.capturedEnc.level, this.capturedEnc.atkBias, this.capturedEnc.defBias, this.capturedEnc.spdBias);
+      gameStore.capturePlant(this.capturedEnc.slug, this.capturedEnc.level, 0, 0, 0);
       this.statusText.setText(`${this.wild.name} wurde gefangen!`);
       sfx.pickup();
       this.over = true;
@@ -249,12 +339,29 @@ export class BattleScene extends Phaser.Scene {
     } else {
       this.statusText.setText('Fang-Versuch misslungen.');
       sfx.bump();
-      this.runOneRound();
+      this.waitingForInput = false;
+      const wildMoveSlug = pickWildMove(this.wild);
+      const wildMove = getMove(wildMoveSlug);
+      if (wildMove) {
+        const r = runMoveRound(this.player, this.wild, 'tackle', wildMoveSlug);  // dummy player move
+        // actually nur wild attacks - hier vereinfacht
+        void r;
+      }
+      this.time.delayedCall(1200, () => {
+        this.statusText.setText('Was soll deine Pflanze tun?');
+        this.waitingForInput = true;
+        this.updateBars();
+      });
     }
   }
 
   private tryRun(): void {
     if (this.over) return;
+    if (this.player.statuses.some((s) => s.effect === 'rooted')) {
+      this.statusText.setText('Du bist von Wurzeln gefangen und kannst nicht fliehen.');
+      sfx.bump();
+      return;
+    }
     const success = Math.random() < 0.7;
     if (success) {
       this.statusText.setText('Du fliehst aus dem Kampf.');
@@ -264,7 +371,6 @@ export class BattleScene extends Phaser.Scene {
     } else {
       this.statusText.setText('Flucht misslungen!');
       sfx.bump();
-      this.runOneRound();
     }
   }
 
@@ -272,23 +378,5 @@ export class BattleScene extends Phaser.Scene {
     console.log('[BattleScene] end', msg);
     sfx.door();
     this.scene.start('OverworldScene');
-  }
-
-  private makeButton(x: number, y: number, label: string, color: string, onClick: () => void): void {
-    const c = this.add.container(x, y);
-    const w = 110;
-    const h = 30;
-    const bg = this.add.rectangle(0, 0, w, h, 0x000000, 0.7)
-      .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(color).color)
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    const txt = this.add.text(0, 0, label, {
-      fontFamily: 'monospace', fontSize: '11px', color
-    }).setOrigin(0.5);
-    bg.on('pointerdown', () => bg.setFillStyle(Phaser.Display.Color.HexStringToColor(color).color, 0.4));
-    bg.on('pointerup', () => { bg.setFillStyle(0x000000, 0.7); onClick(); });
-    bg.on('pointerout', () => bg.setFillStyle(0x000000, 0.7));
-    c.add([bg, txt]);
-    this.actionButtons.push(c);
   }
 }
