@@ -17,13 +17,6 @@ export interface PokedexState {
 export type InventoryState = Record<string, number>;
 export type QuestState = Record<string, 'pending' | 'active' | 'completed'>;
 
-export interface StoryState {
-  flags: Record<string, boolean>;
-  currentAct: number;             // 0-7 (0 = pre-game, 1-7 = active acts)
-  metNpcs: string[];              // npc-ids met
-  diaryEntries: number[];         // collected diary-page IDs
-}
-
 export interface TutorialState {
   step: number;       // 0=welcome, 1=move, 2=talk, 3=garden, 4=market, 5=done
   done: boolean;
@@ -51,12 +44,17 @@ export interface GameState {
   lastDailyLoginAt?: number;
   marketShopRosterDay?: number;
   marketShopRoster?: MarketShopRoster;
-  // V8: Story-State
-  story?: StoryState;
   // V8: Foraging V0.2
   forageTilesCooldown?: Record<string, number>;     // "zone:x:y" -> ms
   collectedHiddenSpots?: string[];                  // "zone:x:y"
   lastBerryMasterAt?: number;                       // ms
+  // V8: Achievements V0.1
+  achievements?: string[];                          // unlocked-Slugs
+  achievementCounters?: {
+    crossings?: number;
+    mutations?: number;
+    visitedZones?: string[];
+  };
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
@@ -117,11 +115,12 @@ function migrate(parsed: any): GameState | null {
   if (!parsed || typeof parsed !== 'object') return null;
   if (parsed.version === 7) {
     parsed.version = 8;
-    parsed.story = parsed.story ?? { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
     if (!parsed.forageTilesCooldown) parsed.forageTilesCooldown = {};
     if (!Array.isArray(parsed.collectedHiddenSpots)) parsed.collectedHiddenSpots = [];
     if (typeof parsed.lastBerryMasterAt !== 'number') parsed.lastBerryMasterAt = 0;
-    console.log('[storage] migrated save v7 -> v8 (storyline + foraging V0.2)');
+    if (!Array.isArray(parsed.achievements)) parsed.achievements = [];
+    if (!parsed.achievementCounters) parsed.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
+    console.log('[storage] migrated save v7 -> v8 (foraging V0.2)');
   }
   if (parsed.version === 6) {
     parsed.version = 7;
@@ -171,6 +170,8 @@ function migrate(parsed: any): GameState | null {
     if (!parsed.forageTilesCooldown) parsed.forageTilesCooldown = {};
     if (!Array.isArray(parsed.collectedHiddenSpots)) parsed.collectedHiddenSpots = [];
     if (typeof parsed.lastBerryMasterAt !== 'number') parsed.lastBerryMasterAt = 0;
+    if (!Array.isArray(parsed.achievements)) parsed.achievements = [];
+    if (!parsed.achievementCounters) parsed.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
     if (parsed.overworld && (parsed.overworld as any).lastSceneVisited === 'GreenhouseScene') {
       (parsed.overworld as any).lastSceneVisited = 'GardenScene';
     }

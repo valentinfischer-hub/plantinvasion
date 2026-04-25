@@ -97,6 +97,13 @@ const salzbuchtNpcs: NPCSpawn[] = [
   }
 ];
 
+
+// Forage-Tiles V0.2 (Berry-Bush 50, Wildplant 51)
+if (tiles[3]?.[5] !== undefined) tiles[3][5] = 50;
+if (tiles[6]?.[24] !== undefined) tiles[6][24] = 51;
+if (tiles[14]?.[3] !== undefined) tiles[14][3] = 51;
+if (tiles[15]?.[23] !== undefined) tiles[15][23] = 50;
+
 const salzbucht: MapDef = {
   width: W,
   height: H,

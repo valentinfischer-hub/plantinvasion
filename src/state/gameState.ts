@@ -13,6 +13,7 @@ import {
   findHiddenSpot,
   hiddenSpotKey
 } from '../data/foraging';
+import { ACHIEVEMENTS, getAchievement } from '../data/achievements';
 import { loadGame, saveGame, SAVE_SCHEMA_VERSION, type GameState } from './storage';
 
 export const GRID_COLUMNS = 4;
@@ -134,7 +135,11 @@ class GameStore {
       if (updated !== p) mutated = true;
       return updated;
     });
-    if (mutated) this.notify();
+    if (mutated) {
+      // Achievement-Check (first-bloom, pristine-grower etc.) periodisch
+      this.checkAchievements();
+      this.notify();
+    }
   }
 
   // =========================================================
@@ -323,6 +328,97 @@ class GameStore {
     return drop;
   }
 
+  // =========================================================
+  // Achievements V0.1
+  // =========================================================
+
+  getAchievements(): string[] {
+    return this.state.achievements ?? [];
+  }
+
+  hasAchievement(slug: string): boolean {
+    return (this.state.achievements ?? []).includes(slug);
+  }
+
+  /** Pflicht-Trigger: pruefe ob ein Achievement jetzt erfuellt ist. Gibt unlocked-Liste zurueck. */
+  checkAchievements(): string[] {
+    if (!this.state.achievements) this.state.achievements = [];
+    if (!this.state.achievementCounters) this.state.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
+    const unlocked: string[] = [];
+    const dex = this.getPokedex();
+    const counters = this.state.achievementCounters;
+    for (const a of ACHIEVEMENTS) {
+      if (this.state.achievements.includes(a.slug)) continue;
+      let meets = false;
+      switch (a.slug) {
+        case 'first-bloom':
+          meets = this.state.plants.some((p) => (p.highestStageReached ?? 0) >= 4);
+          break;
+        case 'pristine-grower':
+          meets = this.state.plants.some((p) => p.qualityTier === 'pristine');
+          break;
+        case 'hybrid-architect':
+          meets = (counters.crossings ?? 0) >= 10;
+          break;
+        case 'mutation-storm':
+          meets = (counters.mutations ?? 0) >= 10;
+          break;
+        case 'cactus-bundle':
+          meets = this.state.plants.filter(
+            (p) => p.qualityTier === 'pristine' && p.speciesSlug.includes('cactus')
+          ).length >= 5;
+          break;
+        case 'world-traveler':
+          meets = (counters.visitedZones ?? []).length >= 7;
+          break;
+        case 'collector':
+          meets = (dex.discovered ?? []).length >= 30;
+          break;
+        case 'completion':
+          meets = (dex.discovered ?? []).length >= 60;
+          break;
+        // swamp-veteran und volcano-tamer kommen via Boss-Defeat-Hook in S-09
+        default:
+          meets = false;
+      }
+      if (meets) {
+        this.state.achievements.push(a.slug);
+        if (a.rewardCoins) this.addCoins(a.rewardCoins);
+        if (a.rewardItem) this.addItem(a.rewardItem.slug, a.rewardItem.amount);
+        unlocked.push(a.slug);
+      }
+    }
+    if (unlocked.length > 0) this.notify();
+    return unlocked;
+  }
+
+  /** Counter-Increment Helper - aufzurufen bei Crossing/Mutation/Zone-Visit. */
+  incrementAchievementCounter(key: 'crossings' | 'mutations'): void {
+    if (!this.state.achievementCounters) this.state.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
+    this.state.achievementCounters[key] = (this.state.achievementCounters[key] ?? 0) + 1;
+    this.checkAchievements();
+  }
+
+  recordZoneVisit(zone: string): void {
+    if (!this.state.achievementCounters) this.state.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
+    if (!this.state.achievementCounters.visitedZones) this.state.achievementCounters.visitedZones = [];
+    if (!this.state.achievementCounters.visitedZones.includes(zone)) {
+      this.state.achievementCounters.visitedZones.push(zone);
+      this.checkAchievements();
+    }
+  }
+
+  unlockAchievementBySlug(slug: string): void {
+    if (!this.state.achievements) this.state.achievements = [];
+    if (this.state.achievements.includes(slug)) return;
+    const def = getAchievement(slug);
+    if (!def) return;
+    this.state.achievements.push(slug);
+    if (def.rewardCoins) this.addCoins(def.rewardCoins);
+    if (def.rewardItem) this.addItem(def.rewardItem.slug, def.rewardItem.amount);
+    this.notify();
+  }
+
   /** Berry-Master-NPC: einmal pro Real-Time-Tag einen Free-Seed. */
   claimBerryMaster(now = Date.now()): { ok: boolean; reason?: string; itemSlug?: string } {
     const last = this.state.lastBerryMasterAt ?? 0;
@@ -469,52 +565,6 @@ class GameStore {
     return this.state.pokedex ?? { discovered: [], captured: [] };
   }
 
-  getStoryFlag(flag: string): boolean {
-    return !!this.state.story?.flags[flag];
-  }
-
-  setStoryFlag(flag: string, value: boolean = true): void {
-    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    this.state.story.flags[flag] = value;
-    this.save();
-  }
-
-  getCurrentAct(): number {
-    return this.state.story?.currentAct ?? 0;
-  }
-
-  advanceAct(toAct: number): void {
-    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    if (toAct > this.state.story.currentAct) {
-      this.state.story.currentAct = toAct;
-      this.save();
-    }
-  }
-
-  meetNpc(npcId: string): boolean {
-    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    if (this.state.story.metNpcs.includes(npcId)) return false;
-    this.state.story.metNpcs.push(npcId);
-    this.save();
-    return true;
-  }
-
-  hasMetNpc(npcId: string): boolean {
-    return this.state.story?.metNpcs.includes(npcId) ?? false;
-  }
-
-  collectDiaryEntry(entryId: number): boolean {
-    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    if (this.state.story.diaryEntries.includes(entryId)) return false;
-    this.state.story.diaryEntries.push(entryId);
-    this.save();
-    return true;
-  }
-
-  getDiaryEntries(): number[] {
-    return this.state.story?.diaryEntries ?? [];
-  }
-
   getQuestState(questId: string): 'pending' | 'active' | 'completed' {
     return this.state.quests?.[questId] ?? 'pending';
   }
@@ -635,6 +685,8 @@ class GameStore {
     this.state.plants.push(child);
     this.state.coins -= COST;
     this.captureSpecies(child.speciesSlug);
+    this.incrementAchievementCounter('crossings');
+    if (mutation.isMutation) this.incrementAchievementCounter('mutations');
     this.save();
     return { ok: true, child };
   }

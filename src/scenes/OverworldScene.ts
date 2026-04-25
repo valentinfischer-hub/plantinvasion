@@ -192,6 +192,28 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     console.log('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
     (window as any).__overworld = this;
+
+    // Daily-Login-Reward: einmalig pro Real-Time-Tag claimen, dann Toast
+    this.tryClaimDailyLogin();
+    // Zone-Visit fuer Achievement-Tracking
+    gameStore.recordZoneVisit(this.currentZone);
+  }
+
+  private tryClaimDailyLogin(): void {
+    const r = gameStore.claimDailyLogin();
+    if (!r.ok || !r.reward) return;
+    const { width, height } = this.scale;
+    const toast = this.add.text(width / 2, height - 60, `Tagesbelohnung: ${r.reward.label}`, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#ffd166',
+      backgroundColor: '#1a1f1a', padding: { x: 12, y: 8 }
+    }).setOrigin(0.5).setDepth(2000).setScrollFactor(0);
+    this.tweens.add({
+      targets: toast,
+      alpha: 0,
+      duration: 4000,
+      delay: 2500,
+      onComplete: () => toast.destroy()
+    });
   }
 
   public update(time: number, delta: number): void {
@@ -516,6 +538,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     console.log('[OverworldScene] zone change', this.currentZone, '->', newZone);
     sfx.dialogOpen();
     gameStore.setOverworldPos(spawnX, spawnY, facing, 'OverworldScene', newZone);
+    gameStore.recordZoneVisit(newZone);
     this.scene.restart();
   }
 

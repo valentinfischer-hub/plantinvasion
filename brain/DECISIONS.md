@@ -142,6 +142,13 @@ Append-only Log strategischer Entscheidungen. Jeder Eintrag hat Datum, Entscheid
 
 **Konsequenz**: 35+ neue Spezies in species.ts (Total 51 Basis + 10 Hybrid = 61). Save-Migration v7 -> v8 mit Foraging-State (forageTilesCooldown, collectedHiddenSpots, lastBerryMasterAt). Neue Files: src/data/foraging.ts, src/data/hybridRecipes.ts. OverworldScene-tryInteract erweitert (Forage-Detection, Hidden-Spot-Detection, Berry-Master-Spezial-Dialog). BattleScene-Win-Path mit applyBattleDrop. Procedural-Plant-Sprite-Generator mit 61 Paletten und 4 Archetypen (flower, cactus, tree, sukkulent, carnivore, aquatic, fern). 14 von 14 Bash-Tests PASS.
 
+### D-025 Achievements V0.1 plus Forage-Tiles biom-weit plus Daily-Login-Toast (2026-04-25)
+**Entscheidung**: 10 Achievements aus endgame.md werden aktiviert mit gameStore-Tracking (crossings-counter, mutations-counter, visitedZones, Pokedex-Discovery, Plant-Tier-Snapshots). Forage-Tiles (Berry-Bush 50, Wildplant 51) jetzt in allen 7 Biomen (4 pro Biom). Daily-Login-Reward zeigt sich als Toast unten-mittig in OverworldScene beim ersten Tag-Login.
+
+**Begruendung**: Foraging-System V0.2 war bisher nur in Wurzelheim sichtbar - Spieler sah keinen Mehrwert. Achievements geben Sammler-Loop Substanz (Kaktoria-Bezwinger, Hybrid-Architekt, Welten-Reisender). Daily-Login-Toast statt Modal weil weniger UI-Interrupt - wirkt cozy statt sperrig.
+
+**Konsequenz**: src/data/achievements.ts NEU mit 10 Defs. gameStore: checkAchievements, incrementAchievementCounter, recordZoneVisit. Crossing-Counter wird in crossPlants getriggert, Tier/Stage-Snapshots in tick(). Zone-Visit in changeZone. Save-State erweitert um achievements[] + achievementCounters{crossings, mutations, visitedZones[]}. Build clean, tsc clean, kein neuer Migration-Schritt da Schema v8 schon-richt-Felder als optional hat.
+
 ### D-024 Seed-Acquisition V0.2 (Pokemon-Style Foraging) plus 50+ Spezies plus 10 Hybrid-Recipes (2026-04-25)
 **Entscheidung**: Pokemon-Style Foraging-System mit 4 neuen Mechaniken: Forage-Tiles (Bushes/Wildplants mit 1h-Cooldown-Loot), Hidden-Item-Spots (5 pro Biom, one-shot pro Save), Battle-Drops (25% Seed nach Wild-Sieg), Berry-Master-NPC Bertram in Wurzelheim (Daily-Free-Seed). Zusaetzlich 10 Hybrid-Recipes: spezifische 2-Eltern-Crossings erzeugen NEUE Spezies mit gemischter visueller Palette.
 

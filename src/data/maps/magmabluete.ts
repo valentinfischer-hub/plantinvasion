@@ -126,6 +126,13 @@ const magmabluteNpcs: NPCSpawn[] = [
   }
 ];
 
+
+// Forage-Tiles V0.2 (Berry-Bush 50, Wildplant 51)
+if (tiles[3]?.[5] !== undefined) tiles[3][5] = 50;
+if (tiles[5]?.[24] !== undefined) tiles[5][24] = 51;
+if (tiles[15]?.[3] !== undefined) tiles[15][3] = 51;
+if (tiles[15]?.[23] !== undefined) tiles[15][23] = 50;
+
 const magmabluete: MapDef = {
   width: W,
   height: H,

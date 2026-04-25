@@ -103,6 +103,13 @@ const kaktoriaNpcs: NPCSpawn[] = [
   }
 ];
 
+
+// Forage-Tiles V0.2 (Berry-Bush 50, Wildplant 51)
+if (tiles[3]?.[5] !== undefined) tiles[3][5] = 51;
+if (tiles[6]?.[23] !== undefined) tiles[6][23] = 50;
+if (tiles[14]?.[3] !== undefined) tiles[14][3] = 51;
+if (tiles[15]?.[22] !== undefined) tiles[15][22] = 50;
+
 const kaktoria: MapDef = {
   width: W,
   height: H,

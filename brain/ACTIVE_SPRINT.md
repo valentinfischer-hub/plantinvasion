@@ -21,6 +21,7 @@ Postmortem: `brain/postmortems/S-07_frostkamm_salzbucht_battle_anim.md`
 9. **DONE 2026-04-25**: Mordwald-Biom (Karnivoren-Sumpf) plus Magmabluete-Biom (Vulkan-Pyrophyt). Beide mit Spec, Map-File, 6er Encounter-Pool, prozeduralem Tile-Set, Map-Edge-Transitions, NPC. Endgame-Spec V0.1 inkl. 15 Mythical-Pflanzen, Verodyne-Boss-Konzept, Eden-Lost-Region.
 10. **DONE 2026-04-25**: Booster-System V0.1 + Seed-Acquisition + 10 neue Spezies (D-021). 9 Booster-Items, Soil-Tiers (normal/bronze/silver/gold), Daily-Login-Reward, Markt-Daily-Roster, Procedural-Plant-Sprite-Generator fuer 10 neue Spezies (Rose, Aloe Vera, Orchid, Fern, Mint, Iris, Snapdragon, Water Lily, Daffodil, Coneflower). Save-Migration v6->v7. 14 von 14 Tests PASS.
 11. **DONE 2026-04-25**: Seed-Acquisition V0.2 (Pokemon-Style) + 35+ neue Spezies + 10 Hybrid-Recipes (D-024). Forage-Tiles (50/51), Hidden-Spots (35 verteilt auf 7 Biome, one-shot), Battle-Drops (25% Seed), Berry-Master Bertram (Daily-Free). 51 Basis-Spezies + 10 kreuzbare Hybriden = 61 Total. Save-Migration v7->v8. 14/14 Tests PASS.
+12. **DONE 2026-04-25**: Achievements V0.1 + Forage-Tiles in allen 7 Biomen + Daily-Login-Toast (D-025). 10 Achievements (first-bloom, pristine-grower, hybrid-architect, mutation-storm, cactus-bundle, swamp-veteran, volcano-tamer, world-traveler, collector, completion). Counter-Tracking fuer Crossings/Mutations/Visited-Zones. Forage-Tiles Wurzelheim-only -> alle 7 Biome (4 pro Biom). Daily-Login-Toast unten-mittig statt Modal.
 
 ## Tasks
 ### Spec-Phase
