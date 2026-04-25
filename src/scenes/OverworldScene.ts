@@ -11,6 +11,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { generateTilesetTextures, getTileTextureKey } from '../assets/proceduralTileset';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
+import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10]);
@@ -40,6 +41,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private keySpace!: Phaser.Input.Keyboard.Key;
   private debugText!: Phaser.GameObjects.Text;
   private _saveAccum?: number;
+  private interactHint!: Phaser.GameObjects.Text;
+  private touch!: TouchKeysHandle;
+  private prevTouchE = false;
 
   constructor() {
     super('OverworldScene');
@@ -86,6 +90,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
     }).setScrollFactor(0).setDepth(2000);
 
+    // Touch-Controls (D-Pad) - nur auf Touch-Geraeten sichtbar
+    this.touch = buildTouchControls(this);
+    this.player.touch = this.touch;
+
     // Audio-Context wird erst nach erstem User-Input freigeschaltet (Browser-Policy).
     // Wir attachen daher die BGM-Start an den ersten Pointer- oder Key-Event.
     const startAudio = () => {
@@ -96,6 +104,17 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.input.on('pointerdown', startAudio);
     this.input.keyboard?.on('keydown', startAudio);
 
+    // Interact-Hint (E-Icon) ueber NPC oder Schild wenn Spieler benachbart
+    this.interactHint = this.add.text(0, 0, '[E]', {
+      fontFamily: 'monospace', fontSize: '8px', color: '#ffffff',
+      backgroundColor: '#222222', padding: { x: 2, y: 1 }
+    }).setDepth(50).setVisible(false).setOrigin(0.5, 1);
+
+    // Day-Time-Tint: warmer Filter fuer cozy-Vibe
+    const tint = this.add.rectangle(0, 0, 9999, 9999, 0xffd4a0, 0.08).setOrigin(0).setDepth(900).setScrollFactor(0);
+    tint.setInteractive({ useHandCursor: false });
+    tint.disableInteractive();
+
     console.log('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
     (window as any).__overworld = this;
   }
@@ -103,13 +122,18 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   public update(time: number, delta: number): void {
     if (this.dialog.open_) {
       // Wenn Dialog offen, Keys nur fuer Dialog-Advance
-      if (Phaser.Input.Keyboard.JustDown(this.keyE) || Phaser.Input.Keyboard.JustDown(this.keySpace)) {
+      const touchE = this.touch && this.touch.e.pressed && !this.prevTouchE;
+      this.prevTouchE = this.touch ? this.touch.e.pressed : false;
+      if (Phaser.Input.Keyboard.JustDown(this.keyE) || Phaser.Input.Keyboard.JustDown(this.keySpace) || touchE) {
         this.dialog.next();
       }
       return;
     }
 
     this.player.update(time, delta);
+
+    // Update Interact-Hint
+    this.updateInteractHint();
 
     // Periodische Position-Speicherung (alle ~2s wenn nicht moving)
     if (!this.player.isMoving) {
@@ -120,8 +144,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       }
     }
 
-    // Interact-Key
-    if (Phaser.Input.Keyboard.JustDown(this.keyE) || Phaser.Input.Keyboard.JustDown(this.keySpace)) {
+    // Interact-Key (Tastatur oder Touch)
+    const touchE = this.touch.e.pressed && !this.prevTouchE;
+    this.prevTouchE = this.touch.e.pressed;
+    if (Phaser.Input.Keyboard.JustDown(this.keyE) || Phaser.Input.Keyboard.JustDown(this.keySpace) || touchE) {
       this.tryInteract();
     }
 
@@ -129,6 +155,30 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.debugText.setText(
       `Wurzelheim  Tile (${this.player.tileX}, ${this.player.tileY})  Facing ${this.player.facing}  [E/Space=interact, Shift=run]`
     );
+  }
+
+  private updateInteractHint(): void {
+    const front = this.player.getTileInFront();
+    let show = false;
+    let targetX = 0, targetY = 0;
+    const npc = this.npcs.find((n) => n.data.tileX === front.tileX && n.data.tileY === front.tileY);
+    if (npc) {
+      show = true;
+      targetX = npc.sprite.x;
+      targetY = npc.sprite.y - 8;
+    } else {
+      const t = this.getTile(front.tileX, front.tileY);
+      // Schild, Markstand oder Building-Tuer
+      if (t === 10 || t === 9 || t === 8 || t === 7) {
+        show = true;
+        targetX = front.tileX * TILE_SIZE + TILE_SIZE / 2;
+        targetY = front.tileY * TILE_SIZE + TILE_SIZE / 2 - 8;
+      }
+    }
+    this.interactHint.setVisible(show);
+    if (show) {
+      this.interactHint.setPosition(targetX, targetY);
+    }
   }
 
   private tryInteract(): void {

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { MenuScene } from './scenes/MenuScene';
 import { OverworldScene } from './scenes/OverworldScene';
 import { GreenhouseScene } from './scenes/GreenhouseScene';
 
@@ -13,14 +14,11 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  // forceSetTimeOut laesst den Game-Loop auch laufen wenn der Tab im Hintergrund ist.
-  // Wichtig fuer headless-Browser-Tests via Chrome MCP. In V1.0 Production evtl. wieder
-  // entfernen, dann pausiert das Spiel automatisch wenn man den Tab wechselt.
   fps: {
     target: 60,
     forceSetTimeOut: true
   },
-  scene: [OverworldScene, GreenhouseScene]
+  scene: [MenuScene, OverworldScene, GreenhouseScene]
 };
 
 const game = new Phaser.Game(config);

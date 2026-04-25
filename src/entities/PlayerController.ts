@@ -6,6 +6,7 @@ import {
 } from '../utils/constants';
 import { generatePlayerAtlas, type CharacterAtlasEntry } from '../assets/proceduralSprites';
 import { sfx } from '../audio/sfxGenerator';
+import type { TouchKeysHandle } from '../ui/TouchControls';
 
 export type Dir = 'up' | 'down' | 'left' | 'right';
 
@@ -48,6 +49,7 @@ export class PlayerController {
   private collision: CollisionChecker;
   private atlas: CharacterAtlasEntry;
   private walkFrameToggle = 0;       // 0 = idle, 1 = walkA, 2 = walkB
+  public touch: TouchKeysHandle | null = null;
   private walkFrameCounter = 0;
 
   constructor(scene: Phaser.Scene, tileX: number, tileY: number, collision: CollisionChecker) {
@@ -89,11 +91,11 @@ export class PlayerController {
       return;
     }
 
-    // Input-Read
-    const up = this.cursors.up?.isDown || this.keyW.isDown;
-    const down = this.cursors.down?.isDown || this.keyS.isDown;
-    const left = this.cursors.left?.isDown || this.keyA.isDown;
-    const right = this.cursors.right?.isDown || this.keyD.isDown;
+    // Input-Read - Keyboard plus optional Touch
+    const up = !!(this.cursors.up?.isDown || this.keyW.isDown || this.touch?.up.pressed);
+    const down = !!(this.cursors.down?.isDown || this.keyS.isDown || this.touch?.down.pressed);
+    const left = !!(this.cursors.left?.isDown || this.keyA.isDown || this.touch?.left.pressed);
+    const right = !!(this.cursors.right?.isDown || this.keyD.isDown || this.touch?.right.pressed);
 
     let dir: Dir | null = null;
     if (up) dir = 'up';
