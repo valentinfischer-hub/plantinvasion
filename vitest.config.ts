@@ -28,14 +28,16 @@ export default defineConfig({
         'src/data/leveling.ts',
         'src/state/storage.ts',
         'src/utils/gameTime.ts',
-        'src/utils/featureFlags.ts'
+        'src/utils/featureFlags.ts',
+        'src/services/supabase.ts'
       ],
       thresholds: {
         'src/data/genetics.ts': { lines: 90, statements: 90, functions: 90, branches: 80 },
         'src/data/breedingV2.ts': { lines: 90, statements: 90, functions: 90, branches: 80 },
         'src/data/leveling.ts': { lines: 90, statements: 90, functions: 90, branches: 90 },
         'src/state/storage.ts': { lines: 85, statements: 85, functions: 85, branches: 80 },
-        'src/utils/gameTime.ts': { lines: 100, statements: 100, functions: 100, branches: 100 }
+        'src/utils/gameTime.ts': { lines: 100, statements: 100, functions: 100, branches: 100 },
+        'src/services/supabase.ts': { lines: 50, statements: 50, functions: 100, branches: 55 }
       }
     }
   }

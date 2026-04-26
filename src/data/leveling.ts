@@ -1,4 +1,5 @@
 import type { GrowthStage, Plant, QualityTier, SoilTier } from '../types/plant';
+import { now as gameTimeNow } from '../utils/gameTime';
 import { getSpecies } from './species';
 import {
   xpBoosterMultiplier,
@@ -85,16 +86,16 @@ export function hydrationMultiplier(plant: Plant): number {
   }
 }
 
-export function msSinceWatered(plant: Plant, now = Date.now()): number {
+export function msSinceWatered(plant: Plant, now = gameTimeNow()): number {
   return now - plant.lastWateredAt;
 }
 
-export function canBeWatered(plant: Plant, now = Date.now()): boolean {
+export function canBeWatered(plant: Plant, now = gameTimeNow()): boolean {
   // Cooldown plus Hydration darf nicht voll sein (Wassergiessen sinnlos bei 100)
   return msSinceWatered(plant, now) >= WATER_COOLDOWN_MS && plant.hydration < HYDRATION_MAX - 1;
 }
 
-export function waterCooldownRemaining(plant: Plant, now = Date.now()): number {
+export function waterCooldownRemaining(plant: Plant, now = gameTimeNow()): number {
   return Math.max(0, WATER_COOLDOWN_MS - msSinceWatered(plant, now));
 }
 
@@ -134,14 +135,14 @@ export function hybridVigorMultiplier(plant: Plant): number {
   return 1.0;
 }
 
-export function timeOfDayMultiplier(now = Date.now()): number {
+export function timeOfDayMultiplier(now = gameTimeNow()): number {
   const hour = new Date(now).getHours();
   if (hour >= 6 && hour < 18) return 1.0;
   if (hour >= 18 && hour < 22) return 0.7;
   return 0.4;
 }
 
-export function totalXpMultiplier(plant: Plant, currentZone: string, now = Date.now()): number {
+export function totalXpMultiplier(plant: Plant, currentZone: string, now = gameTimeNow()): number {
   return (
     stageMultiplier(stageOf(plant)) *
     Math.max(0, hydrationMultiplier(plant)) * // negativ wird in tickPlant separat behandelt
@@ -196,7 +197,7 @@ export function isBlooming(plant: Plant): boolean {
   return stageOf(plant) === 4;
 }
 
-export function bloomProgress(plant: Plant, now = Date.now()): number {
+export function bloomProgress(plant: Plant, now = gameTimeNow()): number {
   if (!isBlooming(plant)) return 0;
   if (plant.pendingHarvest) return 1;
   const start = plant.lastBloomedAt ?? plant.bornAt;
@@ -204,7 +205,7 @@ export function bloomProgress(plant: Plant, now = Date.now()): number {
   return Math.min(1, (now - start) / cycle);
 }
 
-export function isHarvestReady(plant: Plant, now = Date.now()): boolean {
+export function isHarvestReady(plant: Plant, now = gameTimeNow()): boolean {
   return isBlooming(plant) && (plant.pendingHarvest || bloomProgress(plant, now) >= 1);
 }
 
@@ -243,7 +244,7 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
   const ctx: TickContext =
     typeof ctxOrNow === 'number'
       ? { zone: 'wurzelheim', now: ctxOrNow }
-      : ctxOrNow ?? { zone: 'wurzelheim', now: Date.now() };
+      : ctxOrNow ?? { zone: 'wurzelheim', now: gameTimeNow() };
   const { now, zone } = ctx;
   const soilTier: SoilTier = ctx.soilTier ?? 'normal';
 
@@ -349,7 +350,7 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
  * Addiere XP, propagiere Level-ups, clamp auf 0 und MAX_LEVEL.
  * Bonsai-Mode: Cap bei Level 44 (eine unter Blooming-Threshold 45)
  */
-export function applyXp(plant: Plant, xpDelta: number, now = Date.now()): Plant {
+export function applyXp(plant: Plant, xpDelta: number, now = gameTimeNow()): Plant {
   let level = plant.level;
   let xp = plant.xp + xpDelta;
   let totalXp = Math.max(0, plant.totalXp + Math.max(0, xpDelta));
@@ -382,7 +383,7 @@ export function applyXp(plant: Plant, xpDelta: number, now = Date.now()): Plant 
 /**
  * Wassergiessen: Hydration auf 100, Cooldown reset, +5 XP, +1 careScore.
  */
-export function waterPlant(plant: Plant, now = Date.now()): { plant: Plant; success: boolean } {
+export function waterPlant(plant: Plant, now = gameTimeNow()): { plant: Plant; success: boolean } {
   if (!canBeWatered(plant, now)) {
     return { plant, success: false };
   }
@@ -406,7 +407,7 @@ export function waterPlant(plant: Plant, now = Date.now()): { plant: Plant; succ
  * Ernte einer Blooming-Pflanze. Setzt pendingHarvest=false, reset bloom-Cycle.
  * Gibt {plant, output} zurueck. Wenn nicht ready, output={coins:0, ...}.
  */
-export function harvestPlant(plant: Plant, now = Date.now()): { plant: Plant; output: HarvestOutput } {
+export function harvestPlant(plant: Plant, now = gameTimeNow()): { plant: Plant; output: HarvestOutput } {
   if (!isHarvestReady(plant, now)) {
     return { plant, output: { coins: 0, pollenChance: false } };
   }
