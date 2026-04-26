@@ -58,6 +58,7 @@ export class GardenScene extends Phaser.Scene {
   private crossBtnTxt?: Phaser.GameObjects.Text;
   private headerText!: Phaser.GameObjects.Text;
   private detailPanel?: Phaser.GameObjects.Container;
+  private slotHotspots: Array<{ gridX: number; gridY: number; hotspot: Phaser.GameObjects.Rectangle }> = [];
   private dragSource?: { plantId: string; startX: number; startY: number };
 
   constructor() {
@@ -106,6 +107,7 @@ export class GardenScene extends Phaser.Scene {
       gridHeight + 16,
       6
     );
+    this.slotHotspots = [];
     for (let y = 0; y < GRID_ROWS; y++) {
       for (let x = 0; x < GRID_COLUMNS; x++) {
         const sx = this.gridOriginX + x * (TILE + TILE_PAD);
@@ -115,6 +117,12 @@ export class GardenScene extends Phaser.Scene {
         slot.fillRoundedRect(sx, sy, TILE, TILE, 4);
         slot.lineStyle(1, 0x44603f, 0.5);
         slot.strokeRoundedRect(sx, sy, TILE, TILE, 4);
+        // B-012 V0.2: jeder Slot ist klickbar fuer Slot-First-Saeen-UI.
+        const hotspot = this.add.rectangle(sx + TILE / 2, sy + TILE / 2, TILE, TILE, 0x000000, 0)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(-1);
+        hotspot.on('pointerdown', () => this.onSlotClick(x, y));
+        this.slotHotspots.push({ gridX: x, gridY: y, hotspot });
       }
     }
 
@@ -361,6 +369,79 @@ export class GardenScene extends Phaser.Scene {
         const result = gameStore.plantSeed(slug);
         if (result.ok) {
           this.showFlash(`${item?.name ?? slug} eingesaeet`, '#9be36e');
+          container.destroy();
+          this.detailPanel = undefined;
+        } else {
+          this.showFlash(result.reason ?? 'Fehlgeschlagen', '#ff7e7e');
+        }
+      });
+      container.add(btn);
+    });
+    const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {
+      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
+    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    close.on('pointerdown', () => {
+      container.destroy();
+      this.detailPanel = undefined;
+    });
+    container.add(close);
+    this.detailPanel = container;
+  }
+
+  /**
+   * B-012 V0.2: Slot-First-Click. Wenn der Slot leer ist, oeffnet sich der Seed-Picker
+   * fuer genau diesen Slot. Bei besetztem Slot greift weiter die Plant-Card-Click-Logik
+   * (Detail-Panel, Cross-Mode etc.) ueber den darueberliegenden Card-Container.
+   */
+  private onSlotClick(gridX: number, gridY: number): void {
+    if (this.crossMode) return;
+    const occupied = gameStore.get().plants.some((p) => p.gridX === gridX && p.gridY === gridY);
+    if (occupied) return;
+    this.openSeedPlantModalForSlot(gridX, gridY);
+  }
+
+  /**
+   * B-012 V0.2: Slot-First-Variante des Saeen-Modals. Nutzt plantSeedAt() statt plantSeed()
+   * damit der User seine Slot-Auswahl behaelt und nicht der erste freie Slot ueberschrieben wird.
+   */
+  private openSeedPlantModalForSlot(gridX: number, gridY: number): void {
+    if (this.detailPanel) {
+      this.detailPanel.destroy();
+      this.detailPanel = undefined;
+    }
+    const inv = gameStore.getInventory();
+    const seedSlugs = Object.keys(inv).filter((k) => isSeedItem(k) && (inv[k] ?? 0) > 0);
+    if (seedSlugs.length === 0) {
+      this.showFlash('Keine Samen im Inventar', '#ff7e7e');
+      return;
+    }
+    const { width, height } = this.scale;
+    const panelW = 320;
+    const panelH = Math.min(380, 80 + seedSlugs.length * 26);
+    const container = this.add.container(width / 2, height / 2);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x1a1f1a, 0.96);
+    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    bg.lineStyle(2, 0x9be36e, 0.8);
+    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    container.add(bg);
+    const title = this.add.text(0, -panelH / 2 + 12, `Slot ${gridX},${gridY} bepflanzen`, {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
+    }).setOrigin(0.5, 0);
+    container.add(title);
+    seedSlugs.forEach((slug, i) => {
+      const item = getItem(slug);
+      const label = `${item?.name ?? slug} (${inv[slug]})`;
+      const btn = this.add.text(-panelW / 2 + 14, -panelH / 2 + 38 + i * 26, label, {
+        fontFamily: 'monospace', fontSize: '11px',
+        color: '#dcdcdc',
+        backgroundColor: '#2a3325',
+        padding: { left: 8, right: 8, top: 4, bottom: 4 }
+      }).setInteractive({ useHandCursor: true });
+      btn.on('pointerdown', () => {
+        const result = gameStore.plantSeedAt(slug, gridX, gridY);
+        if (result.ok) {
+          this.showFlash(`${item?.name ?? slug} in Slot ${gridX},${gridY} eingesaeet`, '#9be36e');
           container.destroy();
           this.detailPanel = undefined;
         } else {

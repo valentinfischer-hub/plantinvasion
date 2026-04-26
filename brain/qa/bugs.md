@@ -25,8 +25,12 @@
 - Modal-Title zeigt jetzt freie Slot-Anzahl: "Pflanze einsaeen (N frei)".
 - Auto-Slot-Pick (`findFreeGridSlot`) blieb unveraendert, war bereits aktiv.
 
-**Fix V0.2 (Slot-First-UI, Folge-Run):**
-- Geplant: User waehlt zuerst Slot per Klick im Garten, dann erscheint Seed-Auswahl-Modal mit nur den Seeds die in den gewaehlten Slot passen (z.B. Biom-Match).
+**Fix V0.2 (Slot-First-UI, 2026-04-27 Run 12:00):**
+- `gameStore.plantSeedAt(seedSlug, gridX, gridY)` neuer Slot-First-API.
+- `createPlantOfSpeciesAt` und `isSlotOccupied` als Helpers exportiert.
+- Garten-Slots sind jetzt klickbar (Phaser-Hotspots ueber jedem Slot, hinter den Plant-Cards). Klick auf leeren Slot oeffnet Slot-spezifisches Saeen-Modal mit Title `Slot X,Y bepflanzen`. Klick auf besetzten Slot greift weiter durch zum Plant-Card-Detail.
+- Saeen-Header-Button bleibt aktiv (V0.1-Auto-Slot-Pick als Fallback fuer User die einfach den naechsten freien Slot wollen).
+- Cross-Mode unterdrueckt Slot-Click (Hotspot returnt early).
 
 **Tests:**
 - `src/state/__tests__/plantSeed.b012.test.ts` (6 Tests, alle gruen).

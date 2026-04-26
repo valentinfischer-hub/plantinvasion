@@ -40,6 +40,47 @@ function findFreeGridSlot(plants: Plant[]): { x: number; y: number } | null {
 /**
  * Erstellt eine neue Pflanze einer Spezies (Stage Seed, Level 1).
  */
+export function isSlotOccupied(plants: Plant[], gridX: number, gridY: number): boolean {
+  return plants.some((p) => p.gridX === gridX && p.gridY === gridY);
+}
+
+/**
+ * B-012 V0.2: Variante von createPlantOfSpecies mit explizitem Slot.
+ * Liefert null bei unbekannter Spezies, ungueltigen Koordinaten oder besetztem Slot.
+ */
+export function createPlantOfSpeciesAt(
+  speciesSlug: string,
+  plants: Plant[],
+  gridX: number,
+  gridY: number
+): Plant | null {
+  const species = getSpecies(speciesSlug);
+  if (!species) return null;
+  if (gridX < 0 || gridX >= GRID_COLUMNS || gridY < 0 || gridY >= GRID_ROWS) return null;
+  if (isSlotOccupied(plants, gridX, gridY)) return null;
+  const seed = Math.floor(Math.random() * 1_000_000_000);
+  const stats = rollStarterStats(species, seed);
+  const now = Date.now();
+  return {
+    id: makeId(),
+    speciesSlug: species.slug,
+    stats,
+    geneSeed: seed,
+    isMutation: false,
+    level: 1,
+    xp: 0,
+    totalXp: 0,
+    bornAt: now,
+    lastWateredAt: now,
+    lastTickAt: now,
+    gridX,
+    gridY,
+    ...defaultGrowthFields(),
+    genome: defaultGenome(),
+    genes: rollInitialGenes()
+  };
+}
+
 export function createPlantOfSpecies(speciesSlug: string, plants: Plant[]): Plant | null {
   const species = getSpecies(speciesSlug);
   if (!species) return null;
@@ -272,6 +313,31 @@ class GameStore {
     // B-012: separater Reason fuer Garten-voll vs unbekannte Spezies (vorher beide vermischt -> User wusste nicht warum)
     if (this.getFreeSlotCount() === 0) return { ok: false, reason: 'Garten voll. Ernte oder verschiebe Pflanzen.' };
     const plant = createPlantOfSpecies(speciesSlug, this.state.plants);
+    if (!plant) return { ok: false, reason: 'Unbekannte Spezies' };
+    this.state.plants.push(plant);
+    this.consumeItem(seedSlug);
+    this.captureSpecies(speciesSlug);
+    this.notify();
+    return { ok: true, plant };
+  }
+
+  /**
+   * B-012 V0.2: Slot-First-Variante. UI ruft das wenn der User zuerst einen leeren
+   * Slot im Garten geklickt hat, dann den Seed gewaehlt hat. Liefert eindeutige
+   * Reasons damit der UI-Toast kein Raten-Spiel mehr ist.
+   */
+  plantSeedAt(seedSlug: string, gridX: number, gridY: number): { ok: boolean; reason?: string; plant?: Plant } {
+    if (!isSeedItem(seedSlug)) return { ok: false, reason: 'Kein Seed-Item' };
+    if (!this.hasItem(seedSlug)) return { ok: false, reason: 'Seed nicht im Inventar' };
+    const speciesSlug = speciesSlugFromSeed(seedSlug);
+    if (!speciesSlug) return { ok: false, reason: 'Ungueltiger Seed-Slug' };
+    if (gridX < 0 || gridX >= GRID_COLUMNS || gridY < 0 || gridY >= GRID_ROWS) {
+      return { ok: false, reason: 'Slot ausserhalb des Gartens' };
+    }
+    if (isSlotOccupied(this.state.plants, gridX, gridY)) {
+      return { ok: false, reason: 'Slot belegt. Waehle einen leeren Slot.' };
+    }
+    const plant = createPlantOfSpeciesAt(speciesSlug, this.state.plants, gridX, gridY);
     if (!plant) return { ok: false, reason: 'Unbekannte Spezies' };
     this.state.plants.push(plant);
     this.consumeItem(seedSlug);
