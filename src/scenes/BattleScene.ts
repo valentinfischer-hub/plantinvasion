@@ -370,10 +370,19 @@ if (this.bossDef && outcome.winner === this.player) {
     this.wildHpText.setText(`HP ${this.wild.stats.hp} / ${this.wild.stats.maxHp}`);
   }
 
-  private shakeSprites(): void {
-    this.tweens.add({ targets: this.playerSprite, x: '+=6', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: this.wildSprite, x: '-=6', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
+  private shakeSprites(target: 'wild' | 'player' = 'wild'): void {
+    // Beider Sprites kleines Bouncen
+    this.tweens.add({ targets: this.playerSprite, x: '+=4', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.wildSprite, x: '-=4', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
+    // Camera-Shake bei Treffer
+    this.cameras.main.shake(180, 0.005);
     this.cameras.main.flash(80, 100, 100, 100);
+    // Hit-Sprite-Tint-Flash (rot fuer ~150ms)
+    const t = target === 'wild' ? this.wildSprite : this.playerSprite;
+    if (t && (t as any).setTint) {
+      (t as any).setTint(0xff5c5c);
+      this.time.delayedCall(150, () => { try { (t as any).clearTint?.(); } catch (e) {} });
+    }
   }
 
   private spawnDamageFloater(target: Phaser.GameObjects.Sprite, dmg: number, crit: boolean, effLabel: string): void {
