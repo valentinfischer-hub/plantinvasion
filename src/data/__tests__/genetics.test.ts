@@ -149,4 +149,31 @@ describe('crossStats', () => {
     expect(child.def).toBeLessThanOrEqual(STAT_MAX);
     expect(child.spd).toBeLessThanOrEqual(STAT_MAX);
   });
+
+  // Mutation-Boost trifft alle drei Stat-Branches (boostStat 0/1/2).
+  // Seeds gewaehlt damit der 4. rand()-Call exakt die Stat-Auswahl trifft.
+  it('Mutation-Boost wendet sich auf atk an (boostStat 0, seed 3)', () => {
+    const baseline = crossStats(A, B, 3, false);
+    const boosted = crossStats(A, B, 3, true);
+    // atk-Boost mindestens 1.2x, andere Stats bleiben im Wobble-Bereich
+    expect(boosted.atk).toBeGreaterThan(baseline.atk);
+    expect(boosted.def).toBe(baseline.def);
+    expect(boosted.spd).toBe(baseline.spd);
+  });
+
+  it('Mutation-Boost wendet sich auf def an (boostStat 1, seed 2)', () => {
+    const baseline = crossStats(A, B, 2, false);
+    const boosted = crossStats(A, B, 2, true);
+    expect(boosted.def).toBeGreaterThan(baseline.def);
+    expect(boosted.atk).toBe(baseline.atk);
+    expect(boosted.spd).toBe(baseline.spd);
+  });
+
+  it('Mutation-Boost wendet sich auf spd an (boostStat 2, seed 1)', () => {
+    const baseline = crossStats(A, B, 1, false);
+    const boosted = crossStats(A, B, 1, true);
+    expect(boosted.spd).toBeGreaterThan(baseline.spd);
+    expect(boosted.atk).toBe(baseline.atk);
+    expect(boosted.def).toBe(baseline.def);
+  });
 });

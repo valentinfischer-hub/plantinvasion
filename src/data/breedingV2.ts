@@ -1,6 +1,7 @@
 import type { Plant, PlantTrait, PlantGenome } from '../types/plant';
 import { ALL_TRAITS } from '../types/plant';
 import { mulberry32 } from './genetics';
+import { now as gameTimeNow } from '../utils/gameTime';
 
 /**
  * Crossing V2 Engine: Allele-Mendel-Genetik + IV/EV + Egg-Moves + Traits.
@@ -131,7 +132,7 @@ export function crossGenomes(
 }
 
 /** Kreuz-bar wenn Cooldown abgelaufen und Plant adult+ ist. */
-export function canCross(plant: Plant, now = Date.now()): { ok: boolean; reason?: string } {
+export function canCross(plant: Plant, now = gameTimeNow()): { ok: boolean; reason?: string } {
   if (plant.level < 5) return { ok: false, reason: `${plant.nickname ?? plant.speciesSlug} braucht Level 5+` };
   if (plant.genome?.crossCooldownUntil && plant.genome.crossCooldownUntil > now) {
     const minLeft = Math.ceil((plant.genome.crossCooldownUntil - now) / 60000);
@@ -147,7 +148,7 @@ export function setCrossCooldown(plant: Plant): void {
   if (!plant.genome) {
     plant.genome = defaultGenome();
   }
-  plant.genome.crossCooldownUntil = Date.now() + cooldown;
+  plant.genome.crossCooldownUntil = gameTimeNow() + cooldown;
 }
 
 /** Quality-Tier-Inheritance: bessere Eltern, bessere Kinder. */
@@ -171,12 +172,12 @@ export function inheritQualityTier(
 }
 
 /** Pruefe ob Plant noch im Cooldown ist. */
-export function isOnCooldown(plant: Plant, now = Date.now()): boolean {
+export function isOnCooldown(plant: Plant, now = gameTimeNow()): boolean {
   return !!(plant.genome?.crossCooldownUntil && plant.genome.crossCooldownUntil > now);
 }
 
 /** Format Cooldown remaining as 'Xh Ym'. */
-export function formatCooldown(plant: Plant, now = Date.now()): string {
+export function formatCooldown(plant: Plant, now = gameTimeNow()): string {
   if (!plant.genome?.crossCooldownUntil) return '';
   const ms = plant.genome.crossCooldownUntil - now;
   if (ms <= 0) return '';
