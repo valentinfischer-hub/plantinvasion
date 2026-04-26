@@ -31,6 +31,7 @@ import { PauseOverlay } from '../ui/PauseOverlay';
 import { TimeOverlay } from '../ui/TimeOverlay';
 import { WeatherOverlay } from '../ui/WeatherOverlay';
 import { SeasonTintOverlay } from '../ui/SeasonTintOverlay';
+import { AmbientParticles } from '../ui/AmbientParticles';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -145,6 +146,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private saveIcon!: Phaser.GameObjects.Text;
   private weatherOverlay!: WeatherOverlay;
   private seasonTint!: SeasonTintOverlay;
+  private particles!: AmbientParticles;
 
   constructor() {
     super('OverworldScene');
@@ -186,6 +188,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // NPCs
     this.npcs = this.map.npcs.map((n) => new NPC(this, n));
+    this.refreshQuestIndicators();
 
     // Camera
     const worldW = this.map.width * TILE_SIZE;
@@ -245,6 +248,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.timeOverlay = new TimeOverlay(this);
     this.weatherOverlay = new WeatherOverlay(this);
     this.seasonTint = new SeasonTintOverlay(this);
+    this.particles = new AmbientParticles(this);
 
     // Audio-Context wird erst nach erstem User-Input freigeschaltet (Browser-Policy).
     // Wir attachen daher die BGM-Start an den ersten Pointer- oder Key-Event.
@@ -293,7 +297,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Initial-Snapshot der bekannten Achievements
     this.knownAchievements = new Set(gameStore.getAchievements());
     // Subscribe fuer Achievement-Diffs
-    gameStore.subscribe(() => this.checkNewAchievements());
+    gameStore.subscribe(() => { this.checkNewAchievements(); this.refreshQuestIndicators(); });
   }
 
   private checkNewAchievements(): void {
@@ -403,6 +407,20 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     });
   }
 
+  private refreshQuestIndicators(): void {
+    for (const npc of this.npcs) {
+      const quests = QUESTS.filter((qq) => qq.giverId === npc.data.id);
+      if (quests.length === 0) { npc.setQuestIndicator(this, 'none'); continue; }
+      let mode: 'available' | 'turnin' | 'none' = 'none';
+      for (const q of quests) {
+        const status = gameStore.getQuestState(q.id);
+        if (status === 'pending') { mode = 'available'; break; }
+        if (status === 'active' && checkQuestComplete(q)) { mode = 'turnin'; }
+      }
+      npc.setQuestIndicator(this, mode);
+    }
+  }
+
   private flashSaveIcon(): void {
     if (!this.saveIcon) return;
     this.saveIcon.setAlpha(1);
@@ -437,6 +455,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.timeOverlay?.tick(delta);
     this.weatherOverlay?.tick(delta);
     this.seasonTint?.refresh();
+    this.particles?.update(this.weatherOverlay?.getCurrentWeather?.() ?? 'clear');
 
     // Tutorial Auto-Advance
     this.tutorial.checkAdvance({ tileX: this.player.tileX, tileY: this.player.tileY, facing: this.player.facing, isMoving: this.player.isMoving });

@@ -22,6 +22,8 @@ export class NPC {
   public data: NPCData;
   private bounceTween?: Phaser.Tweens.Tween;
   private baseY: number;
+  private questIndicator?: Phaser.GameObjects.Text;
+  private questIndicatorTween?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene, data: NPCData) {
     this.data = data;
@@ -45,8 +47,48 @@ export class NPC {
     });
   }
 
+  /**
+   * Zeigt ein blinkendes ! ueber dem NPC wenn er eine verfuegbare/aktive Quest hat.
+   * mode: 'available' (gold !), 'turnin' (gruen ?), 'none' (entfernt).
+   */
+  public setQuestIndicator(scene: Phaser.Scene, mode: 'available' | 'turnin' | 'none'): void {
+    if (mode === 'none') {
+      this.questIndicatorTween?.stop();
+      this.questIndicator?.destroy();
+      this.questIndicator = undefined;
+      this.questIndicatorTween = undefined;
+      return;
+    }
+    if (this.questIndicator) {
+      this.questIndicator.setText(mode === 'turnin' ? '?' : '!');
+      this.questIndicator.setColor(mode === 'turnin' ? '#9be36e' : '#fcd95c');
+      return;
+    }
+    const px = this.data.tileX * TILE_SIZE + TILE_SIZE / 2;
+    const py = this.data.tileY * TILE_SIZE - 4;
+    this.questIndicator = scene.add.text(px, py, mode === 'turnin' ? '?' : '!', {
+      fontFamily: 'monospace',
+      fontSize: '14px',
+      color: mode === 'turnin' ? '#9be36e' : '#fcd95c',
+      backgroundColor: '#1a1f1a',
+      padding: { x: 3, y: 1 },
+      stroke: '#1a1f1a',
+      strokeThickness: 2
+    }).setOrigin(0.5, 1).setDepth(11);
+    this.questIndicatorTween = scene.tweens.add({
+      targets: this.questIndicator,
+      y: py - 3,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+
   public destroy(): void {
     if (this.bounceTween) this.bounceTween.stop();
+    if (this.questIndicatorTween) this.questIndicatorTween.stop();
+    this.questIndicator?.destroy();
     this.sprite.destroy();
   }
 }
