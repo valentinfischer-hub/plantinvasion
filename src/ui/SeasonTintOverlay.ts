@@ -37,10 +37,10 @@ export class SeasonTintOverlay {
     let color = 0x000000;
     let alpha = 0;
     switch (t.season) {
-      case 0: color = 0xffd4e8; alpha = 0.05; break; // Fruehling rosa
-      case 1: color = 0xffe6a0; alpha = 0.04; break; // Sommer warm
-      case 2: color = 0xff9a3d; alpha = 0.10; break; // Herbst orange
-      case 3: color = 0xb0c8ff; alpha = 0.10; break; // Winter blau-weiss
+      case 0: color = 0xffd4e8; alpha = 0.025; break; // Fruehling rosa (V0.2: halbiert wegen Stacking)
+      case 1: color = 0xffe6a0; alpha = 0.02; break; // Sommer warm
+      case 2: color = 0xff9a3d; alpha = 0.05; break; // Herbst orange
+      case 3: color = 0xb0c8ff; alpha = 0.06; break; // Winter blau-weiss
     }
     this.tintRect.fillColor = color;
     this.tintRect.fillAlpha = alpha;

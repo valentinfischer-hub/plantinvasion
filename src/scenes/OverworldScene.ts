@@ -240,10 +240,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       { label: 'Quests (Q)', onSelect: () => { this.pauseMenu.close(); this.scene.start('QuestLogScene'); } },
       { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.scene.start('MenuScene'); } }
     ]);
-    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam((this.pauseMenu as any).container);
-    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam((this.pauseMenu as any).container);
-    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam((this.miniMap as any).container);
-    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam((this.miniMap as any).container);
+    this.registerInAllUiCams((this.pauseMenu as any).container);
+    this.registerInAllUiCams((this.pauseMenu as any).dim_);
+    this.registerInAllUiCams((this.miniMap as any).container);
 
     // Day-Night-Cycle
     this.timeOverlay = new TimeOverlay(this);
@@ -267,10 +266,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       backgroundColor: '#222222', padding: { x: 2, y: 1 }
     }).setDepth(50).setVisible(false).setOrigin(0.5, 1);
 
-    // Day-Time-Tint: warmer Filter fuer cozy-Vibe
-    const tint = this.add.rectangle(0, 0, 9999, 9999, 0xffd4a0, 0.08).setOrigin(0).setDepth(900).setScrollFactor(0);
-    tint.setInteractive({ useHandCursor: false });
-    tint.disableInteractive();
+    // V0.2: Day-Time-Tint entfernt - TimeOverlay macht das schon, Stacking war zu dunkel
 
     // Farm-Button: persistent oben rechts, fuehrt zur GardenScene (alias "Farm")
     this.makeFarmButton();
@@ -290,15 +286,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.saveIcon = this.add.text(8 / zS, 24 / zS, '* gespeichert', {
       fontFamily: 'monospace', fontSize: '11px', color: '#9be36e', backgroundColor: '#1a1f1a', padding: { x: 4, y: 2 }
     }).setScrollFactor(0).setDepth(1900).setScale(1 / zS).setAlpha(0);
-    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(this.saveIcon);
-    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(this.saveIcon);
+    this.registerInAllUiCams(this.saveIcon);
 
     // Coin-HUD oben-links unter saveIcon
     this.coinHud = this.add.text(8 / zS, 42 / zS, '', {
       fontFamily: 'monospace', fontSize: '12px', color: '#fcd95c', backgroundColor: '#1a1f1a', padding: { x: 6, y: 3 }
     }).setScrollFactor(0).setDepth(1850).setScale(1 / zS);
-    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(this.coinHud);
-    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(this.coinHud);
+    this.registerInAllUiCams(this.coinHud);
     this.refreshCoinHud();
     gameStore.subscribe(() => this.refreshCoinHud());
 
@@ -347,8 +341,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       fontFamily: 'monospace', fontSize: '14px', color: '#1a1f1a'
     }).setOrigin(0.5, 0);
     container.add([title, name]);
-    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(container);
-    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(container);
+    this.registerInAllUiCams(container);
     sfx.dialogOpen();
     this.tweens.add({
       targets: container,
@@ -409,8 +402,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       .setScrollFactor(0)
       .setScale(1 / z);
     // Verhindere Doppel-Rendering durch UI-Cam des Tutorial-Overlays
-    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(toast);
-    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(toast);
+    this.registerInAllUiCams(toast);
     this.tweens.add({
       targets: toast,
       alpha: 0,
@@ -418,6 +410,25 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       delay: 2500,
       onComplete: () => toast.destroy()
     });
+  }
+
+  private registerInAllUiCams(obj: Phaser.GameObjects.GameObject): void {
+    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(obj);
+    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(obj);
+    if (this.seasonTint && (this.seasonTint as any).ignoreInUICam) (this.seasonTint as any).ignoreInUICam(obj);
+    if (this.particles && (this.particles as any).ignoreInUICam) (this.particles as any).ignoreInUICam(obj);
+    if (this.weatherOverlay && (this.weatherOverlay as any).ignoreInUICam) (this.weatherOverlay as any).ignoreInUICam(obj);
+  }
+
+  private refreshNpcNameTags(): void {
+    const px = this.player?.tileX ?? 0;
+    const py = this.player?.tileY ?? 0;
+    for (const npc of this.npcs) {
+      const dx = Math.abs(npc.data.tileX - px);
+      const dy = Math.abs(npc.data.tileY - py);
+      const dist = Math.max(dx, dy);
+      npc.setNameTagVisible(dist <= 2);
+    }
   }
 
   private refreshQuestIndicators(): void {
@@ -448,8 +459,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       fontFamily: 'monospace', fontSize: '18px', color: '#9be36e',
       backgroundColor: '#1a1f1a', padding: { x: 14, y: 6 }
     }).setOrigin(0.5).setScrollFactor(0).setDepth(1950).setScale(1 / zScale);
-    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(toast);
-    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(toast);
+    this.registerInAllUiCams(toast);
     this.tweens.add({ targets: toast, alpha: 0, duration: 1200, delay: 1500, onComplete: () => toast.destroy() });
   }
 
@@ -492,6 +502,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Tutorial Auto-Advance
     this.tutorial.checkAdvance({ tileX: this.player.tileX, tileY: this.player.tileY, facing: this.player.facing, isMoving: this.player.isMoving });
 
+    // Periodische NPC-Name-Tag-Refresh (jeden Tile-Step)
+    if (!this.player.isMoving) {
+      this.refreshNpcNameTags();
+    }
     // Periodische Position-Speicherung (alle ~2s wenn nicht moving)
     if (!this.player.isMoving) {
       this._saveAccum = (this._saveAccum ?? 0) + delta;

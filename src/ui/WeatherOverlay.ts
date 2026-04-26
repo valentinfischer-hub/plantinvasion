@@ -80,13 +80,19 @@ export class WeatherOverlay {
     return 'clear';
   }
 
+  private weatherStartedDay = 0;
+
   private refreshWeather(): void {
     const t = gameStore.getTime();
     if (t.day === this.currentDay) return;
     this.currentDay = t.day;
+    // V0.2: Mindestens 3 In-Game-Tage zwischen Wetter-Wechseln
+    // (war zu hektisch, wechselte alle paar Sekunden bei schneller Game-Time)
+    if (t.day - this.weatherStartedDay < 3) return;
     const newWeather = this.rollWeather();
     if (newWeather !== this.currentWeather) {
       this.changeWeather(newWeather);
+      this.weatherStartedDay = t.day;
     }
   }
 
@@ -176,6 +182,10 @@ export class WeatherOverlay {
    */
   public getCurrentWeather(): Weather {
     return this.currentWeather;
+  }
+
+  public ignoreInUICam(obj: Phaser.GameObjects.GameObject): void {
+    if (this.uiCam) this.uiCam.ignore(obj);
   }
 
   public destroy(): void {

@@ -49,12 +49,14 @@ export class MenuScene extends Phaser.Scene {
       by += 60;
     }
     const _newGameBtn = this.makeButton(cx, by, save ? 'Neues Spiel' : 'Spiel starten', '#fcd95c', () => {
-      // Reset gameStore-State direkt damit Tutorial sofort frisch startet
+      // V0.2 (Critic-Review-Fix): Bei Neues-Spiel direkt in OverworldScene
+      // mit Tutorial-Step 0. Vorher startete man in GardenScene mit
+      // einer einsamen Sunflower und kam sich verloren vor.
       gameStore.resetToNewGame();
+      gameStore.advanceTutorial(0);
       sfx.dialogAdvance();
       startAmbientBGM();
-      // Garten ist Herzstueck - Spieler beginnt im Garten
-      this.scene.start('GardenScene');
+      this.scene.start('OverworldScene');
     });
     by += 60;
     const _settingsBtn = this.makeButton(cx, by, 'Einstellungen', '#8eaedd', () => {

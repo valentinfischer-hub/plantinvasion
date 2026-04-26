@@ -85,7 +85,7 @@ export function newGame(): GameState {
       tileY: 17,
       facing: 'up',
       zone: 'wurzelheim',
-      lastSceneVisited: 'GardenScene'
+      lastSceneVisited: 'OverworldScene'
     },
     pokedex: { discovered: ['sunflower'], captured: ['sunflower'] },
     inventory: { 'basic-lure': 3, 'heal-tonic': 2, 'compost-tea': 2, 'seed-fern': 1 },

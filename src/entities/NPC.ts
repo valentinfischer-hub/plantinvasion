@@ -35,11 +35,15 @@ export class NPC {
     this.sprite.setDisplaySize(TILE_SIZE, TILE_SIZE);
     this.sprite.setDepth(9);
     this.baseY = py;
-    // Name-Tag, klein ueber dem NPC, default nicht sichtbar - via showNameTag aktivierbar
-    const nameTag = scene.add.text(px, py - TILE_SIZE / 2 - 12, data.name, {
-      fontFamily: 'monospace', fontSize: '8px', color: '#ffffff',
+    // Name-Tag, klein ueber dem NPC, default UNSICHTBAR - wird via
+    // setNameTagVisible() ein/aus geschaltet wenn Spieler nah ist (siehe
+    // OverworldScene.refreshNpcNameTags). Truncate auf 12 chars damit nichts
+    // ueberlappt.
+    const shortName = data.name.length > 12 ? data.name.slice(0, 11) + '.' : data.name;
+    const nameTag = scene.add.text(px, py - TILE_SIZE / 2 - 12, shortName, {
+      fontFamily: 'monospace', fontSize: '7px', color: '#ffffff',
       backgroundColor: '#1a1f1a', padding: { x: 2, y: 1 }
-    }).setOrigin(0.5, 1).setDepth(10).setAlpha(0.85);
+    }).setOrigin(0.5, 1).setDepth(10).setAlpha(0.9).setVisible(false);
     this.nameTag = nameTag;
     // Subtiles Bounce-Idle - jeder NPC mit eigener Phase damit sie nicht synchron huepfen
     const phaseDelay = (Math.abs(data.tileX * 31 + data.tileY * 17) % 11) * 90;
@@ -90,6 +94,10 @@ export class NPC {
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
+  }
+
+  public setNameTagVisible(visible: boolean): void {
+    this.nameTag?.setVisible(visible);
   }
 
   public destroy(): void {

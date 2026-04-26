@@ -81,10 +81,10 @@ export class TimeOverlay {
     let color = 0x000000;
     let alpha = 0;
     switch (phase) {
-      case 'morning': color = 0xffd4a0; alpha = 0.10; break;     // warm
+      case 'morning': color = 0xffd4a0; alpha = 0.05; break;     // war 0.10, V0.2 reduziert     // warm
       case 'day': color = 0xffffff; alpha = 0.0; break;
-      case 'evening': color = 0xff8c4a; alpha = 0.18; break;     // sunset orange
-      case 'night': color = 0x1a2858; alpha = 0.45; break;       // deep blue
+      case 'evening': color = 0xff8c4a; alpha = 0.10; break;     // war 0.18, V0.2 reduziert     // sunset orange
+      case 'night': color = 0x1a2858; alpha = 0.30; break;       // war 0.45, V0.2 reduziert wegen Tint-Stacking       // deep blue
     }
     this.tintRect.fillColor = color;
     this.tintRect.fillAlpha = alpha;
