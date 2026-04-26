@@ -27,6 +27,7 @@ import { QUESTS, type QuestDef } from '../data/quests';
 import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { MiniMap } from '../ui/MiniMap';
+import { PauseOverlay } from '../ui/PauseOverlay';
 import { TimeOverlay } from '../ui/TimeOverlay';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
@@ -107,7 +108,11 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private knownAchievements: Set<string> = new Set();
   private tutorial!: TutorialOverlay;
   private miniMap!: MiniMap;
+  private pauseMenu!: PauseOverlay;
+  private keyEsc!: Phaser.Input.Keyboard.Key;
+  private keyH!: Phaser.Input.Keyboard.Key;
   private timeOverlay!: TimeOverlay;
+  private saveIcon!: Phaser.GameObjects.Text;
 
   constructor() {
     super('OverworldScene');
@@ -170,6 +175,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.keyM = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
     this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
     this.keyI = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
+    this.keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    this.keyH = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H);
     this.keyBoss = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
     this.keyDiary = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
 
@@ -186,6 +193,17 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.tutorial = new TutorialOverlay(this);
     this.miniMap = new MiniMap(this);
     this.miniMap.refresh(this.currentZone);
+    this.pauseMenu = new PauseOverlay(this, [
+      { label: 'Weiterspielen', onSelect: () => this.pauseMenu.close() },
+      { label: 'Inventar (I)', onSelect: () => { this.pauseMenu.close(); this.scene.start('InventoryScene'); } },
+      { label: 'Pokedex (P)', onSelect: () => { this.pauseMenu.close(); this.scene.start('PokedexScene'); } },
+      { label: 'Quests (Q)', onSelect: () => { this.pauseMenu.close(); this.scene.start('QuestLogScene'); } },
+      { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.scene.start('MenuScene'); } }
+    ]);
+    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam((this.pauseMenu as any).container);
+    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam((this.pauseMenu as any).container);
+    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam((this.miniMap as any).container);
+    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam((this.miniMap as any).container);
 
     // Day-Night-Cycle
     this.timeOverlay = new TimeOverlay(this);
@@ -216,6 +234,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Daily-Login-Reward: einmalig pro Real-Time-Tag claimen, dann Toast
     this.tryClaimDailyLogin();
+    // Auto-Save-Indicator (oben-links, blendet kurz auf bei jedem Save)
+    const camS = this.cameras.main;
+    const zS = camS.zoom || 1;
+    this.saveIcon = this.add.text(8 / zS, 24 / zS, '* gespeichert', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#9be36e', backgroundColor: '#1a1f1a', padding: { x: 4, y: 2 }
+    }).setScrollFactor(0).setDepth(1900).setScale(1 / zS).setAlpha(0);
+    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(this.saveIcon);
+    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(this.saveIcon);
     // Zone-Visit fuer Achievement-Tracking
     gameStore.recordZoneVisit(this.currentZone);
 
@@ -260,6 +286,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }).setOrigin(0.5, 0);
     container.add([title, name]);
     if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(container);
+    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(container);
     sfx.dialogOpen();
     this.tweens.add({
       targets: container,
@@ -291,6 +318,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       .setScale(1 / z);
     // Verhindere Doppel-Rendering durch UI-Cam des Tutorial-Overlays
     if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(toast);
+    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(toast);
     this.tweens.add({
       targets: toast,
       alpha: 0,
@@ -298,6 +326,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       delay: 2500,
       onComplete: () => toast.destroy()
     });
+  }
+
+  private flashSaveIcon(): void {
+    if (!this.saveIcon) return;
+    this.saveIcon.setAlpha(1);
+    this.tweens.add({ targets: this.saveIcon, alpha: 0, duration: 1200, delay: 600 });
   }
 
   public update(time: number, delta: number): void {
@@ -328,6 +362,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       if (this._saveAccum > 2000) {
         this._saveAccum = 0;
         gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene');
+        this.flashSaveIcon();
       }
     }
 
@@ -365,6 +400,24 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       return;
     }
     // Pokedex-Hotkey
+    if (Phaser.Input.Keyboard.JustDown(this.keyEsc)) {
+      this.pauseMenu.toggle();
+      return;
+    }
+    if (this.pauseMenu.open_) return;
+    if (Phaser.Input.Keyboard.JustDown(this.keyH)) {
+      const used = gameStore.consumeItem('heal-tonic');
+      if (used) {
+        const plants = gameStore.get().plants;
+        if (plants[0]) {
+          (plants[0] as any).hydration = 100;
+        }
+        sfx.pickup();
+      } else {
+        sfx.bump();
+      }
+      return;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.keyI)) {
       sfx.dialogOpen();
       this.scene.start('InventoryScene');

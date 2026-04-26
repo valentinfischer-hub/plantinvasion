@@ -100,6 +100,14 @@ export class TimeOverlay {
     }
   }
 
+  /**
+   * Verhindert dass spaeter erstellte UI-Objekte (Toasts, Pause-Menu)
+   * doppelt von der UI-Cam des TimeOverlay gerendert werden.
+   */
+  public ignoreInUICam(obj: Phaser.GameObjects.GameObject): void {
+    if (this.uiCam) this.uiCam.ignore(obj);
+  }
+
   public destroy(): void {
     this.container?.destroy();
     this.tintRect?.destroy();
