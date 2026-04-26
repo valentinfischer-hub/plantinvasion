@@ -241,7 +241,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.scene.start('MenuScene'); } }
     ]);
     this.registerInAllUiCams((this.pauseMenu as any).container);
-    this.registerInAllUiCams((this.pauseMenu as any).dim_);
+    this.registerInAllUiCams((this.pauseMenu as any).dim);
     this.registerInAllUiCams((this.miniMap as any).container);
 
     // Day-Night-Cycle

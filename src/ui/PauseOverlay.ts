@@ -2,20 +2,18 @@ import Phaser from 'phaser';
 import { sfx } from '../audio/sfxGenerator';
 
 /**
- * PauseOverlay V0.2 (2026-04-25).
- * Wird in OverworldScene per Esc geoffnet. Stoppt update, zeigt Buttons.
+ * PauseOverlay V0.3 (2026-04-25).
  *
- * V0.2 Fixes (Game-Critic-Review B-006/B-012):
- *  - dim-Rectangle wird jetzt korrekt zum Container hinzugefuegt und
- *    als Teil der Pause-UI sichtbar/unsichtbar geschaltet (vorher
- *    permanent visible, hat das ganze Spiel verdunkelt)
- *  - Container-Origin auf top-left statt center, Position-Mathe sauber
- *    fuer Camera-Zoom + scrollFactor 0
+ * V0.3: Eigene UI-Camera (zoom 1) wie TutorialOverlay/TimeOverlay statt
+ * scrollFactor-0-Math die in landscape-mode 720x540 + cam.zoom 2 nicht
+ * sauber zentriert hat. Main-Cam ignoriert dim+container, UI-Cam zeigt
+ * NUR dim+container.
  */
 export class PauseOverlay {
+  private scene: Phaser.Scene;
+  private uiCam: Phaser.Cameras.Scene2D.Camera;
   private container: Phaser.GameObjects.Container;
   private dim: Phaser.GameObjects.Rectangle;
-  private scene: Phaser.Scene;
   private isOpen = false;
   private items: { label: string; onSelect: () => void }[];
 
@@ -23,42 +21,46 @@ export class PauseOverlay {
     this.scene = scene;
     this.items = items;
     const cam = scene.cameras.main;
-    const z = cam.zoom || 1;
+    const W = cam.width;
+    const H = cam.height;
 
-    const w = 240;
-    const h = 60 + this.items.length * 36;
+    // Eigene UI-Camera mit zoom 1
+    this.uiCam = scene.cameras.add(0, 0, W, H);
+    this.uiCam.setZoom(1);
+    this.uiCam.setScroll(0, 0);
 
-    // Dim-Layer: ueber kompletten Camera-Viewport (in cam-pixel-koord)
-    // Position (0,0) origin top-left, scrollFactor 0, scale 1/zoom damit
-    // breite/hoehe stimmen.
-    this.dim = scene.add.rectangle(0, 0, cam.width, cam.height, 0x000000, 0.6)
-      .setOrigin(0)
-      .setScrollFactor(0)
-      .setDepth(2999)
-      .setScale(1 / z)
-      .setVisible(false);
+    // Dim deckt vollen Viewport
+    this.dim = scene.add.rectangle(0, 0, W, H, 0x000000, 0.6).setOrigin(0).setDepth(2999).setVisible(false);
 
-    // Menu-Container in der Camera-Mitte
-    this.container = scene.add.container((cam.width / 2) / z, (cam.height / 2) / z);
-    this.container.setScrollFactor(0);
+    // Menu-Container in Camera-Pixel-Koordinaten zentriert
+    const menuW = 240;
+    const menuH = 60 + this.items.length * 36;
+    this.container = scene.add.container(W / 2, H / 2);
     this.container.setDepth(3000);
-    this.container.setScale(1 / z);
 
-    const bg = scene.add.rectangle(0, 0, w, h, 0x1a1f1a, 0.95)
+    const bg = scene.add.rectangle(0, 0, menuW, menuH, 0x1a1f1a, 0.95)
       .setStrokeStyle(2, 0x9be36e);
-    const title = scene.add.text(0, -h / 2 + 14, 'Pause', {
+    const title = scene.add.text(0, -menuH / 2 + 14, 'Pause', {
       fontFamily: 'monospace', fontSize: '16px', color: '#9be36e'
     }).setOrigin(0.5, 0);
-
     this.container.add([bg, title]);
 
-    let by = -h / 2 + 50;
+    let by = -menuH / 2 + 50;
     for (const item of this.items) {
       const btn = this.makeButton(0, by, item.label, item.onSelect);
       this.container.add(btn);
       by += 36;
     }
     this.container.setVisible(false);
+
+    // Camera-Routing: Main-Cam ignoriert UI-Objekte, UI-Cam zeigt nur die UI-Objekte
+    cam.ignore(this.container);
+    cam.ignore(this.dim);
+    scene.children.list.forEach((obj) => {
+      if (obj !== this.container && obj !== this.dim) {
+        this.uiCam.ignore(obj);
+      }
+    });
   }
 
   private makeButton(x: number, y: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
@@ -103,16 +105,13 @@ export class PauseOverlay {
     return this.isOpen;
   }
 
-  public get container_(): Phaser.GameObjects.Container {
-    return this.container;
-  }
-
-  public get dim_(): Phaser.GameObjects.Rectangle {
-    return this.dim;
+  public ignoreInUICam(obj: Phaser.GameObjects.GameObject): void {
+    if (this.uiCam) this.uiCam.ignore(obj);
   }
 
   public destroy(): void {
     this.container.destroy();
     this.dim.destroy();
+    if (this.uiCam) this.scene.cameras.remove(this.uiCam);
   }
 }
