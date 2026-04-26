@@ -1,5 +1,6 @@
 import type { GardenSlotMeta, Plant, SoilTier } from '../types/plant';
 import { rollStarterStats, crossStats, rollMutation } from '../data/genetics';
+import { defaultGenome, crossGenomes, canCross, setCrossCooldown, inheritQualityTier, formatCooldown } from '../data/breedingV2';
 import { tickPlant, defaultGrowthFields, harvestPlant, isHarvestReady } from '../data/leveling';
 import { getSpecies } from '../data/species';
 import { applyItemToPlant, nextSoilTier, SOIL_COSTS, SOIL_MUTATION_BONUS } from '../data/boosters';
@@ -60,7 +61,8 @@ export function createPlantOfSpecies(speciesSlug: string, plants: Plant[]): Plan
     lastTickAt: now,
     gridX: slot.x,
     gridY: slot.y,
-    ...defaultGrowthFields()
+    ...defaultGrowthFields(),
+    genome: defaultGenome()
   };
 }
 
@@ -788,12 +790,22 @@ class GameStore {
     this.save();
   }
 
+  getCrossCooldown(plantId: string): string {
+    const p = this.state.plants.find((pl) => pl.id === plantId);
+    if (!p) return '';
+    return formatCooldown(p);
+  }
+
   crossPlants(parentAId: string, parentBId: string): { ok: boolean; reason?: string; child?: Plant } {
     const a = this.state.plants.find((p) => p.id === parentAId);
     const b = this.state.plants.find((p) => p.id === parentBId);
     if (!a || !b) return { ok: false, reason: 'Eltern nicht gefunden' };
     if (a.id === b.id) return { ok: false, reason: 'Selbe Pflanze gewaehlt' };
-    if (a.level < 5 || b.level < 5) return { ok: false, reason: 'Beide Pflanzen brauchen Level 5+' };
+    // V2: Cross-Cooldown plus Level-Check via canCross
+    const ccA = canCross(a);
+    if (!ccA.ok) return { ok: false, reason: ccA.reason };
+    const ccB = canCross(b);
+    if (!ccB.ok) return { ok: false, reason: ccB.reason };
     const COST = 50;
     if (this.state.coins < COST) return { ok: false, reason: `Du brauchst ${COST} Gold` };
     // Free Slot
@@ -843,6 +855,15 @@ class GameStore {
       ...defaultGrowthFields(),
       generation: childGeneration
     };
+    // V2 Genome-Inheritance: Allele-Cross + Egg-Moves + Traits + Hidden-Power
+    const parentAGenome = a.genome ?? defaultGenome();
+    const parentBGenome = b.genome ?? defaultGenome();
+    child.genome = crossGenomes(parentAGenome, parentBGenome, seed, mutation.isMutation);
+    // Quality-Tier-Inheritance
+    child.qualityTier = inheritQualityTier(a.qualityTier, b.qualityTier);
+    // Cooldown auf beide Eltern
+    setCrossCooldown(a);
+    setCrossCooldown(b);
     this.state.plants.push(child);
     this.state.coins -= COST;
     this.captureSpecies(child.speciesSlug);
@@ -881,6 +902,7 @@ class GameStore {
       gridY: slot.y,
       ...defaultGrowthFields()
     };
+    newPlant.genome = defaultGenome();
     this.state.plants.push(newPlant);
     this.captureSpecies(slug);
     this.save();

@@ -65,7 +65,7 @@ export interface GameState {
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
-export const SAVE_SCHEMA_VERSION = 9;
+export const SAVE_SCHEMA_VERSION = 10;
 
 const DEFAULT_OVERWORLD: OverworldState = {
   tileX: 14,
@@ -120,6 +120,27 @@ function ensurePlantGrowthFields(plant: any): Plant {
 
 function migrate(parsed: any): GameState | null {
   if (!parsed || typeof parsed !== 'object') return null;
+  if (parsed.version === 9) {
+    parsed.version = 10;
+    if (Array.isArray(parsed.plants)) {
+      for (const pl of parsed.plants) {
+        if (!pl.genome) {
+          pl.genome = {
+            alleleHp: [Math.floor(Math.random()*32), Math.floor(Math.random()*32)],
+            alleleAtk: [Math.floor(Math.random()*32), Math.floor(Math.random()*32)],
+            alleleDef: [Math.floor(Math.random()*32), Math.floor(Math.random()*32)],
+            alleleSpd: [Math.floor(Math.random()*32), Math.floor(Math.random()*32)],
+            alleleVit: [Math.floor(Math.random()*32), Math.floor(Math.random()*32)],
+            alleleRoot: [Math.floor(Math.random()*32), Math.floor(Math.random()*32)],
+            evHp: 0, evAtk: 0, evDef: 0, evSpd: 0, evVit: 0, evRoot: 0,
+            eggMoves: [],
+            traits: []
+          };
+        }
+      }
+    }
+    console.log('[storage] migrated save v9 -> v10 (breeding-v2 genome backfill)');
+  }
   if (parsed.version === 8) {
     parsed.version = 9;
     parsed.time = parsed.time ?? { minute: 360, day: 1, season: 0, year: 1 };  // start at 06:00 spring day1

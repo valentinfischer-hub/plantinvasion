@@ -87,6 +87,9 @@ export interface Plant {
   // dafuer bekommt die Pflanze im Battle einen Stat-Bonus
   bonsaiMode?: boolean;
 
+  // Crossing V2 (V10) - optional fuer Backwards-Compat
+  genome?: PlantGenome;
+
   // UI
   gridX: number;
   gridY: number;
@@ -96,4 +99,44 @@ export interface GardenSlotMeta {
   x: number;
   y: number;
   soilTier: SoilTier;
+}
+
+
+// === Crossing V2 (Save-V10): erweiterte Genetik ===
+
+export type PlantTrait =
+  | 'glowing'
+  | 'oversized'
+  | 'fast-growth'
+  | 'resilient'
+  | 'aromatic'
+  | 'photosynthetic'
+  | 'thorny'
+  | 'phosphorescent'
+  | 'symbiotic'
+  | 'mythic-bloom';
+
+export const ALL_TRAITS: readonly PlantTrait[] = [
+  'glowing','oversized','fast-growth','resilient','aromatic',
+  'photosynthetic','thorny','phosphorescent','symbiotic','mythic-bloom'
+] as const;
+
+export interface PlantGenome {
+  alleleHp: [number, number];
+  alleleAtk: [number, number];
+  alleleDef: [number, number];
+  alleleSpd: [number, number];
+  alleleVit: [number, number];
+  alleleRoot: [number, number];
+  evHp: number;
+  evAtk: number;
+  evDef: number;
+  evSpd: number;
+  evVit: number;
+  evRoot: number;
+  eggMoves: string[];
+  hiddenPowerFamily?: string;
+  hiddenPowerPower?: number;
+  traits: PlantTrait[];
+  crossCooldownUntil?: number;
 }
