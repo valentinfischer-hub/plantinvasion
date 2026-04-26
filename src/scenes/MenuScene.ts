@@ -42,7 +42,8 @@ export class MenuScene extends Phaser.Scene {
       void this.makeButton(cx, by, 'Weiterspielen', '#9be36e', () => {
         sfx.dialogAdvance();
         startAmbientBGM();
-        const target = save.overworld?.lastSceneVisited ?? 'OverworldScene';
+        // Garten ist Herzstueck: Default auf GardenScene
+        const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
         this.scene.start(target);
       });
       by += 60;
@@ -52,7 +53,8 @@ export class MenuScene extends Phaser.Scene {
       gameStore.resetToNewGame();
       sfx.dialogAdvance();
       startAmbientBGM();
-      this.scene.start('OverworldScene');
+      // Garten ist Herzstueck - Spieler beginnt im Garten
+      this.scene.start('GardenScene');
     });
     by += 60;
     const _settingsBtn = this.makeButton(cx, by, 'Einstellungen', '#8eaedd', () => {

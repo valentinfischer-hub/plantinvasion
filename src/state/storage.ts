@@ -72,7 +72,7 @@ const DEFAULT_OVERWORLD: OverworldState = {
   tileY: 17,
   facing: 'up',
   zone: 'wurzelheim',
-  lastSceneVisited: 'OverworldScene'
+  lastSceneVisited: 'GardenScene'
 };
 
 const GRID_COLS = 4;

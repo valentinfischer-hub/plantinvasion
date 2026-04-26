@@ -147,7 +147,9 @@ export class GardenScene extends Phaser.Scene {
         }
       });
       const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
-      owKey.on('down', () => this.scene.start('OverworldScene'));
+      owKey.on('down', () => this.gotoOverworld());
+      const wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+      wKey.on('down', () => this.gotoOverworld());
 
       // S = Seed-Plant-Modal
       const seedKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
@@ -163,6 +165,16 @@ export class GardenScene extends Phaser.Scene {
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
     seedBtn.on('pointerdown', () => this.openSeedPlantModal());
+
+    // Welt-Erkunden-Button: prominent oben links, fuehrt zur OverworldScene
+    const worldBtn = this.add.text(70, 14, 'Welt (W)', {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#1a1f1a',
+      backgroundColor: '#fcd95c',
+      padding: { left: 10, right: 10, top: 4, bottom: 4 }
+    }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
+    worldBtn.on('pointerdown', () => this.gotoOverworld());
 
     // Cross-Mode-Button (S-09 D.o.D. #7)
     this.crossBtnBg = this.add.rectangle(width - 140, 22, 70, 22, 0x000000, 0.7)
@@ -285,6 +297,17 @@ export class GardenScene extends Phaser.Scene {
     });
     container.add(close);
     this.detailPanel = container;
+  }
+
+  private gotoOverworld(): void {
+    gameStore.setOverworldPos(
+      gameStore.getOverworldPos().tileX,
+      gameStore.getOverworldPos().tileY,
+      gameStore.getOverworldPos().facing,
+      'OverworldScene',
+      gameStore.getOverworldPos().zone
+    );
+    this.scene.start('OverworldScene');
   }
 
   private flashText?: Phaser.GameObjects.Text;
