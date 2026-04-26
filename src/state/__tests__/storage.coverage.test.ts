@@ -164,3 +164,37 @@ describe('saveGame catch-Block bei localStorage-Failure (Lines 274-275)', () => 
     expect(errorSpy).not.toHaveBeenCalled();
   });
 });
+
+describe('Save-Migration v1 minimal-Save (Lines 232-235 ?? defaults)', () => {
+  it('migriert v1 ohne plants/coins/gems/createdAt -> alle Defaults greifen', () => {
+    // Minimal v1-Save ohne optionale Felder -> jede `?? default`-Zweige wird genommen.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      version: 1,
+      playerId: 'minimal'
+    }));
+    const state = loadGame();
+    expect(state).not.toBeNull();
+    expect(state!.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(state!.plants).toEqual([]);
+    expect(state!.coins).toBe(0);
+    expect(state!.gems).toBe(0);
+    expect(typeof state!.createdAt).toBe('number');
+  });
+});
+
+describe('Save-Migration v2 ohne plants (Lines 222-223 if-plants-Branch)', () => {
+  it('migriert v2 ohne plants-Feld -> pokedex bleibt leer', () => {
+    // v2-Save ohne plants -> if (parsed.plants) Branch wird false.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      version: 2,
+      playerId: 'no-plants',
+      coins: 50,
+      gems: 0,
+      createdAt: 1_700_000_000_000
+    }));
+    const state = loadGame();
+    expect(state).not.toBeNull();
+    expect(state!.pokedex!.discovered).toEqual([]);
+    expect(state!.pokedex!.captured).toEqual([]);
+  });
+});

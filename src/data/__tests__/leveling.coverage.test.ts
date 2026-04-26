@@ -221,3 +221,50 @@ describe('tickPlant Sprinkler-Booster (Lines 261-263)', () => {
     expect(r.hydration).toBe(0);
   });
 });
+
+describe('tickPlant Edge-Cases (Lines 247, 277, 415)', () => {
+  it('Default ctxOrNow: tickPlant ohne 2. Arg verwendet gameTimeNow', () => {
+    // Line 247: `: ctxOrNow ?? { zone: 'wurzelheim', now: gameTimeNow() }`
+    // ctxOrNow ist undefined -> Default-Branch wird genommen.
+    const plant = makePlant({ lastTickAt: 1 });
+    const r = tickPlant(plant);
+    expect(r.lastTickAt).toBeGreaterThan(plant.lastTickAt);
+  });
+
+  it('Sun-Lamp setzt todMult auf 1.0 (Line 277, true-Branch)', () => {
+    const startedAt = 2_000_000_000_000;
+    const now = startedAt + 60_000;
+    // Mitternacht waere normal todMult < 1, mit Sun-Lamp aber 1.0.
+    const midnight = new Date('2026-04-26T03:00:00').getTime();
+    const lampStartedAt = midnight - 1000;
+    const plant = makePlant({
+      level: 30,
+      lastTickAt: midnight - 1000,
+      bornAt: midnight - 1000,
+      activeBoosters: [{
+        type: 'sun-lamp',
+        startedAt: lampStartedAt,
+        durationMs: 60 * 60 * 1000
+      }]
+    });
+    const r = tickPlant(plant, { zone: 'wurzelheim', now: midnight });
+    // Mit Sun-Lamp wird die XP nicht durch Mitternachts-Penalty reduziert.
+    expect(r.totalXp).toBeGreaterThan(plant.totalXp);
+    // Plant-State unveraendert ausser durch tick (kein Crash).
+    expect(r.lastTickAt).toBe(midnight);
+    void startedAt; void now;
+  });
+});
+
+import { harvestPlant } from '../leveling';
+
+describe('harvestPlant ohne Harvest-Ready (Line 415)', () => {
+  it('liefert leere Output und unveraenderten Plant wenn nicht harvest-ready', () => {
+    const plant = makePlant({ level: 1, pendingHarvest: false });
+    const result = harvestPlant(plant, plant.bornAt + 1000);
+    expect(result.output.coins).toBe(0);
+    expect(result.output.pollenChance).toBe(false);
+    expect(result.output.seedSpeciesSlug).toBeUndefined();
+    expect(result.plant).toBe(plant);
+  });
+});
