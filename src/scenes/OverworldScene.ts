@@ -29,6 +29,7 @@ import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { MiniMap } from '../ui/MiniMap';
 import { PauseOverlay } from '../ui/PauseOverlay';
 import { TimeOverlay } from '../ui/TimeOverlay';
+import { WeatherOverlay } from '../ui/WeatherOverlay';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43, 50, 51, 61, 62, 64]);
@@ -113,6 +114,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private keyH!: Phaser.Input.Keyboard.Key;
   private timeOverlay!: TimeOverlay;
   private saveIcon!: Phaser.GameObjects.Text;
+  private weatherOverlay!: WeatherOverlay;
 
   constructor() {
     super('OverworldScene');
@@ -207,6 +209,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Day-Night-Cycle
     this.timeOverlay = new TimeOverlay(this);
+    this.weatherOverlay = new WeatherOverlay(this);
 
     // Audio-Context wird erst nach erstem User-Input freigeschaltet (Browser-Policy).
     // Wir attachen daher die BGM-Start an den ersten Pointer- oder Key-Event.
@@ -352,6 +355,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Tageszeit ticken
     this.timeOverlay?.tick(delta);
+    this.weatherOverlay?.tick(delta);
 
     // Tutorial Auto-Advance
     this.tutorial.checkAdvance({ tileX: this.player.tileX, tileY: this.player.tileY, facing: this.player.facing, isMoving: this.player.isMoving });

@@ -48,6 +48,9 @@ export class GardenScene extends Phaser.Scene {
   private gridOriginX = 0;
   private gridOriginY = 0;
   private cards: Map<string, PlantCard> = new Map();
+  private crossModeActive = false;
+  private crossSelected: string[] = [];
+  private crossModeText?: Phaser.GameObjects.Text;
   private headerText!: Phaser.GameObjects.Text;
   private detailPanel?: Phaser.GameObjects.Container;
   private dragSource?: { plantId: string; startX: number; startY: number };
@@ -126,6 +129,13 @@ export class GardenScene extends Phaser.Scene {
 
     this.refreshHeader();
 
+    // Cross-Mode-Indikator
+    (window as any).__gardenSelectForCross = (id: string) => this.selectForCross(id);
+    this.crossModeText = this.add.text(this.scale.width / 2, 36, 'CROSS-MODE: 2 Pflanzen anklicken (C zum schliessen)', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ff7eb8',
+      backgroundColor: '#000000', padding: { x: 6, y: 3 }
+    }).setOrigin(0.5).setDepth(2400).setVisible(false);
+
     if (this.input.keyboard) {
       const crossKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
       crossKey.on('down', () => {
@@ -140,6 +150,15 @@ export class GardenScene extends Phaser.Scene {
         } else {
           this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
         }
+      });
+      // C-Hotkey toggle cross-mode (UI-Polish: 2-Slot-Select)
+      const cKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
+      cKey.on('down', () => {
+        this.crossModeActive = !this.crossModeActive;
+        this.crossSelected = [];
+        if (this.crossModeText) this.crossModeText.setVisible(this.crossModeActive);
+        this.refreshCrossHighlights();
+        if (this.crossModeActive) this.showFlash('Cross-Mode: 2 Pflanzen anklicken', '#ff7eb8');
       });
       const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
       owKey.on('down', () => this.scene.start('OverworldScene'));
@@ -217,6 +236,33 @@ export class GardenScene extends Phaser.Scene {
     this.detailPanel = container;
   }
 
+  private refreshCrossHighlights(): void {
+    // Visualisierung der ausgewaehlten Slots (subtile Color-Indikator). Ohne 'frame'-property auf Card: nur logisch
+    void this.crossSelected;
+  }
+
+  private selectForCross(plantId: string): void {
+    if (!this.crossModeActive) return;
+    if (this.crossSelected.includes(plantId)) {
+      this.crossSelected = this.crossSelected.filter((p) => p !== plantId);
+    } else if (this.crossSelected.length < 2) {
+      this.crossSelected.push(plantId);
+    }
+    this.refreshCrossHighlights();
+    if (this.crossSelected.length === 2) {
+      const result = gameStore.crossPlants(this.crossSelected[0], this.crossSelected[1]);
+      if (!result.ok) {
+        this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      } else {
+        this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
+      }
+      this.crossSelected = [];
+      this.crossModeActive = false;
+      if (this.crossModeText) this.crossModeText.setVisible(false);
+      this.refreshCrossHighlights();
+    }
+  }
+
   private flashText?: Phaser.GameObjects.Text;
   private showFlash(message: string, color: string): void {
     if (this.flashText) this.flashText.destroy();
@@ -281,6 +327,13 @@ export class GardenScene extends Phaser.Scene {
       }
     });
     this.refreshHeader();
+
+    // Cross-Mode-Indikator
+    (window as any).__gardenSelectForCross = (id: string) => this.selectForCross(id);
+    this.crossModeText = this.add.text(this.scale.width / 2, 36, 'CROSS-MODE: 2 Pflanzen anklicken (C zum schliessen)', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ff7eb8',
+      backgroundColor: '#000000', padding: { x: 6, y: 3 }
+    }).setOrigin(0.5).setDepth(2400).setVisible(false);
   }
 
   private gridToWorld(x: number, y: number): { x: number; y: number } {
@@ -472,6 +525,13 @@ export class GardenScene extends Phaser.Scene {
       if (card) this.updateCard(card, plant);
     });
     this.refreshHeader();
+
+    // Cross-Mode-Indikator
+    (window as any).__gardenSelectForCross = (id: string) => this.selectForCross(id);
+    this.crossModeText = this.add.text(this.scale.width / 2, 36, 'CROSS-MODE: 2 Pflanzen anklicken (C zum schliessen)', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ff7eb8',
+      backgroundColor: '#000000', padding: { x: 6, y: 3 }
+    }).setOrigin(0.5).setDepth(2400).setVisible(false);
   }
 
   private tierLabel(tier: QualityTier): string {
