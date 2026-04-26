@@ -62,11 +62,16 @@ export class MenuScene extends Phaser.Scene {
       this.scene.start('SettingsScene');
     });
     by += 60;
+    const _helpBtn = this.makeButton(cx, by, 'Hilfe & Hotkeys', '#fcd95c', () => {
+      sfx.dialogAdvance();
+      this.scene.start('HelpScene');
+    });
+    by += 60;
 
     const _hint = this.add.text(cx, height - 24, 'v0.8 - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
-    void _hint; void _title; void _subtitle; void _newGameBtn; void _settingsBtn;
+    void _hint; void _title; void _subtitle; void _newGameBtn; void _settingsBtn; void _helpBtn;
   }
 
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
