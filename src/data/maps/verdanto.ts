@@ -104,6 +104,18 @@ const verdantoNpcs: NPCSpawn[] = [
       'Lyra: Hier in Verdanto leben die letzten unmutierten Bromelien.',
       'Lyra: Sammle 3 Bromeliad-Samen fuer mich, dann erzaehle ich dir mehr ueber die Verodyne-Geschichte.'
     ]
+  },
+  {
+    id: 'theo-trader',
+    name: 'Theo (Tausch-Haendler)',
+    tileX: 18,
+    tileY: 14,
+    facing: 'left',
+    color: 0xfcd95c,
+    dialog: [
+      'Theo: Willkommen am Tauschplatz, Botanikerin.',
+      'Theo: Ich tausche Items gegen Items, kein Gold!'
+    ]
   }
 ];
 

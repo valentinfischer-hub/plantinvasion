@@ -209,6 +209,18 @@ const wurzelheim: MapDef = {
         'Bertram: Ah, der wandernde Botaniker! Ich habe heute einen frischen Samen fuer dich.',
         'Bertram: Komm jeden Tag vorbei, ich gebe dir was Neues mit.'
       ]
+    },
+    {
+      id: 'iris-salbeyen',
+      name: 'Iris Salbeyen',
+      tileX: 22,
+      tileY: 14,
+      facing: 'left',
+      color: 0xb83fa3,
+      dialog: [
+        'Iris: Endlich. Ich habe schon auf dich gewartet, Erbin von Tilda.',
+        'Iris: Wenn du bereit bist, deine Reise zu beginnen, sag es mir.'
+      ]
     }
   ]
 };

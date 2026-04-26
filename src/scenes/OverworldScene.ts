@@ -112,6 +112,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private pauseMenu!: PauseOverlay;
   private keyEsc!: Phaser.Input.Keyboard.Key;
   private keyH!: Phaser.Input.Keyboard.Key;
+  private key1!: Phaser.Input.Keyboard.Key;
+  private key2!: Phaser.Input.Keyboard.Key;
+  private key3!: Phaser.Input.Keyboard.Key;
+  private key4!: Phaser.Input.Keyboard.Key;
   private timeOverlay!: TimeOverlay;
   private saveIcon!: Phaser.GameObjects.Text;
   private weatherOverlay!: WeatherOverlay;
@@ -179,6 +183,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.keyI = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
     this.keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
     this.keyH = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.H);
+    this.key1 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
+    this.key2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
+    this.key3 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.THREE);
+    this.key4 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.FOUR);
     this.keyBoss = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
     this.keyDiary = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
 
@@ -339,6 +347,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
   public update(time: number, delta: number): void {
     if (this.dialog.open_) {
+      // Choice-Mode: number keys 1-4
+      if ((this.dialog as any).isChoiceMode_) {
+        if (Phaser.Input.Keyboard.JustDown(this.key1)) { (this.dialog as any).selectChoice(0); return; }
+        if (Phaser.Input.Keyboard.JustDown(this.key2)) { (this.dialog as any).selectChoice(1); return; }
+        if (Phaser.Input.Keyboard.JustDown(this.key3)) { (this.dialog as any).selectChoice(2); return; }
+        if (Phaser.Input.Keyboard.JustDown(this.key4)) { (this.dialog as any).selectChoice(3); return; }
+        return;
+      }
       // Wenn Dialog offen, Keys nur fuer Dialog-Advance
       const touchE = this.touch && this.touch.e.pressed && !this.prevTouchE;
       this.prevTouchE = this.touch ? this.touch.e.pressed : false;
@@ -478,6 +494,84 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     const npc = this.npcs.find((n) => n.data.tileX === front.tileX && n.data.tileY === front.tileY);
     if (npc) {
       // Berry-Master: Daily-Free-Seed-Dialog
+      // Iris: Choice-basiertes Story-Dialog (S-09)
+      if (npc.data.id === 'iris-salbeyen') {
+        this.tutorial?.markInteract('npc');
+        const metFlag = gameStore.getStoryFlag?.('met_iris') ?? false;
+        if (!metFlag) {
+          this.dialog.openWithChoices(
+            'Iris: Endlich. Ich habe schon auf dich gewartet, Erbin von Tilda.\nWillst du mit mir ueber die Sieben Biome reden?',
+            [
+              { label: 'Ja, erzaehl mir alles!', onSelect: () => {
+                  gameStore.setStoryFlag?.('met_iris', true);
+                  gameStore.acceptQuest('act1-meet-iris');
+                  gameStore.completeQuest('act1-meet-iris', 0, { 'heal-tonic': 3 });
+                  this.dialog.open([
+                    'Iris: Danke. Du hast die Augen deiner Grossmutter.',
+                    'Iris: Die Sieben Biome warten. Verodyne wird sie alle vergiften wenn wir nichts tun.',
+                    'Iris: Ich gebe dir 3 Heil-Tonika. Pass auf dich auf, Botanikerin.'
+                  ]);
+                } },
+              { label: 'Spaeter, vielleicht.', onSelect: () => {
+                  this.dialog.open([
+                    'Iris: Verstaendlich. Ich bin hier wenn du bereit bist.',
+                    '(Komm zurueck und sprich mich erneut an wenn du loslegen willst.)'
+                  ]);
+                } },
+              { label: 'Wer bist du eigentlich?', onSelect: () => {
+                  this.dialog.open([
+                    'Iris: Iris Salbeyen. Wandernde Forscherin der Botanischen Akademie.',
+                    'Iris: Ich kannte deine Grossmutter Tilda gut.',
+                    'Iris: (Sprich mich erneut an wenn du Lust hast loszuziehen.)'
+                  ]);
+                } }
+            ]
+          );
+        } else {
+          this.dialog.open([
+            'Iris: Wie geht deine Reise voran, Botanikerin?',
+            'Iris: Pass auf dich auf in den fremden Biomen.'
+          ]);
+        }
+        return;
+      }
+      // Theo: Tausch-Modus (Item-fuer-Item, S-09)
+      if (npc.data.id === 'theo-trader') {
+        this.tutorial?.markInteract('npc');
+        const inv = gameStore.getInventory();
+        const choices: { label: string; onSelect: () => void }[] = [];
+        const trades = [
+          { wantSlug: 'seed-bromelia', wantQty: 1, giveSlug: 'great-lure', giveQty: 1, label: '1x Bromelia-Samen -> 1x Starker Lockstoff' },
+          { wantSlug: 'seed-fern', wantQty: 1, giveSlug: 'compost-tea', giveQty: 1, label: '1x Fern-Samen -> 1x Kompost-Tee' },
+          { wantSlug: 'seed-lavender', wantQty: 1, giveSlug: 'heal-tonic', giveQty: 2, label: '1x Lavender-Samen -> 2x Heil-Tonikum' }
+        ];
+        for (const t of trades) {
+          const has = (inv[t.wantSlug] ?? 0) >= t.wantQty;
+          if (has) {
+            choices.push({
+              label: t.label,
+              onSelect: () => {
+                gameStore.consumeItem(t.wantSlug);
+                gameStore.addItem(t.giveSlug, t.giveQty);
+                this.dialog.open([`Theo: Tauschdeal! Du erhaeltst ${t.giveQty}x ${t.giveSlug}.`]);
+              }
+            });
+          }
+        }
+        choices.push({ label: 'Abbrechen', onSelect: () => {} });
+        if (choices.length === 1) {
+          this.dialog.open([
+            'Theo: Du hast nichts dabei was ich brauche.',
+            'Theo: Bring mir Samen aus Verdanto oder Wurzelheim, dann tauschen wir.'
+          ]);
+        } else {
+          this.dialog.openWithChoices(
+            'Theo: Was haettest du gern?',
+            choices.slice(0, 4)
+          );
+        }
+        return;
+      }
       if (npc.data.id === 'bertram-berrymaster') {
         this.tutorial?.markInteract('npc');
         const r = gameStore.claimBerryMaster();

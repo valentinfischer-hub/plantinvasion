@@ -48,9 +48,11 @@ export class GardenScene extends Phaser.Scene {
   private gridOriginX = 0;
   private gridOriginY = 0;
   private cards: Map<string, PlantCard> = new Map();
-  private crossModeActive = false;
-  private crossSelected: string[] = [];
-  private crossModeText?: Phaser.GameObjects.Text;
+  private crossMode = false;
+  private crossFirstPlantId: string | null = null;
+  private crossModeHint?: Phaser.GameObjects.Text;
+  private crossBtnBg?: Phaser.GameObjects.Rectangle;
+  private crossBtnTxt?: Phaser.GameObjects.Text;
   private headerText!: Phaser.GameObjects.Text;
   private detailPanel?: Phaser.GameObjects.Container;
   private dragSource?: { plantId: string; startX: number; startY: number };
@@ -129,13 +131,6 @@ export class GardenScene extends Phaser.Scene {
 
     this.refreshHeader();
 
-    // Cross-Mode-Indikator
-    (window as any).__gardenSelectForCross = (id: string) => this.selectForCross(id);
-    this.crossModeText = this.add.text(this.scale.width / 2, 36, 'CROSS-MODE: 2 Pflanzen anklicken (C zum schliessen)', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#ff7eb8',
-      backgroundColor: '#000000', padding: { x: 6, y: 3 }
-    }).setOrigin(0.5).setDepth(2400).setVisible(false);
-
     if (this.input.keyboard) {
       const crossKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
       crossKey.on('down', () => {
@@ -150,15 +145,6 @@ export class GardenScene extends Phaser.Scene {
         } else {
           this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
         }
-      });
-      // C-Hotkey toggle cross-mode (UI-Polish: 2-Slot-Select)
-      const cKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
-      cKey.on('down', () => {
-        this.crossModeActive = !this.crossModeActive;
-        this.crossSelected = [];
-        if (this.crossModeText) this.crossModeText.setVisible(this.crossModeActive);
-        this.refreshCrossHighlights();
-        if (this.crossModeActive) this.showFlash('Cross-Mode: 2 Pflanzen anklicken', '#ff7eb8');
       });
       const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
       owKey.on('down', () => this.scene.start('OverworldScene'));
@@ -177,6 +163,71 @@ export class GardenScene extends Phaser.Scene {
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
     seedBtn.on('pointerdown', () => this.openSeedPlantModal());
+
+    // Cross-Mode-Button (S-09 D.o.D. #7)
+    this.crossBtnBg = this.add.rectangle(width - 140, 22, 70, 22, 0x000000, 0.7)
+      .setStrokeStyle(1, 0xb86ee3)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    this.crossBtnTxt = this.add.text(width - 140, 22, 'Kreuzen', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#b86ee3'
+    }).setOrigin(0.5);
+    this.crossBtnBg.on('pointerdown', () => this.toggleCrossMode());
+
+    this.crossModeHint = this.add.text(width / 2, 50, '', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#b86ee3', backgroundColor: '#1a1f1a', padding: { x: 6, y: 2 }
+    }).setOrigin(0.5).setVisible(false);
+  }
+
+  private toggleCrossMode(): void {
+    this.crossMode = !this.crossMode;
+    this.crossFirstPlantId = null;
+    this.refreshCrossUI();
+    this.renderPlants();
+  }
+
+  private refreshCrossUI(): void {
+    if (this.crossBtnBg) {
+      this.crossBtnBg.setStrokeStyle(2, this.crossMode ? 0xfcd95c : 0xb86ee3);
+    }
+    if (this.crossBtnTxt) {
+      this.crossBtnTxt.setColor(this.crossMode ? '#fcd95c' : '#b86ee3');
+      this.crossBtnTxt.setText(this.crossMode ? 'Aktiv' : 'Kreuzen');
+    }
+    if (this.crossModeHint) {
+      if (this.crossMode) {
+        const txt = this.crossFirstPlantId
+          ? 'Waehle zweite Pflanze (Kreuzen-Btn fuer Abbruch)'
+          : 'Cross-Mode: klicke erste Pflanze zum Auswaehlen';
+        this.crossModeHint.setText(txt);
+        this.crossModeHint.setVisible(true);
+      } else {
+        this.crossModeHint.setVisible(false);
+      }
+    }
+  }
+
+  private handleCrossClick(plantId: string): void {
+    if (!this.crossFirstPlantId) {
+      this.crossFirstPlantId = plantId;
+      this.refreshCrossUI();
+      this.renderPlants();
+      return;
+    }
+    if (this.crossFirstPlantId === plantId) {
+      this.showFlash('Selbe Pflanze - waehle eine andere', '#ff7e7e');
+      return;
+    }
+    const result = gameStore.crossPlants(this.crossFirstPlantId, plantId);
+    if (!result.ok) {
+      this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+    } else {
+      this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
+    }
+    this.crossMode = false;
+    this.crossFirstPlantId = null;
+    this.refreshCrossUI();
+    this.renderPlants();
   }
 
   private openSeedPlantModal(): void {
@@ -234,33 +285,6 @@ export class GardenScene extends Phaser.Scene {
     });
     container.add(close);
     this.detailPanel = container;
-  }
-
-  private refreshCrossHighlights(): void {
-    // Visualisierung der ausgewaehlten Slots (subtile Color-Indikator). Ohne 'frame'-property auf Card: nur logisch
-    void this.crossSelected;
-  }
-
-  private selectForCross(plantId: string): void {
-    if (!this.crossModeActive) return;
-    if (this.crossSelected.includes(plantId)) {
-      this.crossSelected = this.crossSelected.filter((p) => p !== plantId);
-    } else if (this.crossSelected.length < 2) {
-      this.crossSelected.push(plantId);
-    }
-    this.refreshCrossHighlights();
-    if (this.crossSelected.length === 2) {
-      const result = gameStore.crossPlants(this.crossSelected[0], this.crossSelected[1]);
-      if (!result.ok) {
-        this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
-      } else {
-        this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
-      }
-      this.crossSelected = [];
-      this.crossModeActive = false;
-      if (this.crossModeText) this.crossModeText.setVisible(false);
-      this.refreshCrossHighlights();
-    }
   }
 
   private flashText?: Phaser.GameObjects.Text;
@@ -327,13 +351,6 @@ export class GardenScene extends Phaser.Scene {
       }
     });
     this.refreshHeader();
-
-    // Cross-Mode-Indikator
-    (window as any).__gardenSelectForCross = (id: string) => this.selectForCross(id);
-    this.crossModeText = this.add.text(this.scale.width / 2, 36, 'CROSS-MODE: 2 Pflanzen anklicken (C zum schliessen)', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#ff7eb8',
-      backgroundColor: '#000000', padding: { x: 6, y: 3 }
-    }).setOrigin(0.5).setDepth(2400).setVisible(false);
   }
 
   private gridToWorld(x: number, y: number): { x: number; y: number } {
@@ -409,7 +426,11 @@ export class GardenScene extends Phaser.Scene {
       const dx = p.x - (this.dragSource?.startX ?? 0);
       const dy = p.y - (this.dragSource?.startY ?? 0);
       if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
-        this.openDetailPanel(plant.id);
+        if (this.crossMode) {
+          this.handleCrossClick(plant.id);
+        } else {
+          this.openDetailPanel(plant.id);
+        }
       }
     });
 
@@ -525,13 +546,6 @@ export class GardenScene extends Phaser.Scene {
       if (card) this.updateCard(card, plant);
     });
     this.refreshHeader();
-
-    // Cross-Mode-Indikator
-    (window as any).__gardenSelectForCross = (id: string) => this.selectForCross(id);
-    this.crossModeText = this.add.text(this.scale.width / 2, 36, 'CROSS-MODE: 2 Pflanzen anklicken (C zum schliessen)', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#ff7eb8',
-      backgroundColor: '#000000', padding: { x: 6, y: 3 }
-    }).setOrigin(0.5).setDepth(2400).setVisible(false);
   }
 
   private tierLabel(tier: QualityTier): string {
