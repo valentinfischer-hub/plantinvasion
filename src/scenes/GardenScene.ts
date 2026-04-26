@@ -328,6 +328,12 @@ export class GardenScene extends Phaser.Scene {
       this.showFlash('Keine Samen im Inventar', '#ff7e7e');
       return;
     }
+    // B-012: Vorab-Check Garten-voll, sonst landen wir im Modal mit deaktivierten Klicks und der Toast kommt erst danach
+    const freeSlots = gameStore.getFreeSlotCount();
+    if (freeSlots === 0) {
+      this.showFlash('Garten voll. Ernte oder verschiebe Pflanzen.', '#ff7e7e');
+      return;
+    }
     const { width, height } = this.scale;
     const panelW = 320;
     const panelH = Math.min(380, 80 + seedSlugs.length * 26);
@@ -338,7 +344,7 @@ export class GardenScene extends Phaser.Scene {
     bg.lineStyle(2, 0x9be36e, 0.8);
     bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
     container.add(bg);
-    const title = this.add.text(0, -panelH / 2 + 12, 'Pflanze einsaeen', {
+    const title = this.add.text(0, -panelH / 2 + 12, `Pflanze einsaeen (${freeSlots} frei)`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
     }).setOrigin(0.5, 0);
     container.add(title);

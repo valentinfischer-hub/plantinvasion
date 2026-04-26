@@ -256,13 +256,23 @@ class GameStore {
    * Saet einen Seed-Item ein und erstellt eine neue Pflanze (Stage 0).
    * Item wird konsumiert.
    */
+  /**
+   * B-012: Helper fuer Vorab-Check vor Saeen-Modal. UI kann Slot-Count im Title anzeigen
+   * und bei 0 freien Slots das Modal gar nicht erst oeffnen.
+   */
+  getFreeSlotCount(): number {
+    return GRID_CAPACITY - this.state.plants.length;
+  }
+
   plantSeed(seedSlug: string): { ok: boolean; reason?: string; plant?: Plant } {
     if (!isSeedItem(seedSlug)) return { ok: false, reason: 'Kein Seed-Item' };
     if (!this.hasItem(seedSlug)) return { ok: false, reason: 'Seed nicht im Inventar' };
     const speciesSlug = speciesSlugFromSeed(seedSlug);
     if (!speciesSlug) return { ok: false, reason: 'Ungueltiger Seed-Slug' };
+    // B-012: separater Reason fuer Garten-voll vs unbekannte Spezies (vorher beide vermischt -> User wusste nicht warum)
+    if (this.getFreeSlotCount() === 0) return { ok: false, reason: 'Garten voll. Ernte oder verschiebe Pflanzen.' };
     const plant = createPlantOfSpecies(speciesSlug, this.state.plants);
-    if (!plant) return { ok: false, reason: 'Kein freier Slot oder unbekannte Spezies' };
+    if (!plant) return { ok: false, reason: 'Unbekannte Spezies' };
     this.state.plants.push(plant);
     this.consumeItem(seedSlug);
     this.captureSpecies(speciesSlug);
