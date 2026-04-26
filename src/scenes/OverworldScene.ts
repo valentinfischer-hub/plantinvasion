@@ -653,13 +653,33 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       }
       this.tutorial?.markInteract('npc');
       const lines = [...npc.data.dialog];
-      // Quest-Logic: Suche Quest fuer diesen NPC
-      const quest = QUESTS.find((qq) => qq.giverId === npc.data.id);
+      gameStore.meetNpc(npc.data.id);
+      // Quest-Logic: Pick beste Quest fuer diesen NPC
+      // 1. active (priorisiert), 2. pending mit erfuelltem requiredFlag
+      const candidates = QUESTS.filter((qq) => qq.giverId === npc.data.id);
+      const activeQuest = candidates.find((qq) => gameStore.getQuestState(qq.id) === 'active');
+      const pendingQuest = candidates.find((qq) => {
+        if (gameStore.getQuestState(qq.id) !== 'pending') return false;
+        if (qq.requiredFlag && !gameStore.getStoryFlag(qq.requiredFlag)) return false;
+        return true;
+      });
+      const quest = activeQuest ?? pendingQuest;
       if (quest) {
         const status = gameStore.getQuestState(quest.id);
         if (status === 'pending') {
           lines.push('---', `Neue Quest: ${quest.title}`, quest.description);
           gameStore.acceptQuest(quest.id);
+          // talk-to-Quests werden direkt completed beim akzeptieren
+          if (quest.goal.type === 'talk-to' && quest.goal.npcId === npc.data.id) {
+            const rewardCoins = quest.reward.coins ?? 0;
+            const rewardItems = quest.reward.items ?? {};
+            gameStore.completeQuest(quest.id, rewardCoins, rewardItems);
+            if (quest.setsFlag) gameStore.setStoryFlag(quest.setsFlag, true);
+            if (quest.advancesAct) gameStore.advanceAct(quest.advancesAct);
+            if (quest.diaryEntry) gameStore.collectDiaryEntry(quest.diaryEntry);
+            lines.push('---', `Quest sofort abgeschlossen: +${rewardCoins} Gold`);
+            if (quest.diaryEntry) lines.push('Neuer Tagebuch-Eintrag (T)!');
+          }
         } else if (status === 'active') {
           // Pruefe Erfuellung
           const ok = checkQuestComplete(quest);
@@ -667,7 +687,11 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
             const rewardCoins = quest.reward.coins ?? 0;
             const rewardItems = quest.reward.items ?? {};
             gameStore.completeQuest(quest.id, rewardCoins, rewardItems);
+            if (quest.setsFlag) gameStore.setStoryFlag(quest.setsFlag, true);
+            if (quest.advancesAct) gameStore.advanceAct(quest.advancesAct);
+            if (quest.diaryEntry) gameStore.collectDiaryEntry(quest.diaryEntry);
             lines.push('---', `Quest abgeschlossen: ${quest.title}!`, `Belohnung: ${rewardCoins} Gold`);
+            if (quest.diaryEntry) lines.push('Neuer Tagebuch-Eintrag (T)!');
           } else {
             lines.push('---', `Aktive Quest: ${quest.title} (noch nicht erfuellt)`);
           }
@@ -910,8 +934,20 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Hohes Gras (Tile 2) oder Bromelien (Tile 13): Encounter-Trigger
     const encounterRate = t === 13 ? 0.10 : (t === 2 || t === 34 || t === 44 ? 0.07 : 0);
     if (encounterRate > 0 && Math.random() < encounterRate) {
-      const pool = getEncounterPool(this.currentZone, t);
-      console.log('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'size:', pool.length);
+      let pool = getEncounterPool(this.currentZone, t);
+      // Wetter-Modifier: Re-weight pool je Wetter
+      const weather = this.weatherOverlay?.getCurrentWeather() ?? 'clear';
+      if (weather !== 'clear') {
+        pool = pool.map((e) => {
+          let weightBoost = 1.0;
+          if (weather === 'rain' && (e.family === 'Bromeliaceae' || e.family === 'Orchidaceae')) weightBoost = 1.5;
+          if (weather === 'snow' && (e.family === 'Crassulaceae' || e.family === 'Asteraceae')) weightBoost = 1.5;
+          if (weather === 'storm' && e.family === 'Mythical') weightBoost = 3.0;
+          if (weather === 'fog' && e.family === 'Droseraceae') weightBoost = 1.4;
+          return { ...e, weight: Math.floor(e.weight * weightBoost) };
+        });
+      }
+      console.log('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'weather:', weather, 'size:', pool.length);
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       sfx.dialogOpen();
       let poolKey = 'wurzelheim-tallgrass';

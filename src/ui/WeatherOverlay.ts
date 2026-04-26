@@ -171,6 +171,10 @@ export class WeatherOverlay {
     }
   }
 
+  public getCurrentWeather(): Weather {
+    return this.currentWeather;
+  }
+
   public destroy(): void {
     for (const p of this.particles) p.sprite.destroy();
     this.weatherText?.destroy();
