@@ -26,6 +26,8 @@ import { getSpecies } from '../data/species';
 import { generateAllPlantStages } from '../assets/proceduralPlantSprites';
 import { listActiveBoosters, boosterRemainingMs } from '../data/boosters';
 import { companionBonus, getCompanionsFor } from '../data/companion';
+import { plantRole } from '../data/roles';
+import { getAllele } from '../data/genes';
 import { isSeedItem, getItem } from '../data/items';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
@@ -644,6 +646,17 @@ export class GardenScene extends Phaser.Scene {
     this.refreshHeader();
   }
 
+  private formatGeneSummary(plant: Plant): string {
+    if (!plant.genes) return '';
+    const parts: string[] = [];
+    for (const slug of Object.values(plant.genes)) {
+      if (!slug) continue;
+      const a = getAllele(slug);
+      if (a) parts.push(a.label);
+    }
+    return parts.length > 0 ? `Genes: ${parts.slice(0, 4).join(', ')}` : '';
+  }
+
   private tierLabel(tier: QualityTier): string {
     return tier.charAt(0).toUpperCase() + tier.slice(1);
   }
@@ -706,8 +719,11 @@ export class GardenScene extends Phaser.Scene {
       `Wachstum: ${xpPerSec.toFixed(2)} XP/s`,
       ``,
       `ATK ${plant.stats.atk}  DEF ${plant.stats.def}  SPD ${plant.stats.spd}`,
-      `Generation: F${plant.generation}${plant.isMutation ? ' (Mutation)' : ''}`
-    ];
+      `Generation: F${plant.generation}${plant.isMutation ? ' (Mutation' + (plant.mutationKind ? '-' + plant.mutationKind : '') + ')' : ''}`,
+      `Rolle: ${plantRole(plant).role} (${plantRole(plant).hint})`,
+      plant.hydration >= 80 ? 'Gen: Growth-Gen aktiv (+Wachstum)' : (plant.hydration < 25 ? 'Gen: Resistenz-Gen aktiv (+Defense)' : ''),
+      plant.genes ? this.formatGeneSummary(plant) : ''
+    ].filter((l) => l !== '');
     const stats = this.add.text(-panelW / 2 + 14, -panelH / 2 + 50, lines.join('\n'), {
       fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc'
     });

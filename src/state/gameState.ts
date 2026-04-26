@@ -7,6 +7,7 @@ import { applyItemToPlant, nextSoilTier, SOIL_COSTS, SOIL_MUTATION_BONUS } from 
 import { getItem, isSeedItem, speciesSlugFromSeed } from '../data/items';
 import { findRecipe } from '../data/hybridRecipes';
 import { companionBonus } from '../data/companion';
+import { rollInitialGenes, inheritGenes } from '../data/genes';
 import {
   FORAGE_COOLDOWN_MS,
   rollForagePool,
@@ -62,7 +63,8 @@ export function createPlantOfSpecies(speciesSlug: string, plants: Plant[]): Plan
     gridX: slot.x,
     gridY: slot.y,
     ...defaultGrowthFields(),
-    genome: defaultGenome()
+    genome: defaultGenome(),
+    genes: rollInitialGenes()
   };
 }
 
@@ -836,6 +838,18 @@ class GameStore {
     const now = Date.now();
     // Generation = max(parent.generation) + 1
     const childGeneration = Math.max(a.generation ?? 0, b.generation ?? 0) + 1;
+    // Gen-Vererbung 70/20/10
+    const childGenes = inheritGenes(a.genes ?? {}, b.genes ?? {}, mutation.isMutation);
+    // Mutation-Art Roll (gleichmaessig 4-fach falls Mutation)
+    const mutationKind = mutation.isMutation
+      ? (['stat', 'skill', 'form', 'legendary'] as const)[Math.floor(Math.random() * 4)]
+      : undefined;
+    // Legendary-Mutation-Art: +20% all Stats
+    if (mutationKind === 'legendary') {
+      stats.atk = Math.floor(stats.atk * 1.20);
+      stats.def = Math.floor(stats.def * 1.20);
+      stats.spd = Math.floor(stats.spd * 1.20);
+    }
     const child: Plant = {
       id: 'p_' + Math.random().toString(36).slice(2, 10),
       speciesSlug: childSlug,
@@ -844,6 +858,7 @@ class GameStore {
       parentAId: a.id,
       parentBId: b.id,
       isMutation: mutation.isMutation,
+      mutationKind,
       level: 1,
       xp: 0,
       totalXp: 0,
@@ -852,6 +867,7 @@ class GameStore {
       lastTickAt: now,
       gridX: slot.x,
       gridY: slot.y,
+      genes: childGenes,
       ...defaultGrowthFields(),
       generation: childGeneration
     };

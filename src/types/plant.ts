@@ -90,6 +90,20 @@ export interface Plant {
   // Crossing V2 (V10) - optional fuer Backwards-Compat
   genome?: PlantGenome;
 
+  // Gen-Slots V0.1 (D-027): 6 Slots Angriff/Wachstum/Resistenz/Utility/Mutation/Form
+  // Allel-Slugs aus src/data/genes.ts
+  genes?: {
+    attack?: string;
+    growth?: string;
+    resistance?: string;
+    utility?: string;
+    mutation?: string;
+    form?: string;
+  };
+
+  // Mutation-Art (V0.6.7): bei Mutation eine von 4 Arten setzen
+  mutationKind?: 'stat' | 'skill' | 'form' | 'legendary';
+
   // UI
   gridX: number;
   gridY: number;

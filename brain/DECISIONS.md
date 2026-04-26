@@ -58,6 +58,20 @@ Append-only Log strategischer Entscheidungen. Jeder Eintrag hat Datum, Entscheid
 
 **Begruendung**: Bereits installiert, Repo lebt, Switching-Costs zu hoch. Phaser kann alles was wir brauchen (Tile-Movement, Sprite-Animation, Audio, Input-Handling).
 
+### D-027 Pflanzen-RPG-Design-Inspiration: Gen-Slots V0.1 plus Plant-Roles plus Mutation-Arten (2026-04-25 spaet)
+**Entscheidung**: Nach User-Upload eines Pflanzen-RPG-Design-Doc werden 3 Konzepte ergaenzt: 6 Gen-Slots (Angriff/Wachstum/Resistenz/Utility/Mutation/Form) mit String-Allelen, Plant-Role-Tag (DPS/Tank/Support/Control aus Stats abgeleitet), 4 Mutation-Arten (Stat/Skill/Form/Legendary). Vererbung 70/20/10 Eltern/Variation/Mutation.
+
+**Begruendung**: User-Wunsch fuer mehr Tiefe beim Zuechten. Doc-Upload (pflanzen_rpg_design.docx) zeigt klar welche Mechaniken er sich vorstellt - viele waren schon da (Level-Schwellen 5/15/30/45, Biome-Boosts, Mutation-System), Gen-Slots und Roles fehlten. Ergaenzung statt Pivot.
+
+**Konsequenz**: Neue Files src/data/genes.ts und src/data/roles.ts. Plant-Type um genes und mutationKind erweitert (optional, kein Save-Bump noetig). createPlantOfSpecies generiert rollInitialGenes, crossPlants nutzt inheritGenes mit 70/20/10. Detail-Panel zeigt Role-Tag, Mutation-Art (z.B. Mutation-legendary), Gen-Expression-Hint je nach Hydration, Gene-Summary. Co-existiert mit dem parallel laufenden D-026 Allele-Genetik-System (separater breedingV2.ts).
+
+### D-026 Crossing-System V2: Allele-Genetik + IV/EV + Egg-Moves + Traits
+**Entscheidung**: Crossing-System wurde vom simplen "wobble-Mittel-der-Eltern-Stats" zu vollwertigem Genome-System erweitert. Mendel-Allele (2 Slots pro Stat, 0-31 IV), EV-Tracking, 10 PlantTraits (visuell+funktional), Egg-Moves (max 3 vererbt), Hidden-Power, Cross-Cooldown, Quality-Tier-Inheritance.
+
+**Begruendung**: User-Wunsch fuer mehr Tiefe, Referenzen auf Farming-RPG-Genre-Patterns (Mendel-Genetik 1865 ist Public Domain). Mehr Replay-Wert durch Stammbaum-Crafting.
+
+**Konsequenz**: Save-V10 mit genome-Field auf Plant. brain/research/breeding_inspiration.md dokumentiert Genre-Patterns. brain/design/breeding_v2.md kommt in S-10. src/data/breedingV2.ts mit defaultGenome, crossGenomes, canCross, inheritQualityTier, formatCooldown. createPlantOfSpecies und capturePlant geben Default-Genome. Crossing erzwingt jetzt Cooldown (4h, 2h mit symbiotic-Trait). LineageScene fuer Stammbaum-Visualisierung kommt in S-10.
+
 ### D-022 Storyline V1: 7-Akt Hero-Journey (revidiert D-006)
 **Entscheidung**: Story von "Light-Plot" auf vollwertigen 7-Akt-Hero-Journey-Plot ausgebaut. ca 20h Hauptstory plus 30h Side-Content.
 
