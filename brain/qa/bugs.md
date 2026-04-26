@@ -35,4 +35,4 @@
 **Hinweis Provenienz:**
 - Der referenzierte QA-Critic-Report `brain/agents/qa-critic/critical_2026-04-26_12.md` existierte zum Zeitpunkt des Fix nicht im Repo. Tech-Code hat das Problem im Self-Audit der `GardenScene.openSeedPlantModal`-Sequenz identifiziert. QA-Critic-Doku waere ein Folge-Item.
 
-**Commit:** wird nach Push hier eingetragen.
+**Commit:** `2fa24f8` (2026-04-27 09:00, gepusht auf origin/main).
