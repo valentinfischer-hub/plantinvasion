@@ -55,11 +55,16 @@ export class MenuScene extends Phaser.Scene {
       this.scene.start('OverworldScene');
     });
     by += 60;
+    const _settingsBtn = this.makeButton(cx, by, 'Einstellungen', '#8eaedd', () => {
+      sfx.dialogAdvance();
+      this.scene.start('SettingsScene');
+    });
+    by += 60;
 
-    const _hint = this.add.text(cx, height - 24, 'v0.7 - Brave Browser empfohlen', {
+    const _hint = this.add.text(cx, height - 24, 'v0.8 - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
-    void _hint; void _title; void _subtitle; void _newGameBtn;
+    void _hint; void _title; void _subtitle; void _newGameBtn; void _settingsBtn;
   }
 
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {

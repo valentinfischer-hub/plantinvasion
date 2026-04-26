@@ -399,6 +399,11 @@ class GameStore {
     this.checkAchievements();
   }
 
+  getAchievementCounters(): { crossings: number; mutations: number; visitedZones: string[] } {
+    if (!this.state.achievementCounters) this.state.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
+    return this.state.achievementCounters as any;
+  }
+
   recordZoneVisit(zone: string): void {
     if (!this.state.achievementCounters) this.state.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
     if (!this.state.achievementCounters.visitedZones) this.state.achievementCounters.visitedZones = [];

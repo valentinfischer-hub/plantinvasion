@@ -72,6 +72,9 @@ export const sfx = {
   pickup(): void {
     blip({ freq: 660, freqEnd: 990, duration: 0.1, volume: 0.4 });
     setTimeout(() => blip({ freq: 880, freqEnd: 1320, duration: 0.08, volume: 0.3 }), 80);
+  },
+  click(): void {
+    blip({ freq: 800, duration: 0.04, volume: 0.18, type: 'square' });
   }
 };
 

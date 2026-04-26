@@ -26,6 +26,7 @@ import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
 import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
+import { MiniMap } from '../ui/MiniMap';
 import { TimeOverlay } from '../ui/TimeOverlay';
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
@@ -95,6 +96,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private keyP!: Phaser.Input.Keyboard.Key;
   private keyM!: Phaser.Input.Keyboard.Key;
   private keyQ!: Phaser.Input.Keyboard.Key;
+  private keyI!: Phaser.Input.Keyboard.Key;
   private keyBoss!: Phaser.Input.Keyboard.Key;
   private keyDiary!: Phaser.Input.Keyboard.Key;
   private debugText!: Phaser.GameObjects.Text;
@@ -104,6 +106,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private prevTouchE = false;
   private knownAchievements: Set<string> = new Set();
   private tutorial!: TutorialOverlay;
+  private miniMap!: MiniMap;
   private timeOverlay!: TimeOverlay;
 
   constructor() {
@@ -166,6 +169,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.keyP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
     this.keyM = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
     this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+    this.keyI = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I);
     this.keyBoss = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
     this.keyDiary = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
 
@@ -180,6 +184,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Tutorial-Overlay
     this.tutorial = new TutorialOverlay(this);
+    this.miniMap = new MiniMap(this);
+    this.miniMap.refresh(this.currentZone);
 
     // Day-Night-Cycle
     this.timeOverlay = new TimeOverlay(this);
@@ -359,6 +365,11 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       return;
     }
     // Pokedex-Hotkey
+    if (Phaser.Input.Keyboard.JustDown(this.keyI)) {
+      sfx.dialogOpen();
+      this.scene.start('InventoryScene');
+      return;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.keyP)) {
       this.tutorial?.markInteract('pokedex');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
