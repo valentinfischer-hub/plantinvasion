@@ -100,7 +100,31 @@ const kaktoriaNpcs: NPCSpawn[] = [
       'Durst: Hier wachsen die seltensten Kaktusarten von Botanopia.',
       'Durst: Sammle Saguaro-Samen wenn du dich traust. Vorsicht vor den Stacheln.'
     ]
-  }
+  },
+    {
+      id: 'thala-wuestenwanderer',
+      name: 'Thala',
+      tileX: 11,
+      tileY: 9,
+      facing: 'down',
+      color: 0xc88a5a,
+      dialog: [
+        'Thala: Tagsueber heiss, nachts kalt. So ist die Wueste.',
+        'Thala: Wenn du nordwaerts gehst, kommst du zum Frostkamm.'
+      ]
+    },
+    {
+      id: 'kasimir-stachelfreund',
+      name: 'Kasimir (Stachel-Freund)',
+      tileX: 19,
+      tileY: 13,
+      facing: 'right',
+      color: 0x4a8228,
+      dialog: [
+        'Kasimir: Stacheln sind nicht nur Schutz - manche bluehen wenn der Mond voll ist.',
+        'Kasimir: Bring mir einen Saguaro mit Pristine-Tier.'
+      ]
+    }
 ];
 
 
@@ -109,6 +133,10 @@ if (tiles[3]?.[5] !== undefined) tiles[3][5] = 51;
 if (tiles[6]?.[23] !== undefined) tiles[6][23] = 50;
 if (tiles[14]?.[3] !== undefined) tiles[14][3] = 51;
 if (tiles[15]?.[22] !== undefined) tiles[15][22] = 50;
+
+// Lore-Sign V0.6 (Tile 10)
+if (tiles[7]?.[8] !== undefined) tiles[7][8] = 10;
+if (tiles[11]?.[22] !== undefined) tiles[11][22] = 10;
 
 const kaktoria: MapDef = {
   width: W,

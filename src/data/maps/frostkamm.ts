@@ -104,7 +104,31 @@ const frostkammNpcs: NPCSpawn[] = [
       'Eira: Edelweiss ist hier mein Spezialgebiet. Hast du eines gesehen?',
       'Eira: Hinter den Eisfeldern wartet Glaciara, das Endgame-Biom.'
     ]
-  }
+  },
+    {
+      id: 'selma-bergsteigerin',
+      name: 'Selma',
+      tileX: 12,
+      tileY: 8,
+      facing: 'down',
+      color: 0xc8d8e8,
+      dialog: [
+        'Selma: Ich kletter seit Kindheit auf diese Berge.',
+        'Selma: Tief im Schnee findest du Permafrost-Lichen, gibt einen Boost gegen Kaelte-Schaden.'
+      ]
+    },
+    {
+      id: 'huber-pelzhaendler',
+      name: 'Huber (Pelz-Haendler)',
+      tileX: 20,
+      tileY: 13,
+      facing: 'left',
+      color: 0x8a6e3a,
+      dialog: [
+        'Huber: Edelweiss bringt nach Erntezeit den hoechsten Preis.',
+        'Huber: Saug-Pollen halten Frostkamm-Pflanzen warm waehrend der Reise.'
+      ]
+    }
 ];
 
 
@@ -113,6 +137,10 @@ if (tiles[3]?.[5] !== undefined) tiles[3][5] = 51;
 if (tiles[5]?.[23] !== undefined) tiles[5][23] = 51;
 if (tiles[14]?.[5] !== undefined) tiles[14][5] = 50;
 if (tiles[15]?.[23] !== undefined) tiles[15][23] = 50;
+
+// Lore-Sign V0.6 (Tile 10)
+if (tiles[7]?.[8] !== undefined) tiles[7][8] = 10;
+if (tiles[12]?.[22] !== undefined) tiles[12][22] = 10;
 
 const frostkamm: MapDef = {
   width: W,

@@ -116,6 +116,30 @@ const verdantoNpcs: NPCSpawn[] = [
       'Theo: Willkommen am Tauschplatz, Botanikerin.',
       'Theo: Ich tausche Items gegen Items, kein Gold!'
     ]
+  },
+  {
+    id: 'mosa-bromelien-zuechter',
+    name: 'Mosa',
+    tileX: 9,
+    tileY: 8,
+    facing: 'down',
+    color: 0xfcd95c,
+    dialog: [
+      'Mosa: Ich zuechte Bromelien seit 30 Jahren.',
+      'Mosa: Tausch mir 5 Air-Plant-Samen, ich gebe dir eine Vanille-Orchidee.'
+    ]
+  },
+  {
+    id: 'aris-froschfreund',
+    name: 'Aris (Frosch-Freund)',
+    tileX: 21,
+    tileY: 10,
+    facing: 'left',
+    color: 0x4a8298,
+    dialog: [
+      'Aris: Diese Sumpf-Froesche springen vor jedem Encounter.',
+      'Aris: Hoer aufs Quaken, dann weisst du wo wilde Pflanzen sind.'
+    ]
   }
 ];
 
@@ -125,6 +149,10 @@ if (tiles[3]?.[5]) tiles[3][5] = 50;
 if (tiles[5]?.[24] !== undefined) tiles[5][24] = 50;
 if (tiles[12]?.[3] !== undefined) tiles[12][3] = 51;
 if (tiles[15]?.[24] !== undefined) tiles[15][24] = 51;
+
+// Lore-Sign V0.6 (Tile 10)
+if (tiles[9]?.[7] !== undefined) tiles[9][7] = 10;
+if (tiles[12]?.[20] !== undefined) tiles[12][20] = 10;
 
 const verdanto: MapDef = {
   width: W,

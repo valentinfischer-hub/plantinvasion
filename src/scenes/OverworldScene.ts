@@ -31,6 +31,30 @@ import { PauseOverlay } from '../ui/PauseOverlay';
 import { TimeOverlay } from '../ui/TimeOverlay';
 import { WeatherOverlay } from '../ui/WeatherOverlay';
 
+const SIGN_DIALOGS: Record<string, string[]> = {
+  // Verdanto
+  'verdanto:7:9': ['Schild: Verdanto-Pfad', 'Achte auf die Bromelien, sie speichern Wasser.'],
+  'verdanto:20:12': ['Schild: Wuergefeigen-Sektor', 'Hinter den hohen Lianen leben rare Encounter.'],
+  // Kaktoria
+  'kaktoria:8:7': ['Schild: Wuesten-Pfad', 'Wasser ist hier knapp. Trag immer Aloe-Saft mit dir.'],
+  'kaktoria:22:11': ['Schild: Saguaro-Hain', 'Riesenkakteen koennen 100 Jahre alt werden.'],
+  // Frostkamm
+  'frostkamm:8:7': ['Schild: Eisroute', 'Vorsicht, Eis-Tiles rutschen.'],
+  'frostkamm:22:12': ['Schild: Bergfichten-Wald', 'Ueber Tausenden Jahren gewachsen.'],
+  // Salzbucht
+  'salzbucht:7:6': ['Schild: Strandweg', 'Bei Sturm kommen rare Encounter.'],
+  'salzbucht:21:11': ['Schild: Mangrove-Inseln', 'Brackwasser - manche Pflanzen lieben es.'],
+  // Mordwald
+  'mordwald:8:5': ['Schild: Sumpfpfad', 'Folge dem Holzsteg, sonst sinkst du.'],
+  'mordwald:20:12': ['Schild: Karnivoren-Anbau', 'Hier wachsen die hungrigsten Pflanzen.'],
+  // Magmabluete
+  'magmabluete:7:5': ['Schild: Lava-Adern', 'Vorsicht: Lava-Tiles geben Schaden!'],
+  'magmabluete:22:12': ['Schild: Krater-Pfad', 'Ganz oben wartet das Magmaherz.'],
+  // Glaciara
+  'glaciara:8:6': ['Schild: Endgame-Eis', 'Hier wachsen die haertesten Pflanzen.'],
+  'glaciara:22:12': ['Schild: Mythical-Tor', 'Eden Lost wartet hinter dem Tor.'],
+};
+
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43, 50, 51, 61, 62, 64]);
 
@@ -240,6 +264,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     tint.setInteractive({ useHandCursor: false });
     tint.disableInteractive();
 
+    // Farm-Button: persistent oben rechts, fuehrt zur GardenScene (alias "Farm")
+    this.makeFarmButton();
+    if (this.input.keyboard) {
+      const farmKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
+      farmKey.on('down', () => this.gotoFarm());
+    }
+
     console.log('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
     (window as any).__overworld = this;
 
@@ -306,6 +337,36 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       duration: 1500,
       onComplete: () => container.destroy()
     });
+  }
+
+
+  private makeFarmButton(): void {
+    const { width } = this.scale;
+    const btnX = width - 60;
+    const btnY = 22;
+    const c = this.add.container(btnX, btnY).setScrollFactor(0).setDepth(1900);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x9be36e, 0.92);
+    bg.fillRoundedRect(-44, -16, 88, 32, 6);
+    bg.lineStyle(2, 0x4a8228, 1);
+    bg.strokeRoundedRect(-44, -16, 88, 32, 6);
+    const txt = this.add.text(0, -2, 'FARM (G)', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#1a1f1a'
+    }).setOrigin(0.5);
+    const hint = this.add.text(0, 9, 'giessen', {
+      fontFamily: 'monospace', fontSize: '7px', color: '#1a1f1a'
+    }).setOrigin(0.5);
+    c.add([bg, txt, hint]);
+    bg.setInteractive(new Phaser.Geom.Rectangle(-44, -16, 88, 32), Phaser.Geom.Rectangle.Contains);
+    bg.on('pointerdown', () => this.gotoFarm());
+    if (this.miniMap && (this.miniMap as any).ignoreInUICam) (this.miniMap as any).ignoreInUICam(c);
+  }
+
+  private gotoFarm(): void {
+    if (this.dialog?.open_) return;
+    sfx.door();
+    gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GardenScene', this.currentZone);
+    this.scene.start('GardenScene');
   }
 
   private tryClaimDailyLogin(): void {
@@ -620,10 +681,17 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Schild?
     const t = this.getTile(front.tileX, front.tileY);
     if (t === 10) {
-      this.dialog.open([
-        'Schild: Heimatdorf Wurzelheim.',
-        'Schild: Hinter dieser Tuer ist Grossmutters Garten.'
-      ]);
+      const key = `${this.currentZone}:${front.tileX}:${front.tileY}`;
+      const dlg = SIGN_DIALOGS[key];
+      if (dlg) {
+        this.dialog.open(dlg);
+      } else {
+        // Default-Dialog (Wurzelheim-Schild)
+        this.dialog.open([
+          'Schild: Heimatdorf Wurzelheim.',
+          'Schild: Hinter dieser Tuer ist Grossmutters Garten.'
+        ]);
+      }
       return;
     }
     if (t === 9) {

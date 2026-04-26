@@ -94,7 +94,31 @@ const salzbuchtNpcs: NPCSpawn[] = [
       'Finn: Hier am Strand wachsen ganz besondere Pflanzen mit Salztoleranz.',
       'Finn: Wenn du die Saege findest, kannst du Treibgut wegraeumen und neue Wege erschliessen.'
     ]
-  }
+  },
+    {
+      id: 'linnea-muschelsucherin',
+      name: 'Linnea',
+      tileX: 11,
+      tileY: 8,
+      facing: 'down',
+      color: 0xfff0f5,
+      dialog: [
+        'Linnea: Ich sammle hier Muscheln und Treibgut.',
+        'Linnea: Manchmal sind Pflanzensamen drin - bring sie mir, ich tausch sie gegen Coins.'
+      ]
+    },
+    {
+      id: 'orin-leuchtturmwaerter',
+      name: 'Orin (Leuchtturm)',
+      tileX: 19,
+      tileY: 12,
+      facing: 'left',
+      color: 0xfcd95c,
+      dialog: [
+        'Orin: Bei Vollmond leuchtet der Mangrove-Wald von selbst.',
+        'Orin: Vorsicht: salzwasser-resistente Hybriden sind selten und kostbar.'
+      ]
+    }
 ];
 
 
@@ -103,6 +127,10 @@ if (tiles[3]?.[5] !== undefined) tiles[3][5] = 50;
 if (tiles[6]?.[24] !== undefined) tiles[6][24] = 51;
 if (tiles[14]?.[3] !== undefined) tiles[14][3] = 51;
 if (tiles[15]?.[23] !== undefined) tiles[15][23] = 50;
+
+// Lore-Sign V0.6 (Tile 10)
+if (tiles[6]?.[7] !== undefined) tiles[6][7] = 10;
+if (tiles[11]?.[21] !== undefined) tiles[11][21] = 10;
 
 const salzbucht: MapDef = {
   width: W,

@@ -123,7 +123,31 @@ const magmabluteNpcs: NPCSpawn[] = [
       'Cinder: Vulkan-Asche ist der beste Duenger. Verkauf mir was du findest.',
       'Cinder: Eine Prise auf eine Pflanze und sie waechst fuer eine Stunde 1.5x schneller.'
     ]
-  }
+  },
+    {
+      id: 'feyra-glutsammlerin',
+      name: 'Feyra',
+      tileX: 11,
+      tileY: 8,
+      facing: 'down',
+      color: 0xff5c1a,
+      dialog: [
+        'Feyra: Ich ziehe Glut-Splitter aus der Lava, sicher mit Aloe-Salbe.',
+        'Feyra: Bring mir 3 Vulkan-Asche, ich verstaerke deine Pyrophyt-Pflanzen.'
+      ]
+    },
+    {
+      id: 'lex-vulkanforscher',
+      name: 'Lex',
+      tileX: 21,
+      tileY: 11,
+      facing: 'left',
+      color: 0xa84a3a,
+      dialog: [
+        'Lex: Aktive Phasen sind kurz. Wenn du Eruption siehst, hau ab.',
+        'Lex: Die Phoenix-Brand-Same ist ein Mythos - oder ist sie es?'
+      ]
+    }
 ];
 
 
@@ -132,6 +156,10 @@ if (tiles[3]?.[5] !== undefined) tiles[3][5] = 50;
 if (tiles[5]?.[24] !== undefined) tiles[5][24] = 51;
 if (tiles[15]?.[3] !== undefined) tiles[15][3] = 51;
 if (tiles[15]?.[23] !== undefined) tiles[15][23] = 50;
+
+// Lore-Sign V0.6 (Tile 10)
+if (tiles[5]?.[7] !== undefined) tiles[5][7] = 10;
+if (tiles[12]?.[22] !== undefined) tiles[12][22] = 10;
 
 const magmabluete: MapDef = {
   width: W,

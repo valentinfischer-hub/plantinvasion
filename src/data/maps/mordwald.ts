@@ -117,7 +117,31 @@ const mordwaldNpcs: NPCSpawn[] = [
       'Madame Drosera: Bring mir 5 Bladderwort-Haeute, ich gebe dir Sumpf-Pollen.',
       'Madame Drosera: Pass auf den Mond auf, bei Vollmond wacht der Wurzel-Lord.'
     ]
-  }
+  },
+    {
+      id: 'grimwald-froschsucher',
+      name: 'Grimwald',
+      tileX: 11,
+      tileY: 7,
+      facing: 'down',
+      color: 0x4a6b28,
+      dialog: [
+        'Grimwald: Ich kenne jeden Frosch im Sumpf.',
+        'Grimwald: Drosera gibt mir Sumpf-Pollen wenn ich frische Bladderworts bringe.'
+      ]
+    },
+    {
+      id: 'hex-elvira',
+      name: 'Elvira',
+      tileX: 21,
+      tileY: 14,
+      facing: 'left',
+      color: 0x6b3a8a,
+      dialog: [
+        'Elvira: Manche sagen Karnivoren-Pflanzen lauschen mit.',
+        'Elvira: Ich verkaufe seltene Sumpf-Items im Tausch gegen Pristine-Pollen.'
+      ]
+    }
 ];
 
 
@@ -126,6 +150,10 @@ if (tiles[3]?.[5] !== undefined) tiles[3][5] = 51;
 if (tiles[5]?.[24] !== undefined) tiles[5][24] = 50;
 if (tiles[14]?.[3] !== undefined) tiles[14][3] = 51;
 if (tiles[15]?.[24] !== undefined) tiles[15][24] = 50;
+
+// Lore-Sign V0.6 (Tile 10)
+if (tiles[5]?.[8] !== undefined) tiles[5][8] = 10;
+if (tiles[12]?.[20] !== undefined) tiles[12][20] = 10;
 
 const mordwald: MapDef = {
   width: W,

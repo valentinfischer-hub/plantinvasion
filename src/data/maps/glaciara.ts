@@ -96,8 +96,36 @@ const glaciaraNpcs: NPCSpawn[] = [
       'Glaziella: Hier wachsen Pflanzen die Eis ueberlebt haben.',
       'Glaziella: Hinter dem Mythical-Tor wartet Eden Lost - aber dafuer brauchst du noch Verodyne.'
     ]
-  }
+  },
+    {
+      id: 'arvik-eisangler',
+      name: 'Arvik (Eisangler)',
+      tileX: 11,
+      tileY: 8,
+      facing: 'down',
+      color: 0x6b9de8,
+      dialog: [
+        'Arvik: Permafrost-Lichen wachsen am tiefsten Eis.',
+        'Arvik: Tausch mir 3 Frost-Moss, ich gebe dir eine Mountain-Pine-Saat.'
+      ]
+    },
+    {
+      id: 'saela-mythenforscherin',
+      name: 'Saela',
+      tileX: 20,
+      tileY: 12,
+      facing: 'left',
+      color: 0xb86ee3,
+      dialog: [
+        'Saela: Ich erforsche das Mythical-Tor seit Jahren.',
+        'Saela: Es oeffnet sich nur wenn du Verodyne besiegt hast.'
+      ]
+    }
 ];
+
+// Lore-Sign V0.6 (Tile 10)
+if (tiles[6]?.[8] !== undefined) tiles[6][8] = 10;
+if (tiles[12]?.[22] !== undefined) tiles[12][22] = 10;
 
 const glaciara: MapDef = {
   width: W,
