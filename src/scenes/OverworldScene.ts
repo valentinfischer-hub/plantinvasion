@@ -144,6 +144,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private key4!: Phaser.Input.Keyboard.Key;
   private timeOverlay!: TimeOverlay;
   private saveIcon!: Phaser.GameObjects.Text;
+  private coinHud!: Phaser.GameObjects.Text;
   private weatherOverlay!: WeatherOverlay;
   private seasonTint!: SeasonTintOverlay;
   private particles!: AmbientParticles;
@@ -291,6 +292,18 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }).setScrollFactor(0).setDepth(1900).setScale(1 / zS).setAlpha(0);
     if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(this.saveIcon);
     if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(this.saveIcon);
+
+    // Coin-HUD oben-links unter saveIcon
+    this.coinHud = this.add.text(8 / zS, 42 / zS, '', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#fcd95c', backgroundColor: '#1a1f1a', padding: { x: 6, y: 3 }
+    }).setScrollFactor(0).setDepth(1850).setScale(1 / zS);
+    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(this.coinHud);
+    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(this.coinHud);
+    this.refreshCoinHud();
+    gameStore.subscribe(() => this.refreshCoinHud());
+
+    // Zone-Toast: Name der aktuellen Zone fuer 2.5s einblenden
+    this.showZoneToast(this.currentZone);
     // Zone-Visit fuer Achievement-Tracking
     gameStore.recordZoneVisit(this.currentZone);
 
@@ -419,6 +432,25 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       }
       npc.setQuestIndicator(this, mode);
     }
+  }
+
+  private refreshCoinHud(): void {
+    if (!this.coinHud) return;
+    const s = gameStore.get();
+    this.coinHud.setText(`Coins: ${s.coins}`);
+  }
+
+  private showZoneToast(zone: string): void {
+    const cam = this.cameras.main;
+    const zScale = cam.zoom || 1;
+    const label = zone.charAt(0).toUpperCase() + zone.slice(1);
+    const toast = this.add.text(cam.width / 2 / zScale, 36 / zScale, label, {
+      fontFamily: 'monospace', fontSize: '18px', color: '#9be36e',
+      backgroundColor: '#1a1f1a', padding: { x: 14, y: 6 }
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(1950).setScale(1 / zScale);
+    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(toast);
+    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(toast);
+    this.tweens.add({ targets: toast, alpha: 0, duration: 1200, delay: 1500, onComplete: () => toast.destroy() });
   }
 
   private flashSaveIcon(): void {

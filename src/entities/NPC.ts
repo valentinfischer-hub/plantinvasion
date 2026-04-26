@@ -24,6 +24,7 @@ export class NPC {
   private baseY: number;
   private questIndicator?: Phaser.GameObjects.Text;
   private questIndicatorTween?: Phaser.Tweens.Tween;
+  private nameTag?: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, data: NPCData) {
     this.data = data;
@@ -34,6 +35,12 @@ export class NPC {
     this.sprite.setDisplaySize(TILE_SIZE, TILE_SIZE);
     this.sprite.setDepth(9);
     this.baseY = py;
+    // Name-Tag, klein ueber dem NPC, default nicht sichtbar - via showNameTag aktivierbar
+    const nameTag = scene.add.text(px, py - TILE_SIZE / 2 - 12, data.name, {
+      fontFamily: 'monospace', fontSize: '8px', color: '#ffffff',
+      backgroundColor: '#1a1f1a', padding: { x: 2, y: 1 }
+    }).setOrigin(0.5, 1).setDepth(10).setAlpha(0.85);
+    this.nameTag = nameTag;
     // Subtiles Bounce-Idle - jeder NPC mit eigener Phase damit sie nicht synchron huepfen
     const phaseDelay = (Math.abs(data.tileX * 31 + data.tileY * 17) % 11) * 90;
     this.bounceTween = scene.tweens.add({
@@ -89,6 +96,7 @@ export class NPC {
     if (this.bounceTween) this.bounceTween.stop();
     if (this.questIndicatorTween) this.questIndicatorTween.stop();
     this.questIndicator?.destroy();
+    this.nameTag?.destroy();
     this.sprite.destroy();
   }
 }
