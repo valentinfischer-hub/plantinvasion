@@ -120,6 +120,37 @@ function ensurePlantGrowthFields(plant: any): Plant {
 
 function migrate(parsed: any): GameState | null {
   if (!parsed || typeof parsed !== 'object') return null;
+  // Migrations-Kette ist ASCENDING geordnet, damit sequentielle if-Statements
+  // jeweils die soeben gebumpte Version aufgreifen koennen. Reihenfolge ist
+  // load-bearing: bei Reorder bricht die Kette fuer Saves von v6 oder aelter.
+  if (parsed.version === 6) {
+    parsed.version = 7;
+    if (Array.isArray(parsed.plants)) {
+      parsed.plants = parsed.plants.map((p: any) => ({
+        ...ensurePlantGrowthFields(p),
+        activeBoosters: Array.isArray(p.activeBoosters) ? p.activeBoosters : []
+      }));
+    }
+    if (!parsed.gardenSlots) parsed.gardenSlots = defaultGardenSlots();
+    if (typeof parsed.lastDailyLoginAt !== 'number') parsed.lastDailyLoginAt = 0;
+    if (typeof parsed.marketShopRosterDay !== 'number') parsed.marketShopRosterDay = -1;
+    if (!parsed.marketShopRoster) parsed.marketShopRoster = { seedSlugs: [], boosterSlugs: [] };
+    console.log('[storage] migrated save v6 -> v7 (booster-system V0.1)');
+  }
+  if (parsed.version === 7) {
+    parsed.version = 8;
+    if (!parsed.forageTilesCooldown) parsed.forageTilesCooldown = {};
+    if (!Array.isArray(parsed.collectedHiddenSpots)) parsed.collectedHiddenSpots = [];
+    if (typeof parsed.lastBerryMasterAt !== 'number') parsed.lastBerryMasterAt = 0;
+    if (!Array.isArray(parsed.achievements)) parsed.achievements = [];
+    if (!parsed.achievementCounters) parsed.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
+    console.log('[storage] migrated save v7 -> v8 (foraging V0.2)');
+  }
+  if (parsed.version === 8) {
+    parsed.version = 9;
+    parsed.time = parsed.time ?? { minute: 360, day: 1, season: 0, year: 1 };  // start at 06:00 spring day1
+    console.log('[storage] migrated save v8 -> v9 (time-system)');
+  }
   if (parsed.version === 9) {
     parsed.version = 10;
     if (Array.isArray(parsed.plants)) {
@@ -140,34 +171,6 @@ function migrate(parsed: any): GameState | null {
       }
     }
     console.log('[storage] migrated save v9 -> v10 (breeding-v2 genome backfill)');
-  }
-  if (parsed.version === 8) {
-    parsed.version = 9;
-    parsed.time = parsed.time ?? { minute: 360, day: 1, season: 0, year: 1 };  // start at 06:00 spring day1
-    console.log('[storage] migrated save v8 -> v9 (time-system)');
-  }
-  if (parsed.version === 7) {
-    parsed.version = 8;
-    if (!parsed.forageTilesCooldown) parsed.forageTilesCooldown = {};
-    if (!Array.isArray(parsed.collectedHiddenSpots)) parsed.collectedHiddenSpots = [];
-    if (typeof parsed.lastBerryMasterAt !== 'number') parsed.lastBerryMasterAt = 0;
-    if (!Array.isArray(parsed.achievements)) parsed.achievements = [];
-    if (!parsed.achievementCounters) parsed.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
-    console.log('[storage] migrated save v7 -> v8 (foraging V0.2)');
-  }
-  if (parsed.version === 6) {
-    parsed.version = 7;
-    if (Array.isArray(parsed.plants)) {
-      parsed.plants = parsed.plants.map((p: any) => ({
-        ...ensurePlantGrowthFields(p),
-        activeBoosters: Array.isArray(p.activeBoosters) ? p.activeBoosters : []
-      }));
-    }
-    if (!parsed.gardenSlots) parsed.gardenSlots = defaultGardenSlots();
-    if (typeof parsed.lastDailyLoginAt !== 'number') parsed.lastDailyLoginAt = 0;
-    if (typeof parsed.marketShopRosterDay !== 'number') parsed.marketShopRosterDay = -1;
-    if (!parsed.marketShopRoster) parsed.marketShopRoster = { seedSlugs: [], boosterSlugs: [] };
-    console.log('[storage] migrated save v6 -> v7 (booster-system V0.1)');
   }
   if (parsed.version === 5) {
     parsed.version = 6;

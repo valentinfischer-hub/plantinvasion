@@ -79,7 +79,7 @@ Migrationen v1 bis v10 in `state/storage.ts::migrate`. Details siehe `brain/tech
 | JS-Bundle (minified) | < 5 MB | 1.72 MB | OK |
 | JS-Bundle (gzip) | < 1 MB | 0.41 MB | OK |
 | FPS (locked) | 60 | 60 (Phaser default) | OK |
-| Coverage Genetik | 90 Prozent | 100 Prozent (breedingV2), 100 Prozent Lines genetics | OK |
+| Coverage Genetik | 90 Prozent | 100 Prozent (breedingV2), 100 Prozent Lines genetics, 91.7 Prozent leveling | OK |
 | TypeScript any-Anzahl | 0 | 0 | OK |
 | ESLint-Warnings | 0 | nicht eingerichtet | TODO |
 
@@ -122,6 +122,7 @@ Producer-Release-Decision noetig bei: Engine-Wechsel, Backend-Wahl, Library > 10
 
 ## Aenderungs-Log
 
+- **2026-04-26 12:00:** 124 leveling.ts-Tests + 28 storage.ts-Migrationstests (200 gesamt). Bug-Fix in storage.ts::migrate: Versions-Steps von DESCENDING auf ASCENDING umgestellt, sonst discarded migrate() v6/v7/v8 Saves. Coverage von leveling.ts 91.7 Prozent.
 - **2026-04-26:** Architektur-Doc V0.7 erstellt. Vitest 2 + Coverage-V8 hinzugefuegt. Test-Suite fuer genetics.ts und breedingV2.ts mit 48 Tests, 100 Prozent Coverage auf breedingV2.ts.
 - **2026-04-25:** Save-V10 mit PlantGenome-Field. Crossing V2 mit Allele-Mendel-Genetik live.
 - **2026-04-23 bis 2026-04-25:** Save v2 bis v10 Schritt-fuer-Schritt Migrationen.
