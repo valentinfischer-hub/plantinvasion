@@ -78,3 +78,15 @@ interface Plant {
 - LocalStorage-Limit ca. 5-10 MB (browser-abhaengig)
 - Bei 200 Pokedex-Eintraegen plus 12 Garden-Slots plus typischen Items bleibt das Save < 50 KB
 - Cloud-Sync (Supabase) ist Phase 2 wenn LocalStorage zu klein wird oder Multi-Device gewuenscht
+
+## Schema-History Update (2026-04-26)
+
+| Version | Datum | Sprint | Aenderung | Migration |
+|---------|-------|--------|-----------|-----------|
+| 7 | 2026-04-25 | S-08 | Booster + Soil + Daily-Login + Market-Roster | gardenSlots default, lastDailyLoginAt 0 |
+| 8 | 2026-04-25 | S-08 | Foraging V0.2 + Achievements V0.1 | forageTilesCooldown {}, achievements [] |
+| 9 | 2026-04-25 | S-08 | Time-System (minute/day/season/year) | start at 06:00 spring day1 |
+| 10 | 2026-04-25 | S-09 | Crossing V2 PlantGenome (Allele/EV/Egg-Moves/Traits) | Random-IV-Backfill 0..31 pro Allele |
+
+## Test-Coverage (Stand 2026-04-26)
+Migrate-Funktion ist noch nicht direkt unit-getestet. Aufgabe fuer naechsten Tech-Run: Snapshot-Tests fuer v1->v10 Schritt-fuer-Schritt mit fixen Sample-Saves.
