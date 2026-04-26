@@ -30,6 +30,7 @@ import { MiniMap } from '../ui/MiniMap';
 import { PauseOverlay } from '../ui/PauseOverlay';
 import { TimeOverlay } from '../ui/TimeOverlay';
 import { WeatherOverlay } from '../ui/WeatherOverlay';
+import { SeasonTintOverlay } from '../ui/SeasonTintOverlay';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -143,6 +144,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private timeOverlay!: TimeOverlay;
   private saveIcon!: Phaser.GameObjects.Text;
   private weatherOverlay!: WeatherOverlay;
+  private seasonTint!: SeasonTintOverlay;
 
   constructor() {
     super('OverworldScene');
@@ -242,6 +244,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Day-Night-Cycle
     this.timeOverlay = new TimeOverlay(this);
     this.weatherOverlay = new WeatherOverlay(this);
+    this.seasonTint = new SeasonTintOverlay(this);
 
     // Audio-Context wird erst nach erstem User-Input freigeschaltet (Browser-Policy).
     // Wir attachen daher die BGM-Start an den ersten Pointer- oder Key-Event.
@@ -433,6 +436,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Tageszeit ticken
     this.timeOverlay?.tick(delta);
     this.weatherOverlay?.tick(delta);
+    this.seasonTint?.refresh();
 
     // Tutorial Auto-Advance
     this.tutorial.checkAdvance({ tileX: this.player.tileX, tileY: this.player.tileY, facing: this.player.facing, isMoving: this.player.isMoving });
@@ -932,7 +936,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       return;
     }
     // Hohes Gras (Tile 2) oder Bromelien (Tile 13): Encounter-Trigger
-    const encounterRate = t === 13 ? 0.10 : (t === 2 || t === 34 || t === 44 ? 0.07 : 0);
+    let encounterRate = t === 13 ? 0.10 : (t === 2 || t === 34 || t === 44 ? 0.07 : 0);
+    // Wetter-Modifier S-09 D.o.D. #4: Regen +20% Bromelia, Schnee +20% Frostkamm
+    const weather = this.weatherOverlay?.getCurrentWeather?.() ?? 'clear';
+    if (weather === 'rain' && t === 13) encounterRate *= 1.2;
+    if (weather === 'snow' && this.currentZone === 'frostkamm' && t === 2) encounterRate *= 1.2;
+    if (weather === 'storm' && this.currentZone === 'salzbucht' && t === 2) encounterRate *= 1.3;
+    if (weather === 'fog' && this.currentZone === 'mordwald' && t === 34) encounterRate *= 1.25;
     if (encounterRate > 0 && Math.random() < encounterRate) {
       let pool = getEncounterPool(this.currentZone, t);
       // Wetter-Modifier: Re-weight pool je Wetter

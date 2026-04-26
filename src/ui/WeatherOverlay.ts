@@ -171,6 +171,9 @@ export class WeatherOverlay {
     }
   }
 
+  /**
+   * Aktuelles Wetter, von externen Systemen lesbar (Encounter-Modifier S-09 D.o.D. #4).
+   */
   public getCurrentWeather(): Weather {
     return this.currentWeather;
   }
