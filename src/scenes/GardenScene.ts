@@ -25,6 +25,7 @@ import { GROWTH_STAGE_NAMES, QUALITY_TIERS, type Plant, type QualityTier } from 
 import { getSpecies } from '../data/species';
 import { generateAllPlantStages } from '../assets/proceduralPlantSprites';
 import { listActiveBoosters, boosterRemainingMs } from '../data/boosters';
+import { companionBonus, getCompanionsFor } from '../data/companion';
 import { isSeedItem, getItem } from '../data/items';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
@@ -230,16 +231,88 @@ export class GardenScene extends Phaser.Scene {
       this.showFlash('Selbe Pflanze - waehle eine andere', '#ff7e7e');
       return;
     }
-    const result = gameStore.crossPlants(this.crossFirstPlantId, plantId);
-    if (!result.ok) {
-      this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
-    } else {
-      this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
+    // Preview-Modal vor Bestaetigung
+    this.openCrossPreviewModal(this.crossFirstPlantId, plantId);
+  }
+
+  private openCrossPreviewModal(parentAId: string, parentBId: string): void {
+    if (this.detailPanel) {
+      this.detailPanel.destroy();
+      this.detailPanel = undefined;
     }
-    this.crossMode = false;
-    this.crossFirstPlantId = null;
-    this.refreshCrossUI();
-    this.renderPlants();
+    const preview = gameStore.previewCross(parentAId, parentBId);
+    if (!preview.ok) {
+      this.showFlash(preview.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      this.crossMode = false;
+      this.crossFirstPlantId = null;
+      this.refreshCrossUI();
+      this.renderPlants();
+      return;
+    }
+    const { width, height } = this.scale;
+    const panelW = 320;
+    const panelH = 240;
+    const c = this.add.container(width / 2, height / 2);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x1a1f1a, 0.96);
+    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    bg.lineStyle(2, 0xb86ee3, 0.9);
+    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    c.add(bg);
+    const title = this.add.text(0, -panelH / 2 + 12, 'Kreuzungs-Vorschau', {
+      fontFamily: 'monospace', fontSize: '14px', color: '#b86ee3'
+    }).setOrigin(0.5, 0);
+    c.add(title);
+    const childLabel = this.add.text(0, -panelH / 2 + 38, `Kind: ${preview.childSlug}`, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
+    }).setOrigin(0.5, 0);
+    c.add(childLabel);
+    const r = preview.statRange!;
+    const stats = this.add.text(-panelW / 2 + 14, -panelH / 2 + 64,
+      [
+        'Stat-Range (Mittel +/- 10%):',
+        `  ATK ${r.atk[0]} - ${r.atk[1]}`,
+        `  DEF ${r.def[0]} - ${r.def[1]}`,
+        `  SPD ${r.spd[0]} - ${r.spd[1]}`,
+        '',
+        `Mutation-Chance: ${(preview.mutationChance! * 100).toFixed(0)}%`,
+        `Kosten: 50 Coins`
+      ].join('\n'),
+      { fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc' });
+    c.add(stats);
+    const okBtn = this.add.text(-60, panelH / 2 - 30, 'Kreuzen!', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#1a1f1a',
+      backgroundColor: '#b86ee3', padding: { left: 14, right: 14, top: 6, bottom: 6 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    okBtn.on('pointerdown', () => {
+      const result = gameStore.crossPlants(parentAId, parentBId);
+      if (!result.ok) {
+        this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      } else {
+        this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#b86ee3');
+      }
+      c.destroy();
+      this.detailPanel = undefined;
+      this.crossMode = false;
+      this.crossFirstPlantId = null;
+      this.refreshCrossUI();
+      this.renderPlants();
+    });
+    c.add(okBtn);
+    const cancelBtn = this.add.text(60, panelH / 2 - 30, 'Abbruch', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc',
+      backgroundColor: '#3a3a3a', padding: { left: 12, right: 12, top: 6, bottom: 6 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    cancelBtn.on('pointerdown', () => {
+      c.destroy();
+      this.detailPanel = undefined;
+      this.crossMode = false;
+      this.crossFirstPlantId = null;
+      this.refreshCrossUI();
+      this.renderPlants();
+    });
+    c.add(cancelBtn);
+    this.detailPanel = c;
   }
 
   private openSeedPlantModal(): void {
@@ -712,6 +785,46 @@ export class GardenScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '10px', color: '#bbbbbb'
     });
     container.add(soilText);
+
+    // Companion-Bonus-Anzeige
+    const cBonus = companionBonus(plant, gameStore.get().plants);
+    if (cBonus.bonus > 0) {
+      const compText = this.add.text(-panelW / 2 + 14, soilY + 14,
+        `Companion +${(cBonus.bonus * 100).toFixed(0)}%: ${cBonus.hint ?? ''}`, {
+        fontFamily: 'monospace', fontSize: '9px', color: '#9be36e'
+      });
+      container.add(compText);
+    } else {
+      const partners = getCompanionsFor(plant.speciesSlug);
+      if (partners.length > 0) {
+        const partnerHint = partners.slice(0, 2).map((p) => p.partner).join(', ');
+        const compText = this.add.text(-panelW / 2 + 14, soilY + 14,
+          `Companion-Hint: ${partnerHint} nebenan`, {
+          fontFamily: 'monospace', fontSize: '9px', color: '#888888'
+        });
+        container.add(compText);
+      }
+    }
+
+    // Bonsai-Toggle
+    const bonsaiY = soilY + 28;
+    const bonsaiLabel = plant.bonsaiMode ? 'Bonsai aktiv (Cap L44)' : 'Normal (Stage-Up moeglich)';
+    const bonsaiBtn = this.add.text(-panelW / 2 + 14, bonsaiY, `${bonsaiLabel}  [Bonsai-Toggle]`, {
+      fontFamily: 'monospace', fontSize: '9px',
+      color: plant.bonsaiMode ? '#fcd95c' : '#bbbbbb',
+      backgroundColor: '#1a1f1a',
+      padding: { x: 4, y: 2 }
+    }).setInteractive({ useHandCursor: true });
+    bonsaiBtn.on('pointerdown', () => {
+      const r = gameStore.toggleBonsai(plant.id);
+      if (!r.ok) {
+        this.showFlash(r.reason ?? 'Toggle fehlgeschlagen', '#ff7e7e');
+      } else {
+        this.showFlash(r.bonsai ? 'Bonsai aktiviert (+30% maxHp im Battle)' : 'Bonsai deaktiviert', r.bonsai ? '#fcd95c' : '#bbbbbb');
+        this.openDetailPanel(plant.id);
+      }
+    });
+    container.add(bonsaiBtn);
 
     // Wasser-Button
     const ready = canBeWatered(plant);

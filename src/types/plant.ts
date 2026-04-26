@@ -83,6 +83,10 @@ export interface Plant {
   // Booster-V0.1
   activeBoosters: ActiveBooster[];
 
+  // Bonsai-Mode V0.1: Wenn true, ist Stage-Up auf Blooming blockiert,
+  // dafuer bekommt die Pflanze im Battle einen Stat-Bonus
+  bonsaiMode?: boolean;
+
   // UI
   gridX: number;
   gridY: number;

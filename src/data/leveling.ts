@@ -235,6 +235,8 @@ export interface TickContext {
   zone: string;
   now: number;
   soilTier?: SoilTier;
+  /** Companion-Bonus aus benachbartem Slot (0..0.2), wird in gameStore.tick berechnet. */
+  companionBonus?: number;
 }
 
 export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant {
@@ -274,6 +276,7 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
   const todMult = hasActiveSunLamp(plant, now) ? 1.0 : timeOfDayMultiplier(now);
   const boosterMult = xpBoosterMultiplier(plant, now);
   const soilMult = SOIL_XP_MULTIPLIER[soilTier];
+  const companionMult = 1.0 + (ctx.companionBonus ?? 0);
   const xpPerSec = BASE_XP_PER_SEC *
     stageMultiplier(stageOf(plant)) *
     biomeMatchMultiplier(plant.speciesSlug, zone) *
@@ -281,7 +284,8 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
     todMult *
     hydMult *
     boosterMult *
-    soilMult;
+    soilMult *
+    companionMult;
 
   const xpDelta = xpPerSec * dtSec;
 
@@ -343,16 +347,23 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
 
 /**
  * Addiere XP, propagiere Level-ups, clamp auf 0 und MAX_LEVEL.
+ * Bonsai-Mode: Cap bei Level 44 (eine unter Blooming-Threshold 45)
  */
 export function applyXp(plant: Plant, xpDelta: number, now = Date.now()): Plant {
   let level = plant.level;
   let xp = plant.xp + xpDelta;
   let totalXp = Math.max(0, plant.totalXp + Math.max(0, xpDelta));
+  const cap = plant.bonsaiMode ? 44 : MAX_LEVEL;
 
   // Level-up
-  while (level < MAX_LEVEL && xp >= xpToNextLevel(level)) {
+  while (level < cap && xp >= xpToNextLevel(level)) {
     xp -= xpToNextLevel(level);
     level += 1;
+  }
+  if (level >= cap && plant.bonsaiMode) {
+    // Bonsai-Cap: bleibe bei 44, XP geht auf 0
+    level = cap;
+    xp = 0;
   }
   // Level-down (bei Vernachlaessigung)
   while (level > 1 && xp < 0) {
@@ -360,7 +371,7 @@ export function applyXp(plant: Plant, xpDelta: number, now = Date.now()): Plant 
     xp += xpToNextLevel(level);
   }
   if (xp < 0) xp = 0;
-  if (level >= MAX_LEVEL) {
+  if (level >= MAX_LEVEL && !plant.bonsaiMode) {
     level = MAX_LEVEL;
     xp = 0;
   }

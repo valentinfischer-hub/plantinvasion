@@ -5,6 +5,7 @@ import { getSpecies } from '../data/species';
 import { applyItemToPlant, nextSoilTier, SOIL_COSTS, SOIL_MUTATION_BONUS } from '../data/boosters';
 import { getItem, isSeedItem, speciesSlugFromSeed } from '../data/items';
 import { findRecipe } from '../data/hybridRecipes';
+import { companionBonus } from '../data/companion';
 import {
   FORAGE_COOLDOWN_MS,
   rollForagePool,
@@ -129,17 +130,81 @@ class GameStore {
   tick(now = Date.now()): void {
     let mutated = false;
     const zone = 'wurzelheim';
-    this.state.plants = this.state.plants.map((p) => {
+    const allPlants = this.state.plants;
+    this.state.plants = allPlants.map((p) => {
       const soilTier = this.getSoilTier(p.gridX, p.gridY);
-      const updated = tickPlant(p, { zone, now, soilTier });
+      const cBonus = companionBonus(p, allPlants).bonus;
+      const updated = tickPlant(p, { zone, now, soilTier, companionBonus: cBonus });
       if (updated !== p) mutated = true;
       return updated;
     });
     if (mutated) {
-      // Achievement-Check (first-bloom, pristine-grower etc.) periodisch
       this.checkAchievements();
       this.notify();
     }
+  }
+
+  /** Schaltet Bonsai-Mode auf einer Pflanze. */
+  toggleBonsai(plantId: string): { ok: boolean; bonsai?: boolean; reason?: string } {
+    const plant = this.state.plants.find((p) => p.id === plantId);
+    if (!plant) return { ok: false, reason: 'Pflanze nicht gefunden' };
+    if (plant.level >= 45 && !plant.bonsaiMode) {
+      return { ok: false, reason: 'Pflanze ist bereits Blooming - kann nicht zu Bonsai werden' };
+    }
+    const newBonsai = !plant.bonsaiMode;
+    this.state.plants = this.state.plants.map((p) =>
+      p.id === plantId ? { ...p, bonsaiMode: newBonsai } : p
+    );
+    this.notify();
+    return { ok: true, bonsai: newBonsai };
+  }
+
+  /**
+   * Vorschau auf ein Crossing ohne State-Mutation. Zeigt Stat-Range und Mutation-Chance.
+   */
+  previewCross(parentAId: string, parentBId: string): {
+    ok: boolean;
+    reason?: string;
+    childSlug?: string;
+    statRange?: { atk: [number, number]; def: [number, number]; spd: [number, number] };
+    mutationChance?: number;
+  } {
+    const a = this.state.plants.find((p) => p.id === parentAId);
+    const b = this.state.plants.find((p) => p.id === parentBId);
+    if (!a || !b) return { ok: false, reason: 'Eltern nicht gefunden' };
+    if (a.id === b.id) return { ok: false, reason: 'Selbe Pflanze gewaehlt' };
+    if (a.level < 5 || b.level < 5) return { ok: false, reason: 'Beide brauchen Level 5+' };
+    const recipe = findRecipe(a.speciesSlug, b.speciesSlug);
+    const childSlug = recipe ? recipe.childSlug : a.speciesSlug;
+    // Stat-Range: Mittel +/- 10%
+    const avg = (x: number, y: number) => Math.round((x + y) / 2);
+    const range = (mid: number) => [Math.round(mid * 0.9), Math.round(mid * 1.1)] as [number, number];
+    const slot = this.findFreeSlot();
+    const soilBonus = slot ? SOIL_MUTATION_BONUS[this.getSoilTier(slot.x, slot.y)] : 0;
+    const recipeBonus = recipe?.mutationBonus ?? 0;
+    const hybridBoost = this.hasItem('hybrid-booster') ? 0.05 : 0;
+    const totalMut = 0.08 + soilBonus + recipeBonus + hybridBoost;
+    return {
+      ok: true,
+      childSlug,
+      statRange: {
+        atk: range(avg(a.stats.atk, b.stats.atk)),
+        def: range(avg(a.stats.def, b.stats.def)),
+        spd: range(avg(a.stats.spd, b.stats.spd))
+      },
+      mutationChance: Math.round(totalMut * 100) / 100
+    };
+  }
+
+  /** Helfer: erste freie Slot-Position oder null. */
+  private findFreeSlot(): { x: number; y: number } | null {
+    const occupied = new Set(this.state.plants.map((p) => `${p.gridX},${p.gridY}`));
+    for (let y = 0; y < GRID_ROWS; y++) {
+      for (let x = 0; x < GRID_COLUMNS; x++) {
+        if (!occupied.has(`${x},${y}`)) return { x, y };
+      }
+    }
+    return null;
   }
 
   // =========================================================

@@ -297,8 +297,17 @@ export function makeBattleSide(opts: {
   atkBias?: number;
   defBias?: number;
   spdBias?: number;
+  bonsaiMode?: boolean;
 }): BattleSide {
   const moveSlugs = opts.moveSlugs ?? defaultMovesForFamily(opts.family);
+  const stats = makeStatsForLevel(opts.level, opts.atkBias, opts.defBias, opts.spdBias);
+  if (opts.bonsaiMode) {
+    stats.maxHp = Math.floor(stats.maxHp * 1.30);
+    stats.hp = stats.maxHp;
+    stats.atk = Math.floor(stats.atk * 1.15);
+    stats.def = Math.floor(stats.def * 1.15);
+    stats.spd = Math.floor(stats.spd * 1.15);
+  }
   return {
     name: opts.name,
     family: opts.family,
@@ -307,7 +316,7 @@ export function makeBattleSide(opts: {
     spriteColor: opts.spriteColor ?? 0x9be36e,
     spriteKey: opts.spriteKey,
     moveSlugs: moveSlugs.slice(0, 4),
-    stats: makeStatsForLevel(opts.level, opts.atkBias, opts.defBias, opts.spdBias),
+    stats,
     statuses: [],
     modifiers: []
   };
