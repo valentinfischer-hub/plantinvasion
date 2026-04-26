@@ -1,11 +1,20 @@
 # Tech-Code Agent State
 
-**Letzter Run:** 2026-04-26 12:00 (zweite autonome Iteration)
+**Letzter Run:** 2026-04-26 16:00 (dritte autonome Iteration)
 **Owner:** valentinfischer-hub
 **Branch:** main
 
 ## Aktueller Sprint
 S-09 Story-Akt-1 plus NPC-Walking plus Saison-Tile-Variationen. Geplantes Ende 2026-05-04.
+
+## Heute erledigt (Run 16:00)
+- **Bundle-Splitting:** Phaser in eigenen Chunk via `manualChunks` ausgelagert. App-Code jetzt 242 KB (vorher 1.72 MB monolithisch). Phaser-Chunk 1.48 MB bleibt CDN-cached zwischen Releases.
+- **storage.ts in Coverage-Threshold aufgenommen:** 85 Prozent Lines/Statements/Funcs, 80 Prozent Branch. Aktuell 98.5 Prozent Lines erreicht.
+- **`src/utils/featureFlags.ts`** neu: typsicherer Wrapper um `import.meta.env`. `MP_ENABLED` und `DEBUG_OVERLAY` als build-time-baked Konstanten. 9 Tests, alle gruen.
+- **`src/utils/gameTime.ts`** neu: injizierbarer Time-Provider als Vorbereitung fuer Time-Refactor von leveling.ts. 12 Tests, 100 Prozent Coverage. Heilige Pfade noch nicht migriert (additiv).
+- **`src/vite-env.d.ts`** neu: typed `ImportMetaEnv` mit allen VITE_*-Vars (MP_ENABLED, DEBUG_OVERLAY, SUPABASE_URL, SUPABASE_ANON_KEY).
+- **`.env.example`** neu: dokumentiert alle unterstuetzten Build-Time-Flags.
+- **vite.config.ts** erweitert um chunkSizeWarningLimit 1500 KB (Phaser-Chunk).
 
 ## Heute erledigt (Run 12:00)
 - 124 neue Vitest-Tests fuer leveling.ts (XP-Curve, Stages, Hydration, Multiplikatoren, Bloom-Cycle, Tick, Harvest, applyXp, waterPlant, defaultGrowthFields, Konstanten)
@@ -22,35 +31,39 @@ S-09 Story-Akt-1 plus NPC-Walking plus Saison-Tile-Variationen. Geplantes Ende 2
 - ESLint 9 Flat Config (typescript-eslint), 0 errors
 - brain/tech/architecture.md V0.7 als Single-Source-of-Truth
 
-## Test-Stats Stand 2026-04-26 12:00
-- 200 von 200 Tests gruen ueber 4 Suiten
+## Test-Stats Stand 2026-04-26 16:00
+- 221 von 221 Tests gruen ueber 6 Suiten (vorher 200/4)
 - breedingV2.ts: 100 Prozent Lines/Branch/Funcs
 - genetics.ts: 100 Prozent Lines, 81.8 Prozent Branch
 - leveling.ts: 91.7 Prozent Lines, 94.6 Prozent Branch, 96.2 Prozent Funcs
-- storage.ts: implizit ueber Migration-Tests, kein Coverage-Threshold gesetzt
+- storage.ts: 98.5 Prozent Lines (Threshold 85 Prozent)
+- gameTime.ts: 100 Prozent (Threshold 100 Prozent)
+- featureFlags.ts: 94.4 Prozent (kein Threshold, Build-Time-Bake)
 
 ## Naechste Prios (in Reihenfolge)
-1. **ESLint-Bestand abbauen** (62 any-Errors in storage.ts, breedingV2.ts und Co. nach und nach typisieren, weiter nach uncovered-Lines in leveling.ts)
-2. **storage.ts in Coverage-Threshold aufnehmen** (jetzt wo Tests existieren)
-3. **Bundle-Splitting** (manualChunks fuer Phaser separat, ca 1.5 MB sparen)
-4. **Time-System-Refactor** (gameTime statt Date.now in leveling.ts -> testbar)
-5. **NPC-Walking-Cycles** (Sprint-S-09 DoD)
-6. **Saison-Tile-Variationen** (Sprint-S-09 DoD)
-7. **Multiplayer-Feature-Flag aktivieren** (VITE_MP_ENABLED in vite.config.ts referenzieren)
+1. **leveling.ts auf gameTime.now() migrieren** (jetzt sicher dank 100 Prozent Coverage auf gameTime). Date.now()-Default-Args durch Wrapper-Calls ersetzen.
+2. **ESLint-Bestand abbauen** (82 Warnings, davon ~62 any in storage.ts und Co.)
+3. **NPC-Walking-Cycles** (Sprint-S-09 DoD)
+4. **Saison-Tile-Variationen** (Sprint-S-09 DoD)
+5. **Hybrid-Reveal-Tests** (heiliger Pfad ohne Tests, vor Refactor)
+6. **Supabase-Client hinter Feature-Flag instantiieren** (`src/services/supabase.ts`)
 
 ## Offene QA-Punkte
-Keine aktiven QA-Reports. brain/agents/qa-critic/ ist leer. Bei Bug-Reports werden sie hier verlinkt.
+Keine aktiven QA-Reports. brain/agents/qa-critic/ ist leer.
 
 ## Multiplayer-Status
 - Supabase-Migrationen vorhanden (0001_init.sql, 0002_generic_species.sql)
-- .env.local NICHT im Repo (gitignored). Keine Keys validierbar im Tech-Run.
-- Multiplayer-Code-Pfad: noch nicht aktiv. Feature-Flag `VITE_MP_ENABLED` geplant aber nicht referenziert.
+- Feature-Flag `MP_ENABLED` aktiv exportiert aus `src/utils/featureFlags.ts`
+- `.env.example` mit `VITE_MP_ENABLED`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` dokumentiert
+- Multiplayer-Code-Pfad: noch nicht aktiv. Naechster Schritt: `src/services/supabase.ts` hinter `if (MP_ENABLED)` Lazy-Init.
+- `.env.local` NICHT im Repo (gitignored). Keys werden lokal/in Netlify gepflegt.
 
-## Performance-Audit (2026-04-26 12:00)
-- Bundle: 1.72 MB minified, 0.41 MB gzip. 5 MB Budget OK.
-- TypeScript-Strict: gruen.
+## Performance-Audit (2026-04-26 16:00)
+- Bundle: App 242 KB minified / 70 KB gzip + Phaser 1.48 MB / 340 KB gzip = 1.72 MB total / 410 KB gzip. 5 MB Budget OK.
+- Bundle-Splitting aktiv: Phaser-Chunk wird zwischen Releases CDN-cached.
+- TypeScript-Strict: gruen, kein `any` in neuem Code.
 - 60fps: Phaser-Default, kein Frame-Drop bekannt.
-- ESLint: 0 errors, 82 warnings (Bestand).
+- ESLint: 0 errors, 82 warnings (Bestand unveraendert).
 
 ## Autonomie-Verbrauch
-- 0 von 3 Bug-Iterationen verwendet (Save-Bug wurde direkt im ersten Versuch gefixt und durch Tests bestaetigt).
+- 0 von 3 Bug-Iterationen verwendet (alle Aenderungen waren additiv plus Bundle-Config).
