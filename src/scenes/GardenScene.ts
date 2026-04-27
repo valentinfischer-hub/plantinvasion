@@ -90,6 +90,27 @@ export class GardenScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor('#2d3a2a');
 
+    // Boden-Tile-Background (Sprint 1 Atlas): full-screen 32x32 Tile-Pattern
+    // mit ground_erdig-Variationen rotiert per Hash-Index. Subtle Alpha
+    // damit Slot-Marker plus Pflanzen-Sprites darueber gut sichtbar bleiben.
+    if (this.textures.exists('ground_erdig_v1')) {
+      const TS = 32;
+      const sceneW = this.scale.width;
+      const sceneH = this.scale.height;
+      const cols = Math.ceil(sceneW / TS);
+      const rows = Math.ceil(sceneH / TS);
+      for (let ty = 0; ty < rows; ty++) {
+        for (let tx = 0; tx < cols; tx++) {
+          const v = ((tx * 7 + ty * 13) % 4) + 1;
+          this.add.image(tx * TS, ty * TS, `ground_erdig_v${v}`)
+            .setOrigin(0, 0)
+            .setAlpha(0.4)
+            .setDepth(-100);
+        }
+      }
+    }
+
+
     this.headerText = this.add.text(width / 2, 16, '', {
       fontFamily: 'monospace',
       fontSize: '14px',
@@ -120,6 +141,21 @@ export class GardenScene extends Phaser.Scene {
         slot.fillRoundedRect(sx, sy, TILE, TILE, 4);
         slot.lineStyle(1, 0x44603f, 0.5);
         slot.strokeRoundedRect(sx, sy, TILE, TILE, 4);
+
+        // Slot-spezifischer Boden-Tile (Sprint 1 Atlas) als visuelle Variation.
+        // 4 Erdtypen (erdig/steinig/moosig/aschig) rotiert per Slot-Index modulo 4.
+        const groundTypes = ['erdig', 'steinig', 'moosig', 'aschig'];
+        const groundType = groundTypes[(x + y) % groundTypes.length];
+        const groundVariant = ((x * 3 + y * 5) % 4) + 1;
+        const groundKey = `ground_${groundType}_v${groundVariant}`;
+        if (this.textures.exists(groundKey)) {
+          this.add.image(sx + TILE / 2, sy + TILE / 2, groundKey)
+            .setOrigin(0.5)
+            .setDisplaySize(TILE - 4, TILE - 4)
+            .setAlpha(0.7)
+            .setDepth(-50);
+        }
+
         // B-012 V0.2: jeder Slot ist klickbar fuer Slot-First-Saeen-UI.
         const hotspot = this.add.rectangle(sx + TILE / 2, sy + TILE / 2, TILE, TILE, 0x000000, 0)
           .setInteractive({ useHandCursor: true })
