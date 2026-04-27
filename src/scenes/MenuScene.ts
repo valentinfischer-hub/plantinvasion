@@ -13,6 +13,39 @@ export class MenuScene extends Phaser.Scene {
     super('MenuScene');
   }
 
+  public preload(): void {
+    // Sprint 0+1 Atlas-Pack (Art-UI Generation 2026-04-26).
+    // 4 Atlases: 12 Pflanzen-Spezies plus 16 Boden-Tile-Variationen plus UI-Frames.
+    // Frame-Names siehe public/assets/atlases/*.json.
+    // Bindung an Spezies-Map plus GardenScene-Tiles erfolgt in Folge-Run.
+    this.load.atlas('plants_sprint_0', 'assets/atlases/plants_sprint_0.webp', 'assets/atlases/plants_sprint_0.json');
+    this.load.atlas('plants_sprint_1', 'assets/atlases/plants_sprint_1.webp', 'assets/atlases/plants_sprint_1.json');
+    this.load.atlas('ground_sprint_1', 'assets/atlases/ground_sprint_1.webp', 'assets/atlases/ground_sprint_1.json');
+    this.load.atlas('ui_sprint_0', 'assets/atlases/ui_sprint_0.webp', 'assets/atlases/ui_sprint_0.json');
+
+    // 16 einzelne Boden-Tile-Files (erdig/steinig/moosig/aschig je 4 Varianten)
+    // fuer GardenScene-Slot-Variation per Slot-Index modulo 4.
+    const groundTypes = ['erdig', 'steinig', 'moosig', 'aschig'];
+    groundTypes.forEach((type) => {
+      for (let v = 1; v <= 4; v++) {
+        this.load.image(`ground_${type}_v${v}`, `assets/sprites/tiles/ground_${type}_v${v}.webp`);
+      }
+    });
+
+    // Plant-Sprites Legacy-Fallback (Sprint 0 Pilot-Spezies fuer existierende species-Map).
+    const species = ['sunflower', 'spike-cactus', 'venus-flytrap', 'lavender', 'tomato-plant'];
+    const stageFiles = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
+    species.forEach((slug) => {
+      stageFiles.forEach((sf, idx) => {
+        const key = `${slug}-${idx}`;
+        if (!this.textures.exists(key)) {
+          this.load.image(key, `assets/sprites/plants/${slug}/${sf}.png`);
+        }
+      });
+    });
+  }
+
+
   public create(): void {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1a2820');
