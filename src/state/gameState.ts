@@ -546,7 +546,7 @@ class GameStore {
 
   getAchievementCounters(): { crossings: number; mutations: number; visitedZones: string[] } {
     if (!this.state.achievementCounters) this.state.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
-    return this.state.achievementCounters as any;
+    return this.state.achievementCounters ?? { crossings: 0, mutations: 0, visitedZones: [] };
   }
 
   recordZoneVisit(zone: string): void {
@@ -683,13 +683,13 @@ class GameStore {
 
   // === TIME-STATE ===
   getTime(): { minute: number; day: number; season: 0|1|2|3; year: number } {
-    return (this.state as any).time ?? { minute: 360, day: 1, season: 0, year: 1 };
+    return this.state.time ?? { minute: 360, day: 1, season: 0, year: 1 };
   }
 
   /** Advance game-time by N real-ms. 1 real-second = 1 game-minute. */
   tickGameTime(deltaMs: number): void {
-    if (!(this.state as any).time) (this.state as any).time = { minute: 360, day: 1, season: 0, year: 1 };
-    const t = (this.state as any).time;
+    if (!this.state.time) this.state.time = { minute: 360, day: 1, season: 0, year: 1 };
+    const t = this.state.time;
     t.minute += deltaMs / 1000;
     while (t.minute >= 1440) {
       t.minute -= 1440;
@@ -726,49 +726,49 @@ class GameStore {
 
   // === STORY-STATE ===
   getStoryFlag(flag: string): boolean {
-    return !!(this.state as any).story?.flags?.[flag];
+    return !!this.state.story?.flags?.[flag];
   }
 
   setStoryFlag(flag: string, value: boolean = true): void {
-    if (!(this.state as any).story) (this.state as any).story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    (this.state as any).story.flags[flag] = value;
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    this.state.story.flags[flag] = value;
     this.save();
   }
 
   getCurrentAct(): number {
-    return (this.state as any).story?.currentAct ?? 0;
+    return this.state.story?.currentAct ?? 0;
   }
 
   advanceAct(toAct: number): void {
-    if (!(this.state as any).story) (this.state as any).story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    if (toAct > (this.state as any).story.currentAct) {
-      (this.state as any).story.currentAct = toAct;
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if (toAct > this.state.story.currentAct) {
+      this.state.story.currentAct = toAct;
       this.save();
     }
   }
 
   meetNpc(npcId: string): boolean {
-    if (!(this.state as any).story) (this.state as any).story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    if ((this.state as any).story.metNpcs.includes(npcId)) return false;
-    (this.state as any).story.metNpcs.push(npcId);
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if (this.state.story.metNpcs.includes(npcId)) return false;
+    this.state.story.metNpcs.push(npcId);
     this.save();
     return true;
   }
 
   hasMetNpc(npcId: string): boolean {
-    return (this.state as any).story?.metNpcs?.includes(npcId) ?? false;
+    return this.state.story?.metNpcs?.includes(npcId) ?? false;
   }
 
   collectDiaryEntry(entryId: number): boolean {
-    if (!(this.state as any).story) (this.state as any).story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
-    if ((this.state as any).story.diaryEntries.includes(entryId)) return false;
-    (this.state as any).story.diaryEntries.push(entryId);
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    if (this.state.story.diaryEntries.includes(entryId)) return false;
+    this.state.story.diaryEntries.push(entryId);
     this.save();
     return true;
   }
 
   getDiaryEntries(): number[] {
-    return (this.state as any).story?.diaryEntries ?? [];
+    return this.state.story?.diaryEntries ?? [];
   }
 
   setOverworldPos(tileX: number, tileY: number, facing: 'up' | 'down' | 'left' | 'right', scene: 'OverworldScene' | 'GardenScene' = 'OverworldScene', zone?: string): void {
