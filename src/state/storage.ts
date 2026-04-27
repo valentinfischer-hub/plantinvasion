@@ -88,33 +88,41 @@ function defaultGardenSlots(): GardenSlotMeta[] {
   return slots;
 }
 
+/** B-013: Hilfstyp fuer legacy-Save-Strukturen aus alten Versionen. Vermeidet `any` an isolierten Stellen. */
+type RawRecord = Record<string, unknown>;
+
+function asRecord(v: unknown): RawRecord {
+  return (v !== null && typeof v === 'object' ? v : {}) as RawRecord;
+}
+
 /**
  * Backfill der V0.2 Growth-Felder fuer alle Pflanzen.
  */
-function ensurePlantGrowthFields(plant: any): Plant {
+function ensurePlantGrowthFields(plant: unknown): Plant {
+  const p = asRecord(plant);
   const defaults = defaultGrowthFields();
   const generation =
-    typeof plant.generation === 'number'
-      ? plant.generation
-      : plant.parentAId
+    typeof p.generation === 'number'
+      ? p.generation
+      : p.parentAId
         ? 1
         : 0;
   return {
     ...defaults,
     generation,
-    ...plant,
-    hydration: typeof plant.hydration === 'number' ? plant.hydration : defaults.hydration,
-    careScore: typeof plant.careScore === 'number' ? plant.careScore : defaults.careScore,
-    pendingHarvest: typeof plant.pendingHarvest === 'boolean' ? plant.pendingHarvest : defaults.pendingHarvest,
+    ...p,
+    hydration: typeof p.hydration === 'number' ? p.hydration : defaults.hydration,
+    careScore: typeof p.careScore === 'number' ? p.careScore : defaults.careScore,
+    pendingHarvest: typeof p.pendingHarvest === 'boolean' ? p.pendingHarvest : defaults.pendingHarvest,
     consecutiveDryHours:
-      typeof plant.consecutiveDryHours === 'number'
-        ? plant.consecutiveDryHours
+      typeof p.consecutiveDryHours === 'number'
+        ? p.consecutiveDryHours
         : defaults.consecutiveDryHours,
     highestStageReached:
-      typeof plant.highestStageReached === 'number'
-        ? plant.highestStageReached
+      typeof p.highestStageReached === 'number'
+        ? p.highestStageReached
         : defaults.highestStageReached,
-    activeBoosters: Array.isArray(plant.activeBoosters) ? plant.activeBoosters : []
+    activeBoosters: Array.isArray(p.activeBoosters) ? p.activeBoosters : []
   } as Plant;
 }
 
@@ -126,10 +134,13 @@ function migrate(parsed: any): GameState | null {
   if (parsed.version === 6) {
     parsed.version = 7;
     if (Array.isArray(parsed.plants)) {
-      parsed.plants = parsed.plants.map((p: any) => ({
-        ...ensurePlantGrowthFields(p),
-        activeBoosters: Array.isArray(p.activeBoosters) ? p.activeBoosters : []
-      }));
+      parsed.plants = parsed.plants.map((p: unknown) => {
+        const pr = asRecord(p);
+        return {
+          ...ensurePlantGrowthFields(p),
+          activeBoosters: Array.isArray(pr.activeBoosters) ? pr.activeBoosters : []
+        };
+      });
     }
     if (!parsed.gardenSlots) parsed.gardenSlots = defaultGardenSlots();
     if (typeof parsed.lastDailyLoginAt !== 'number') parsed.lastDailyLoginAt = 0;
@@ -208,8 +219,12 @@ function migrate(parsed: any): GameState | null {
     if (typeof parsed.lastBerryMasterAt !== 'number') parsed.lastBerryMasterAt = 0;
     if (!Array.isArray(parsed.achievements)) parsed.achievements = [];
     if (!parsed.achievementCounters) parsed.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
-    if (parsed.overworld && (parsed.overworld as any).lastSceneVisited === 'GreenhouseScene') {
-      (parsed.overworld as any).lastSceneVisited = 'GardenScene';
+    {
+      const ow = asRecord(parsed.overworld);
+      if (ow.lastSceneVisited === 'GreenhouseScene') {
+        ow.lastSceneVisited = 'GardenScene';
+        parsed.overworld = ow;
+      }
     }
     if (!parsed.overworld) parsed.overworld = { ...DEFAULT_OVERWORLD };
     return parsed as GameState;
@@ -218,7 +233,7 @@ function migrate(parsed: any): GameState | null {
     parsed.version = 3;
     parsed.pokedex = parsed.pokedex ?? { discovered: [], captured: [] };
     if (parsed.plants) {
-      const ownedSpecies = new Set<string>(parsed.plants.map((p: any) => p.speciesSlug));
+      const ownedSpecies = new Set<string>(parsed.plants.map((p: unknown) => asRecord(p).speciesSlug as string));
       parsed.pokedex.captured = Array.from(new Set([...(parsed.pokedex.captured ?? []), ...ownedSpecies]));
       parsed.pokedex.discovered = Array.from(new Set([...(parsed.pokedex.discovered ?? []), ...ownedSpecies]));
     }
