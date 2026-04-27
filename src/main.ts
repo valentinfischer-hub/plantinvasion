@@ -41,8 +41,8 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 const game = new Phaser.Game(config);
-(window as any).__game = game;
-(window as any).__layout = isLandscape ? 'landscape' : 'portrait';
+(globalThis as { __game?: Phaser.Game; __layout?: string }).__game = game;
+(globalThis as { __game?: Phaser.Game; __layout?: string }).__layout = isLandscape ? 'landscape' : 'portrait';
 
 // Auto-Focus auf Canvas damit Keyboard-Events sofort funktionieren
 game.events.once('ready', () => {

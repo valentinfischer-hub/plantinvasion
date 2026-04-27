@@ -263,7 +263,7 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
   }
   // Tracking trockene Stunden
   const wasDry = plant.hydration < 5;
-  let consecutiveDryHours = wasDry
+  const consecutiveDryHours = wasDry
     ? plant.consecutiveDryHours + dtSec / 3600
     : 0;
 
@@ -353,7 +353,7 @@ export function tickPlant(plant: Plant, ctxOrNow?: TickContext | number): Plant 
 export function applyXp(plant: Plant, xpDelta: number, now = gameTimeNow()): Plant {
   let level = plant.level;
   let xp = plant.xp + xpDelta;
-  let totalXp = Math.max(0, plant.totalXp + Math.max(0, xpDelta));
+  const totalXp = Math.max(0, plant.totalXp + Math.max(0, xpDelta));
   const cap = plant.bonsaiMode ? 44 : MAX_LEVEL;
 
   // Level-up

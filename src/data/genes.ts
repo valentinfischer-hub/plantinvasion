@@ -72,7 +72,7 @@ export function allelesForSlot(slot: GeneSlot): AlleleDef[] {
 
 /** Roll random allele fuer einen Slot. */
 export function rollAllele(slot: GeneSlot, includeMutation = false): string {
-  let pool = allelesForSlot(slot);
+  const pool = allelesForSlot(slot);
   // Mutation-Slot bleibt meistens leer (nur bei mutation-Roll gefuellt)
   if (slot === 'mutation' && !includeMutation) return '';
   // Dominante haeufiger als rezessiv: 60/40

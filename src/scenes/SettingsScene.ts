@@ -75,7 +75,7 @@ export class SettingsScene extends Phaser.Scene {
 
     by += 80;
     // Layout-Info
-    const layout = (window as any).__layout || 'unknown';
+    const layout = (globalThis as { __layout?: string }).__layout || 'unknown';
     this.add.text(width / 2, by, `Layout: ${layout}`, {
       fontFamily: 'monospace', fontSize: '11px', color: '#553e2d'
     }).setOrigin(0.5, 0);
@@ -92,7 +92,7 @@ export class SettingsScene extends Phaser.Scene {
     by += 60;
     // Save-Info
     const save = gameStore.get();
-    this.add.text(width / 2, by, `Spielstand: v${(save as any).version ?? '?'}   Coins: ${save.coins}   Pflanzen: ${save.plants.length}`, {
+    this.add.text(width / 2, by, `Spielstand: v${save.version ?? '?'}   Coins: ${save.coins}   Pflanzen: ${save.plants.length}`, {
       fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
     }).setOrigin(0.5, 0);
 
