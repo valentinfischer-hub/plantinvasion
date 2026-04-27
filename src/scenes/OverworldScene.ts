@@ -33,6 +33,7 @@ import { WeatherOverlay } from '../ui/WeatherOverlay';
 import { SeasonTintOverlay } from '../ui/SeasonTintOverlay';
 import { AmbientParticles } from '../ui/AmbientParticles';
 import { debugLog } from '../utils/debugLog';
+import { showToast } from '../ui/Toast';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -386,31 +387,17 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private tryClaimDailyLogin(): void {
     const r = gameStore.claimDailyLogin();
     if (!r.ok || !r.reward) return;
+    // Tier-3 V0.2: Tagesbelohnung-Toast als reward-Variante (gold), bottom-positioniert.
     const cam = this.cameras.main;
-    const z = cam.zoom || 1;
-    // Position durch zoom teilen, weil scrollFactor 0 nicht vom Camera-Zoom befreit.
-    // Scale 1/z gleicht Pixel-Skalierung der Schrift aus.
-    const toast = this.add
-      .text(cam.width / 2 / z, (cam.height - 60) / z, `Tagesbelohnung: ${r.reward.label}`, {
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        color: '#ffd166',
-        backgroundColor: '#1a1f1a',
-        padding: { x: 12, y: 8 }
-      })
-      .setOrigin(0.5)
-      .setDepth(2000)
-      .setScrollFactor(0)
-      .setScale(1 / z);
+    const toast = showToast(this, `Tagesbelohnung: ${r.reward.label}`, 'reward', {
+      cameraZoom: cam.zoom || 1,
+      yAbsolute: cam.height - 60,
+      padding: { x: 12, y: 8 },
+      duration: 4000,
+      delay: 2500
+    });
     // Verhindere Doppel-Rendering durch UI-Cam des Tutorial-Overlays
     this.registerInAllUiCams(toast);
-    this.tweens.add({
-      targets: toast,
-      alpha: 0,
-      duration: 4000,
-      delay: 2500,
-      onComplete: () => toast.destroy()
-    });
   }
 
   private registerInAllUiCams(obj: Phaser.GameObjects.GameObject): void {
@@ -453,15 +440,19 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private showZoneToast(zone: string): void {
-    const cam = this.cameras.main;
-    const zScale = cam.zoom || 1;
+    // Tier-3 V0.2: Zone-Toast als Header-Variante des zentralen Helpers.
     const label = zone.charAt(0).toUpperCase() + zone.slice(1);
-    const toast = this.add.text(cam.width / 2 / zScale, 36 / zScale, label, {
-      fontFamily: 'monospace', fontSize: '18px', color: '#9be36e',
-      backgroundColor: '#1a1f1a', padding: { x: 14, y: 6 }
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(1950).setScale(1 / zScale);
+    const cam = this.cameras.main;
+    const toast = showToast(this, label, 'success', {
+      cameraZoom: cam.zoom || 1,
+      yAbsolute: 36,
+      fontSize: '18px',
+      padding: { x: 14, y: 6 },
+      depth: 1950,
+      duration: 1200,
+      delay: 1500
+    });
     this.registerInAllUiCams(toast);
-    this.tweens.add({ targets: toast, alpha: 0, duration: 1200, delay: 1500, onComplete: () => toast.destroy() });
   }
 
   private flashSaveIcon(): void {
