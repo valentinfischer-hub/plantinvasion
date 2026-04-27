@@ -22,7 +22,7 @@ const TILE = 14;
 const PAD = 4;
 
 export class MiniMap {
-  private container: Phaser.GameObjects.Container;
+  public container: Phaser.GameObjects.Container;
   private scene: Phaser.Scene;
   private playerDot: Phaser.GameObjects.Rectangle;
   // currentZone wird in refresh genutzt aber nicht persistent gehalten
@@ -94,5 +94,10 @@ export class MiniMap {
 
   public destroy(): void {
     this.container.destroy();
+  }
+
+  public ignoreInUICam(obj: Phaser.GameObjects.GameObject): void {
+    void obj;
+    // MiniMap hat keine eigenen UI-Cameras zu pflegen, no-op fuer registerInAllUiCams-API.
   }
 }

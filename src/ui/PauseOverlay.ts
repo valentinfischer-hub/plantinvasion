@@ -12,8 +12,8 @@ import { sfx } from '../audio/sfxGenerator';
 export class PauseOverlay {
   private scene: Phaser.Scene;
   private uiCam: Phaser.Cameras.Scene2D.Camera;
-  private container: Phaser.GameObjects.Container;
-  private dim: Phaser.GameObjects.Rectangle;
+  public container: Phaser.GameObjects.Container;
+  public dim: Phaser.GameObjects.Rectangle;
   private isOpen = false;
   private items: { label: string; onSelect: () => void }[];
 
