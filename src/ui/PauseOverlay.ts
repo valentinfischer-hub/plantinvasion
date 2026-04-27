@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { sfx } from '../audio/sfxGenerator';
+import { OVERLAY_BG_COLOR, OVERLAY_BG_ALPHA, MODAL_BORDER_COLOR } from './uiTheme';
 
 /**
  * PauseOverlay V0.3 (2026-04-25).
@@ -38,8 +39,8 @@ export class PauseOverlay {
     this.container = scene.add.container(W / 2, H / 2);
     this.container.setDepth(3000);
 
-    const bg = scene.add.rectangle(0, 0, menuW, menuH, 0x1a1f1a, 0.95)
-      .setStrokeStyle(2, 0x9be36e);
+    const bg = scene.add.rectangle(0, 0, menuW, menuH, OVERLAY_BG_COLOR, OVERLAY_BG_ALPHA)
+      .setStrokeStyle(2, MODAL_BORDER_COLOR);
     const title = scene.add.text(0, -menuH / 2 + 14, 'Pause', {
       fontFamily: 'monospace', fontSize: '16px', color: '#9be36e'
     }).setOrigin(0.5, 0);
