@@ -206,7 +206,7 @@ export class BattleScene extends Phaser.Scene {
     // Camera-Routing fuer UI: keine zoom Probleme da Battle-Cam zoom 1 ist
     void this.uiCam;
 
-    (window as any).__battle = this;
+    (globalThis as { __battle?: BattleScene }).__battle = this;
   }
 
   private pickWildSpriteKey(slug: string): string {
@@ -329,8 +329,8 @@ if (this.bossDef && outcome.winner === this.player) {
           if (outcome.winner === this.player) {
             // Battle-Drop V0.2: 25% Seed, 10% Coins
             let dropMsg = '';
-            if (this.capturedEnc?.slug && (gameStore as any).applyBattleDrop) {
-              const drop = (gameStore as any).applyBattleDrop(this.capturedEnc.slug);
+            if (this.capturedEnc?.slug) {
+              const drop = gameStore.applyBattleDrop(this.capturedEnc.slug);
               if (drop.itemSlug) dropMsg += ` +1 ${drop.itemSlug}`;
               if (drop.coins) dropMsg += ` +${drop.coins} Coins`;
             }
@@ -380,9 +380,9 @@ if (this.bossDef && outcome.winner === this.player) {
     this.cameras.main.flash(80, 100, 100, 100);
     // Hit-Sprite-Tint-Flash (rot fuer ~150ms)
     const t = target === 'wild' ? this.wildSprite : this.playerSprite;
-    if (t && (t as any).setTint) {
-      (t as any).setTint(0xff5c5c);
-      this.time.delayedCall(150, () => { try { (t as any).clearTint?.(); } catch (e) {} });
+    if (t && 'setTint' in t) {
+      (t as Phaser.GameObjects.Image).setTint(0xff5c5c);
+      this.time.delayedCall(150, () => { try { (t as Phaser.GameObjects.Image).clearTint?.(); } catch (e) { void e; } });
     }
   }
 
