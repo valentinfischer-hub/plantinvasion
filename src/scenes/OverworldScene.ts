@@ -242,9 +242,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       { label: 'Quests (Q)', onSelect: () => { this.pauseMenu.close(); this.scene.start('QuestLogScene'); } },
       { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.scene.start('MenuScene'); } }
     ]);
-    this.registerInAllUiCams((this.pauseMenu as any).container);
-    this.registerInAllUiCams((this.pauseMenu as any).dim);
-    this.registerInAllUiCams((this.miniMap as any).container);
+    this.registerInAllUiCams(this.pauseMenu.container);
+    this.registerInAllUiCams(this.pauseMenu.dim);
+    this.registerInAllUiCams(this.miniMap.container);
 
     // Day-Night-Cycle
     this.timeOverlay = new TimeOverlay(this);
@@ -278,7 +278,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
 
     debugLog('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
-    (window as any).__overworld = this;
+    (globalThis as { __overworld?: OverworldScene }).__overworld = this;
 
     // Daily-Login-Reward: einmalig pro Real-Time-Tag claimen, dann Toast
     this.tryClaimDailyLogin();
@@ -374,7 +374,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     c.add([bg, txt, hint]);
     bg.setInteractive(new Phaser.Geom.Rectangle(-44, -16, 88, 32), Phaser.Geom.Rectangle.Contains);
     bg.on('pointerdown', () => this.gotoFarm());
-    if (this.miniMap && (this.miniMap as any).ignoreInUICam) (this.miniMap as any).ignoreInUICam(c);
+    if (this.miniMap) this.miniMap.ignoreInUICam(c);
   }
 
   private gotoFarm(): void {
@@ -401,11 +401,11 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private registerInAllUiCams(obj: Phaser.GameObjects.GameObject): void {
-    if (this.tutorial && this.tutorial.ignoreInUICam) this.tutorial.ignoreInUICam(obj);
-    if (this.timeOverlay && (this.timeOverlay as any).ignoreInUICam) (this.timeOverlay as any).ignoreInUICam(obj);
-    if (this.seasonTint && (this.seasonTint as any).ignoreInUICam) (this.seasonTint as any).ignoreInUICam(obj);
-    if (this.particles && (this.particles as any).ignoreInUICam) (this.particles as any).ignoreInUICam(obj);
-    if (this.weatherOverlay && (this.weatherOverlay as any).ignoreInUICam) (this.weatherOverlay as any).ignoreInUICam(obj);
+    if (this.tutorial) this.tutorial.ignoreInUICam(obj);
+    if (this.timeOverlay) this.timeOverlay.ignoreInUICam(obj);
+    if (this.seasonTint) this.seasonTint.ignoreInUICam(obj);
+    if (this.particles) this.particles.ignoreInUICam(obj);
+    if (this.weatherOverlay) this.weatherOverlay.ignoreInUICam(obj);
   }
 
   private refreshNpcNameTags(): void {
@@ -464,11 +464,11 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   public update(time: number, delta: number): void {
     if (this.dialog.open_) {
       // Choice-Mode: number keys 1-4
-      if ((this.dialog as any).isChoiceMode_) {
-        if (Phaser.Input.Keyboard.JustDown(this.key1)) { (this.dialog as any).selectChoice(0); return; }
-        if (Phaser.Input.Keyboard.JustDown(this.key2)) { (this.dialog as any).selectChoice(1); return; }
-        if (Phaser.Input.Keyboard.JustDown(this.key3)) { (this.dialog as any).selectChoice(2); return; }
-        if (Phaser.Input.Keyboard.JustDown(this.key4)) { (this.dialog as any).selectChoice(3); return; }
+      if (this.dialog.isChoiceMode_) {
+        if (Phaser.Input.Keyboard.JustDown(this.key1)) { this.dialog.selectChoice(0); return; }
+        if (Phaser.Input.Keyboard.JustDown(this.key2)) { this.dialog.selectChoice(1); return; }
+        if (Phaser.Input.Keyboard.JustDown(this.key3)) { this.dialog.selectChoice(2); return; }
+        if (Phaser.Input.Keyboard.JustDown(this.key4)) { this.dialog.selectChoice(3); return; }
         return;
       }
       // Wenn Dialog offen, Keys nur fuer Dialog-Advance
@@ -552,7 +552,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       if (used) {
         const plants = gameStore.get().plants;
         if (plants[0]) {
-          (plants[0] as any).hydration = 100;
+          plants[0].hydration = 100;
         }
         sfx.pickup();
       } else {
