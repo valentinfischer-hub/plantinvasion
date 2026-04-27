@@ -34,6 +34,7 @@ import { SeasonTintOverlay } from '../ui/SeasonTintOverlay';
 import { AmbientParticles } from '../ui/AmbientParticles';
 import { debugLog } from '../utils/debugLog';
 import { showToast } from '../ui/Toast';
+import { now as gameTimeNow } from '../utils/gameTime';
 import { FONT_FAMILY } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
@@ -192,6 +193,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // NPCs
     this.npcs = this.map.npcs.map((n) => new NPC(this, n));
+    // S-09 V0.1: NPC-Walking aktivieren. Alle NPCs bekommen Movement-State, Step-Tick im update().
+    this.npcs.forEach((npc) => npc.initMovement());
     this.refreshQuestIndicators();
 
     // Camera
@@ -463,6 +466,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   public update(time: number, delta: number): void {
+    // S-09 V0.1: NPC-Auto-Walking. Pure-Function pro NPC, walls-Set leer (V0.1).
+    // Performance: Max 5-10 NPCs, jeweils ein Funktions-Call alle Frames mit fruehem Return wenn Idle. Vernachlaessigbar bei 60fps.
+    if (this.npcs && this.npcs.length > 0) {
+      const dialogActive = this.dialog?.open_ ?? false;
+      const npcWalls: ReadonlySet<string> = new Set();
+      const now = gameTimeNow();
+      for (const npc of this.npcs) npc.step(now, npcWalls, dialogActive);
+    }
     if (this.dialog.open_) {
       // Choice-Mode: number keys 1-4
       if (this.dialog.isChoiceMode_) {
