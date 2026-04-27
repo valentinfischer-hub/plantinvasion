@@ -68,15 +68,59 @@ export class MenuScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1a2820');
 
-    // Decorative: simple plant-icon
+    // Tile-Background mit ground_erdig-Variationen (Sprint 1 Atlas).
+    // 32x32-Grid, vier Variationen rotiert per Slot-Index modulo 4.
+    if (this.textures.exists('ground_erdig_v1')) {
+      const TS = 32;
+      const cols = Math.ceil(width / TS);
+      const rows = Math.ceil(height / TS);
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const v = ((x * 7 + y * 13) % 4) + 1;
+          this.add.image(x * TS, y * TS, `ground_erdig_v${v}`)
+            .setOrigin(0, 0)
+            .setAlpha(0.45);
+        }
+      }
+    }
+
+    // Hero-Sprite: Mondlilie Bloom als Title-Decoration (Sprint 1 Atlas).
+    // Fallback auf procedural-Plant-Icon falls Atlas noch nicht im Cache.
     const cx = width / 2;
     const plantY = 80;
-    const stem = this.add.rectangle(cx, plantY + 30, 4, 30, 0x4a8228).setOrigin(0.5);
-    const leaf1 = this.add.ellipse(cx - 14, plantY + 18, 22, 12, 0x6abf3a).setRotation(-0.3);
-    const leaf2 = this.add.ellipse(cx + 14, plantY + 24, 22, 12, 0x6abf3a).setRotation(0.3);
-    const flower = this.add.circle(cx, plantY, 14, 0xff7eb8).setStrokeStyle(2, 0x000000);
-    const flowerCenter = this.add.circle(cx, plantY, 5, 0xfcd95c);
-    void stem; void leaf1; void leaf2; void flower; void flowerCenter;
+    if (this.textures.exists('plants_sprint_1')) {
+      this.add.image(cx, plantY, 'plants_sprint_1', 'mondlilie_bloom.webp')
+        .setOrigin(0.5)
+        .setScale(0.85);
+    } else {
+      const stem = this.add.rectangle(cx, plantY + 30, 4, 30, 0x4a8228).setOrigin(0.5);
+      const leaf1 = this.add.ellipse(cx - 14, plantY + 18, 22, 12, 0x6abf3a).setRotation(-0.3);
+      const leaf2 = this.add.ellipse(cx + 14, plantY + 24, 22, 12, 0x6abf3a).setRotation(0.3);
+      const flower = this.add.circle(cx, plantY, 14, 0xff7eb8).setStrokeStyle(2, 0x000000);
+      const flowerCenter = this.add.circle(cx, plantY, 5, 0xfcd95c);
+      void stem; void leaf1; void leaf2; void flower; void flowerCenter;
+    }
+
+    // Spezies-Showcase: 6 Spezies als kleine Bloom-Sprites unten als Footer-Decoration
+    if (this.textures.exists('plants_sprint_0') && this.textures.exists('plants_sprint_1')) {
+      const showcase = [
+        { atlas: 'plants_sprint_0', frame: 'sonnenherz_bloom.webp' },
+        { atlas: 'plants_sprint_0', frame: 'schnappklaue_bloom.webp' },
+        { atlas: 'plants_sprint_0', frame: 'steinblatt_bloom.webp' },
+        { atlas: 'plants_sprint_1', frame: 'wurzelmaul_bloom.webp' },
+        { atlas: 'plants_sprint_1', frame: 'knochenpilz_bloom.webp' },
+        { atlas: 'plants_sprint_1', frame: 'quarzkugel_bloom.webp' }
+      ];
+      const fy = height - 50;
+      const spacing = Math.min(60, (width - 80) / showcase.length);
+      const startX = cx - ((showcase.length - 1) * spacing) / 2;
+      showcase.forEach((s, i) => {
+        this.add.image(startX + i * spacing, fy, s.atlas, s.frame)
+          .setOrigin(0.5)
+          .setScale(0.35)
+          .setAlpha(0.95);
+      });
+    }
 
     // Title
     const _title = this.add.text(cx, plantY + 75, 'Plantinvasion', {
