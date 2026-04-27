@@ -1,5 +1,6 @@
 import type { GardenSlotMeta, Plant } from '../types/plant';
 import { defaultGrowthFields } from '../data/leveling';
+import { debugLog } from '../utils/debugLog';
 
 export interface OverworldState {
   tileX: number;
@@ -159,7 +160,7 @@ function migrate(parsedRaw: unknown): GameState | null {
     if (typeof parsed.lastDailyLoginAt !== 'number') parsed.lastDailyLoginAt = 0;
     if (typeof parsed.marketShopRosterDay !== 'number') parsed.marketShopRosterDay = -1;
     if (!parsed.marketShopRoster) parsed.marketShopRoster = { seedSlugs: [], boosterSlugs: [] };
-    console.log('[storage] migrated save v6 -> v7 (booster-system V0.1)');
+    debugLog('[storage] migrated save v6 -> v7 (booster-system V0.1)');
   }
   if (parsed.version === 7) {
     parsed.version = 8;
@@ -168,12 +169,12 @@ function migrate(parsedRaw: unknown): GameState | null {
     if (typeof parsed.lastBerryMasterAt !== 'number') parsed.lastBerryMasterAt = 0;
     if (!Array.isArray(parsed.achievements)) parsed.achievements = [];
     if (!parsed.achievementCounters) parsed.achievementCounters = { crossings: 0, mutations: 0, visitedZones: [] };
-    console.log('[storage] migrated save v7 -> v8 (foraging V0.2)');
+    debugLog('[storage] migrated save v7 -> v8 (foraging V0.2)');
   }
   if (parsed.version === 8) {
     parsed.version = 9;
     parsed.time = parsed.time ?? { minute: 360, day: 1, season: 0, year: 1 };  // start at 06:00 spring day1
-    console.log('[storage] migrated save v8 -> v9 (time-system)');
+    debugLog('[storage] migrated save v8 -> v9 (time-system)');
   }
   if (parsed.version === 9) {
     parsed.version = 10;
@@ -194,26 +195,26 @@ function migrate(parsedRaw: unknown): GameState | null {
         }
       }
     }
-    console.log('[storage] migrated save v9 -> v10 (breeding-v2 genome backfill)');
+    debugLog('[storage] migrated save v9 -> v10 (breeding-v2 genome backfill)');
   }
   if (parsed.version === 5) {
     parsed.version = 6;
     if (Array.isArray(parsed.plants)) {
       parsed.plants = parsed.plants.map(ensurePlantGrowthFields);
     }
-    console.log('[storage] migrated save v5 -> v6 (growth-system V0.2)');
+    debugLog('[storage] migrated save v5 -> v6 (growth-system V0.2)');
     return migrate(parsed);
   }
   if (parsed.version === 4) {
     parsed.version = 5;
     parsed.quests = parsed.quests ?? {};
-    console.log('[storage] migrated save v4 -> v5');
+    debugLog('[storage] migrated save v4 -> v5');
     return migrate(parsed);
   }
   if (parsed.version === 3) {
     parsed.version = 4;
     parsed.inventory = parsed.inventory ?? { 'basic-lure': 3, 'heal-tonic': 2 };
-    console.log('[storage] migrated save v3 -> v4');
+    debugLog('[storage] migrated save v3 -> v4');
     return migrate(parsed);
   }
   if (parsed.version === SAVE_SCHEMA_VERSION) {
@@ -250,7 +251,7 @@ function migrate(parsedRaw: unknown): GameState | null {
       parsed.pokedex.captured = Array.from(new Set([...(parsed.pokedex.captured ?? []), ...ownedSpecies]));
       parsed.pokedex.discovered = Array.from(new Set([...(parsed.pokedex.discovered ?? []), ...ownedSpecies]));
     }
-    console.log('[storage] migrated save v2 -> v3');
+    debugLog('[storage] migrated save v2 -> v3');
     return migrate(parsed);
   }
   if (parsed.version === 1) {
@@ -264,7 +265,7 @@ function migrate(parsedRaw: unknown): GameState | null {
       overworld: { ...DEFAULT_OVERWORLD },
       pokedex: { discovered: [], captured: [] }
     };
-    console.log('[storage] migrated save v1 -> v3');
+    debugLog('[storage] migrated save v1 -> v3');
     return migrate(v3);
   }
   console.warn('[storage] unknown save-version, discarding', parsed.version);
