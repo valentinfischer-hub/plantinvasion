@@ -96,6 +96,18 @@ function asRecord(v: unknown): RawRecord {
 }
 
 /**
+ * B-013: Loose Schema fuer Migration-Inputs. Alle GameState-Felder sind optional damit
+ * parsed-Objekte aus alten Schema-Versionen nicht TS-Errors werfen. version ist required
+ * weil sie der erste Branching-Key ist. Index-Signature erlaubt Pre-V10-Felder die nicht
+ * mehr in GameState existieren (z.B. legacy `time`-Feld).
+ */
+type LegacySave = {
+  version: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+};
+
+/**
  * Backfill der V0.2 Growth-Felder fuer alle Pflanzen.
  */
 function ensurePlantGrowthFields(plant: unknown): Plant {
@@ -126,8 +138,9 @@ function ensurePlantGrowthFields(plant: unknown): Plant {
   } as Plant;
 }
 
-function migrate(parsed: any): GameState | null {
-  if (!parsed || typeof parsed !== 'object') return null;
+function migrate(parsedRaw: unknown): GameState | null {
+  if (!parsedRaw || typeof parsedRaw !== 'object') return null;
+  const parsed = parsedRaw as LegacySave;
   // Migrations-Kette ist ASCENDING geordnet, damit sequentielle if-Statements
   // jeweils die soeben gebumpte Version aufgreifen koennen. Reihenfolge ist
   // load-bearing: bei Reorder bricht die Kette fuer Saves von v6 oder aelter.
