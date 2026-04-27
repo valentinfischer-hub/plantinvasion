@@ -34,6 +34,7 @@ import { SeasonTintOverlay } from '../ui/SeasonTintOverlay';
 import { AmbientParticles } from '../ui/AmbientParticles';
 import { debugLog } from '../utils/debugLog';
 import { showToast } from '../ui/Toast';
+import { FONT_FAMILY } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -337,10 +338,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     bg.strokeRoundedRect(-160, -28, 320, 56, 8);
     container.add(bg);
     const title = this.add.text(0, -16, 'Achievement!', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#1a1f1a'
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: '#1a1f1a'
     }).setOrigin(0.5, 0);
     const name = this.add.text(0, 4, def.name, {
-      fontFamily: 'monospace', fontSize: '14px', color: '#1a1f1a'
+      fontFamily: FONT_FAMILY, fontSize: '14px', color: '#1a1f1a'
     }).setOrigin(0.5, 0);
     container.add([title, name]);
     this.registerInAllUiCams(container);
