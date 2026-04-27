@@ -87,3 +87,19 @@ describe('drawModalBox Helper', () => {
     expect(lineCall[1]).toBe(0xb86ee3);
   });
 });
+
+describe('drawModalBox V0.4 borderAlpha-Override', () => {
+  it('akzeptiert custom borderAlpha (z.B. 0.9 fuer prominente Modale)', () => {
+    let lineCall: unknown[] = [];
+    const fakeG = {
+      fillStyle: () => fakeG,
+      fillRoundedRect: () => fakeG,
+      lineStyle: (...args: unknown[]) => { lineCall = args; return fakeG; },
+      strokeRoundedRect: () => fakeG
+    };
+    drawModalBox(fakeG as unknown as Parameters<typeof drawModalBox>[0], {
+      width: 100, height: 100, borderColor: 0xb86ee3, borderAlpha: 0.9
+    });
+    expect(lineCall[2]).toBe(0.9);
+  });
+});

@@ -54,6 +54,8 @@ export interface ModalBoxOptions {
   height: number;
   /** Optional override fuer Border-Color (z.B. Mutations-Lila). */
   borderColor?: number;
+  /** Optional override fuer Border-Alpha (z.B. 0.9 fuer prominentere Modale). */
+  borderAlpha?: number;
 }
 
 /**
@@ -72,6 +74,6 @@ export function drawModalBox(g: Phaser.GameObjects.Graphics, opts: ModalBoxOptio
   const border = opts.borderColor ?? MODAL_BORDER_COLOR;
   g.fillStyle(MODAL_BG_COLOR, MODAL_BG_ALPHA);
   g.fillRoundedRect(-width / 2, -height / 2, width, height, MODAL_CORNER_RADIUS);
-  g.lineStyle(MODAL_BORDER_WIDTH, border, MODAL_BORDER_ALPHA);
+  g.lineStyle(MODAL_BORDER_WIDTH, border, opts.borderAlpha ?? MODAL_BORDER_ALPHA);
   g.strokeRoundedRect(-width / 2, -height / 2, width, height, MODAL_CORNER_RADIUS);
 }
