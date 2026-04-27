@@ -31,6 +31,7 @@ import { getAllele } from '../data/genes';
 import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
 import { showToast, type ToastType } from '../ui/Toast';
+import { drawModalBox } from '../ui/uiTheme';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -422,10 +423,7 @@ export class GardenScene extends Phaser.Scene {
     const panelH = Math.min(380, 80 + seedSlugs.length * 26);
     const container = this.add.container(width / 2, height / 2);
     const bg = this.add.graphics();
-    bg.fillStyle(0x1a1f1a, 0.96);
-    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
-    bg.lineStyle(2, 0x9be36e, 0.8);
-    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    drawModalBox(bg, { width: panelW, height: panelH });
     container.add(bg);
     const title = this.add.text(0, -panelH / 2 + 12, `Slot ${gridX},${gridY} bepflanzen`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
