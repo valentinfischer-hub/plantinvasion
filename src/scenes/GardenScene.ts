@@ -267,10 +267,7 @@ export class GardenScene extends Phaser.Scene {
     const panelH = 240;
     const c = this.add.container(width / 2, height / 2);
     const bg = this.add.graphics();
-    bg.fillStyle(0x1a1f1a, 0.96);
-    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
-    bg.lineStyle(2, 0xb86ee3, 0.9);
-    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    drawModalBox(bg, { width: panelW, height: panelH, borderColor: 0xb86ee3, borderAlpha: 0.9 });
     c.add(bg);
     const title = this.add.text(0, -panelH / 2 + 12, 'Kreuzungs-Vorschau', {
       fontFamily: 'monospace', fontSize: '14px', color: '#b86ee3'
@@ -350,10 +347,8 @@ export class GardenScene extends Phaser.Scene {
     const panelH = Math.min(380, 80 + seedSlugs.length * 26);
     const container = this.add.container(width / 2, height / 2);
     const bg = this.add.graphics();
-    bg.fillStyle(0x1a1f1a, 0.96);
-    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
-    bg.lineStyle(2, 0x9be36e, 0.8);
-    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+
+    drawModalBox(bg, { width: panelW, height: panelH });
     container.add(bg);
     const title = this.add.text(0, -panelH / 2 + 12, `Pflanze einsaeen (${freeSlots} frei)`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
@@ -766,10 +761,8 @@ export class GardenScene extends Phaser.Scene {
 
     const container = this.add.container(width / 2, height / 2);
     const bg = this.add.graphics();
-    bg.fillStyle(0x1a1f1a, 0.96);
-    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
-    bg.lineStyle(2, 0x9be36e, 0.8);
-    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+
+    drawModalBox(bg, { width: panelW, height: panelH });
     container.add(bg);
 
     const title = this.add.text(0, -panelH / 2 + 10, species?.commonName ?? plant.speciesSlug, {
@@ -1042,10 +1035,7 @@ export class GardenScene extends Phaser.Scene {
     const panelH = Math.min(360, 80 + slugs.length * 28);
     const container = this.add.container(width / 2, height / 2);
     const bg = this.add.graphics();
-    bg.fillStyle(0x1a1f1a, 0.96);
-    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
-    bg.lineStyle(2, 0xffd166, 0.8);
-    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8);
+    drawModalBox(bg, { width: panelW, height: panelH, borderColor: 0xffd166 });
     container.add(bg);
     const title = this.add.text(0, -panelH / 2 + 12, 'Booster anwenden', {
       fontFamily: 'monospace', fontSize: '13px', color: '#ffd166'
