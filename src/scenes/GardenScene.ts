@@ -30,6 +30,7 @@ import { plantRole } from '../data/roles';
 import { getAllele } from '../data/genes';
 import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
+import { showToast, type ToastType } from '../ui/Toast';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -473,20 +474,14 @@ export class GardenScene extends Phaser.Scene {
     this.scene.start('OverworldScene');
   }
 
-  private flashText?: Phaser.GameObjects.Text;
+  /**
+   * Tier-3-Konsistenz (V0.1): Wrapper auf zentralen showToast.
+   * Color-Mapping: legacy color-strings auf neue ToastType-Convention.
+   * Background ist jetzt #1a1f1a (vorher #000000) damit konsistent zu Overworld-Toasts.
+   */
   private showFlash(message: string, color: string): void {
-    if (this.flashText) this.flashText.destroy();
-    const { width, height } = this.scale;
-    this.flashText = this.add.text(width / 2, height / 2, message, {
-      fontFamily: 'monospace', fontSize: '14px', color,
-      backgroundColor: '#000000', padding: { x: 10, y: 6 }
-    }).setOrigin(0.5).setDepth(2000);
-    this.tweens.add({
-      targets: this.flashText,
-      alpha: 0,
-      duration: 1800,
-      onComplete: () => { this.flashText?.destroy(); this.flashText = undefined; }
-    });
+    const t: ToastType = mapLegacyColor(color);
+    showToast(this, message, t);
   }
 
   private spawnStageUpBurst(x: number, y: number): void {
@@ -1090,5 +1085,16 @@ export class GardenScene extends Phaser.Scene {
     });
     container.add(close);
     this.detailPanel = container;
+  }
+}
+
+function mapLegacyColor(color: string): ToastType {
+  switch (color) {
+    case '#9be36e': return 'success';
+    case '#ff7e7e': return 'error';
+    case '#fcd95c': return 'reward';
+    case '#b86ee3': return 'mutation';
+    case '#8eaedd': return 'info';
+    default: return 'info';
   }
 }
