@@ -14,6 +14,7 @@ import { pickEncounter, randomLevel, WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, V
 import { getSpecies } from '../data/species';
 import { getMove, defaultMovesForFamily, type MoveDef } from '../data/moves';
 import { getBoss, type BossDef } from '../data/bosses';
+import { debugLog } from '../utils/debugLog';
 
 interface BattleSceneInitData {
   poolKey?: string;
@@ -474,7 +475,7 @@ if (this.bossDef && outcome.winner === this.player) {
   }
 
   private endBattle(msg: string): void {
-    console.log('[BattleScene] end', msg);
+    debugLog('[BattleScene] end', msg);
     sfx.door();
     this.scene.start('OverworldScene');
   }

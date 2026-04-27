@@ -32,6 +32,7 @@ import { TimeOverlay } from '../ui/TimeOverlay';
 import { WeatherOverlay } from '../ui/WeatherOverlay';
 import { SeasonTintOverlay } from '../ui/SeasonTintOverlay';
 import { AmbientParticles } from '../ui/AmbientParticles';
+import { debugLog } from '../utils/debugLog';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -275,7 +276,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       farmKey.on('down', () => this.gotoFarm());
     }
 
-    console.log('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
+    debugLog('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
     (window as any).__overworld = this;
 
     // Daily-Login-Reward: einmalig pro Real-Time-Tag claimen, dann Toast
@@ -969,7 +970,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private changeZone(newZone: string, spawnX: number, spawnY: number, facing: 'up' | 'down' | 'left' | 'right'): void {
-    console.log('[OverworldScene] zone change', this.currentZone, '->', newZone);
+    debugLog('[OverworldScene] zone change', this.currentZone, '->', newZone);
     sfx.dialogOpen();
     gameStore.setOverworldPos(spawnX, spawnY, facing, 'OverworldScene', newZone);
     gameStore.recordZoneVisit(newZone);
@@ -989,7 +990,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     const t = this.getTile(tileX, tileY);
     // Tuer zum Garten
     if (t === 7) {
-      console.log('[OverworldScene] door triggered, switching to GardenScene');
+      debugLog('[OverworldScene] door triggered, switching to GardenScene');
       sfx.door();
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GardenScene');
       this.scene.start('GardenScene');
@@ -1022,7 +1023,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
           return { ...e, weight: Math.floor(e.weight * weightBoost) };
         });
       }
-      console.log('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'weather:', weather, 'size:', pool.length);
+      debugLog('[OverworldScene] encounter triggered on tile', t, 'pool:', this.currentZone, 'weather:', weather, 'size:', pool.length);
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
       sfx.dialogOpen();
       let poolKey = 'wurzelheim-tallgrass';

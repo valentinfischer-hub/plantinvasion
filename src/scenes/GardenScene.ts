@@ -29,6 +29,7 @@ import { companionBonus, getCompanionsFor } from '../data/companion';
 import { plantRole } from '../data/roles';
 import { getAllele } from '../data/genes';
 import { isSeedItem, getItem } from '../data/items';
+import { debugLog } from '../utils/debugLog';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -79,7 +80,7 @@ export class GardenScene extends Phaser.Scene {
   }
 
   create(): void {
-    console.log('[GardenScene] create called');
+    debugLog('[GardenScene] create called');
     const { width } = this.scale;
 
     // Procedural-Plant-Sprites fuer Spezies ohne PNG (V0.5 erweiterte Pokedex)
