@@ -47,6 +47,14 @@ export interface ToastOptions {
   cameraZoom?: number;
   /** Optionale y-Position relativ zur Scene-Mitte. Default: Mitte. */
   yOffset?: number;
+  /** Absolute y-Position in Camera-Coordinates. Wenn gesetzt, ueberschreibt yOffset. */
+  yAbsolute?: number;
+  /** Custom fontSize fuer Header-style Toasts (z.B. Zone-Toast). Default '14px'. */
+  fontSize?: string;
+  /** Custom padding. Default { x: 10, y: 6 }. */
+  padding?: { x: number; y: number };
+  /** Custom Depth. Default 2000. */
+  depth?: number;
 }
 
 let activeToast: Phaser.GameObjects.Text | undefined;
@@ -66,17 +74,19 @@ export function showToast(
   const { width, height } = scene.scale;
   const z = opts.cameraZoom ?? 1;
   const x = (width / 2) / z;
-  const y = ((height / 2) + (opts.yOffset ?? 0)) / z;
+  const y = opts.yAbsolute !== undefined
+    ? opts.yAbsolute / z
+    : ((height / 2) + (opts.yOffset ?? 0)) / z;
 
   const toast = scene.add.text(x, y, message, {
     fontFamily: 'monospace',
-    fontSize: '14px',
+    fontSize: opts.fontSize ?? '14px',
     color: COLOR_BY_TYPE[type],
     backgroundColor: '#1a1f1a',
-    padding: { x: 10, y: 6 }
+    padding: opts.padding ?? { x: 10, y: 6 }
   })
     .setOrigin(0.5)
-    .setDepth(2000)
+    .setDepth(opts.depth ?? 2000)
     .setScrollFactor(0)
     .setScale(1 / z);
 

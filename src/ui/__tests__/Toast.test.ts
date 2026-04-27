@@ -117,3 +117,28 @@ describe('showToast Cache + Optionen', () => {
     expect((scene.tweens.add as ReturnType<typeof vi.fn>).mock.calls[0][0].delay).toBe(1500);
   });
 });
+
+describe('showToast V0.2 erweiterte Optionen', () => {
+  it('respektiert custom fontSize', () => {
+    const scene = makeScene();
+    showToast(scene as unknown as Parameters<typeof showToast>[0], 'header', 'success', { fontSize: '18px' });
+    expect((scene.add.text as ReturnType<typeof vi.fn>).mock.calls[0][3]).toMatchObject({ fontSize: '18px' });
+  });
+  it('respektiert custom padding', () => {
+    const scene = makeScene();
+    showToast(scene as unknown as Parameters<typeof showToast>[0], 'pad', 'info', { padding: { x: 14, y: 8 } });
+    expect((scene.add.text as ReturnType<typeof vi.fn>).mock.calls[0][3]).toMatchObject({ padding: { x: 14, y: 8 } });
+  });
+  it('respektiert yAbsolute statt yOffset', () => {
+    const scene = makeScene();
+    showToast(scene as unknown as Parameters<typeof showToast>[0], 'top', 'info', { yAbsolute: 36 });
+    const call = (scene.add.text as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1]).toBe(36); // y-coord ohne zoom = 36
+  });
+  it('cameraZoom skaliert yAbsolute', () => {
+    const scene = makeScene();
+    showToast(scene as unknown as Parameters<typeof showToast>[0], 'zoom', 'info', { yAbsolute: 100, cameraZoom: 2 });
+    const call = (scene.add.text as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[1]).toBe(50); // 100/2
+  });
+});
