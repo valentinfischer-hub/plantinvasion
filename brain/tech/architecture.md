@@ -1,4 +1,4 @@
-# Plantinvasion Architektur (V0.8, Stand 2026-04-26)
+# Plantinvasion Architektur (V1.1, Stand 2026-04-27)
 
 Single-Source-of-Truth fuer Code-Layout, Modul-Grenzen, Daten-Fluss und Engine-Choices. Bei jeder strukturellen Aenderung erweitern.
 
@@ -28,6 +28,11 @@ src/
     boosters.ts             Booster-Items, Soil-Tier-Effekte
     species.ts              Plant-Species-Katalog
     moves.ts, encounters.ts, foraging.ts, quests.ts, achievements.ts ...
+  ui/
+    Toast.ts                Tier-3 zentraler Toast-Helper (5 ToastTypes, konsistenter Style)
+    uiTheme.ts              Tier-3 Theme-Konstanten (Modal/Toast/Tile-Colors, FONT_FAMILY) plus drawModalBox-Helper
+    PauseOverlay.ts, MiniMap.ts, DialogBox.ts, TimeOverlay.ts, ...
+    __tests__/              Vitest fuer Toast.ts (16 Tests), uiTheme.ts (14 Tests)
     maps/<biome>.ts         Tile-Daten, Encounter-Tabellen pro Zone
     __tests__/              Vitest-Suiten (genetics, breedingV2)
   systems/
@@ -89,7 +94,7 @@ Migrationen v1 bis v10 in `state/storage.ts::migrate`. Details siehe `brain/tech
 | Coverage Save-System | 85 Prozent | 98.5 Prozent storage.ts | OK |
 | Coverage gameTime | 100 Prozent | 100 Prozent | OK |
 | TypeScript any-Anzahl | 0 (in neuem Code) | 0 | OK |
-| ESLint-Warnings | reduzierend | 82 (Bestand) | TODO |
+| ESLint-Warnings | reduzierend | **0** | OK |
 
 ## Multiplayer-Foundation (Sprint S-11+)
 
