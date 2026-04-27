@@ -198,3 +198,27 @@ describe('Save-Migration v2 ohne plants (Lines 222-223 if-plants-Branch)', () =>
     expect(state!.pokedex!.captured).toEqual([]);
   });
 });
+
+describe('Save-Migration v2 mit plants + pokedex (Lines 265-266 spread-merge)', () => {
+  it('merged captured/discovered aus parsed.plants in vorhandenen pokedex', () => {
+    // v2-Save mit plants UND existierendem pokedex.captured/discovered.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      version: 2,
+      playerId: 'spread',
+      plants: [
+        { id: 'p1', speciesSlug: 'sunflower', stats: { atk: 10, def: 10, spd: 10 }, geneSeed: 1, isMutation: false, level: 1, xp: 0, totalXp: 0, bornAt: 1, lastWateredAt: 1, lastTickAt: 1, gridX: 0, gridY: 0 },
+        { id: 'p2', speciesSlug: 'mint', stats: { atk: 10, def: 10, spd: 10 }, geneSeed: 2, isMutation: false, level: 1, xp: 0, totalXp: 0, bornAt: 1, lastWateredAt: 1, lastTickAt: 1, gridX: 1, gridY: 0 }
+      ],
+      pokedex: { captured: ['fern'], discovered: ['fern', 'sunflower'] },
+      coins: 0,
+      gems: 0,
+      createdAt: 1
+    }));
+    const state = loadGame();
+    expect(state).not.toBeNull();
+    expect(state!.pokedex!.captured).toContain('sunflower');
+    expect(state!.pokedex!.captured).toContain('mint');
+    expect(state!.pokedex!.captured).toContain('fern');
+    expect(state!.pokedex!.discovered).toContain('mint');
+  });
+});
