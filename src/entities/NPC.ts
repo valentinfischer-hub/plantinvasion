@@ -2,6 +2,9 @@ import Phaser from 'phaser';
 import { TILE_SIZE } from '../utils/constants';
 import { NPC_SPRITE_KEYS } from '../assets/spriteRegistry';
 import type { Dir } from './PlayerController';
+import { npcMovementTick, makeNpcMovementState, type NpcMovementState } from './npcMovement';
+import { TILE_SIZE as _TILE } from '../utils/constants';
+void _TILE;
 
 export interface NPCData {
   id: string;
@@ -106,5 +109,36 @@ export class NPC {
     this.questIndicator?.destroy();
     this.nameTag?.destroy();
     this.sprite.destroy();
+  }
+
+  /** Tier-4 Sprint-S-09: optionaler Movement-State fuer Auto-Walking-V0.1. */
+  public movementState?: NpcMovementState;
+
+  public initMovement(): void {
+    this.movementState = makeNpcMovementState(this.data.id, this.data.tileX, this.data.tileY, this.data.facing);
+  }
+
+  /**
+   * Tick-Hook fuer Auto-Walking. Wenn movementState gesetzt ist, wird ein
+   * Movement-Schritt versucht. Visual-Sprite folgt der Tile-Position.
+   * @param now Game-Time in ms.
+   * @param walls Set von "x,y" Tile-Strings die als Walls gelten.
+   * @param dialogActive Wenn true, NPC pausiert.
+   */
+  public step(now: number, walls: ReadonlySet<string>, dialogActive = false): void {
+    if (!this.movementState) return;
+    const next = npcMovementTick(this.movementState, now, walls, dialogActive);
+    if (next === this.movementState) return;
+    if (next.tileX !== this.movementState.tileX || next.tileY !== this.movementState.tileY) {
+      this.data.tileX = next.tileX;
+      this.data.tileY = next.tileY;
+      const px = next.tileX * 16 + 16 / 2;
+      const py = next.tileY * 16 + 16 / 2;
+      this.sprite.x = px;
+      this.sprite.y = py;
+      this.baseY = py;
+    }
+    this.data.facing = next.facing;
+    this.movementState = next;
   }
 }
