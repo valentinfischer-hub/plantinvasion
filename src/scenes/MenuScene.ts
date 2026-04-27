@@ -14,6 +14,24 @@ export class MenuScene extends Phaser.Scene {
   }
 
   public preload(): void {
+    // Tier-1 FTUE: Loading-Indikator damit der erste Eindruck nicht "haengender Splash" ist.
+    // Wird beim Atlas-Load-Start angezeigt und beim Complete via destroy() entfernt.
+    const cx = this.cameras.main.width / 2;
+    const cy = this.cameras.main.height / 2;
+    const splashTitle = this.add.text(cx, cy - 20, 'Plantinvasion', {
+      fontFamily: 'monospace', fontSize: '32px', color: '#9be36e'
+    }).setOrigin(0.5);
+    const splashStatus = this.add.text(cx, cy + 14, 'lade Assets 0%', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#888888'
+    }).setOrigin(0.5);
+    this.load.on('progress', (v: number) => {
+      splashStatus.setText(`lade Assets ${Math.round(v * 100)}%`);
+    });
+    this.load.on('complete', () => {
+      splashTitle.destroy();
+      splashStatus.destroy();
+    });
+
     // Sprint 0+1 Atlas-Pack (Art-UI Generation 2026-04-26).
     // 4 Atlases: 12 Pflanzen-Spezies plus 16 Boden-Tile-Variationen plus UI-Frames.
     // Frame-Names siehe public/assets/atlases/*.json.
