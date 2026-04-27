@@ -59,9 +59,23 @@ export interface GameState {
   // V8: Achievements V0.1
   achievements?: string[];                          // unlocked-Slugs
   achievementCounters?: {
-    crossings?: number;
-    mutations?: number;
-    visitedZones?: string[];
+    crossings: number;
+    mutations: number;
+    visitedZones: string[];
+  };
+  // V9: Time-System (gameTime-Provider)
+  time?: {
+    minute: number;
+    day: number;
+    season: 0 | 1 | 2 | 3;
+    year: number;
+  };
+  // S-09: Story-Akt-Tracking
+  story?: {
+    flags: Record<string, boolean>;
+    currentAct: number;
+    metNpcs: string[];
+    diaryEntries: number[];
   };
 }
 
