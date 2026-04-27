@@ -4,7 +4,7 @@ import { FALLBACK_TILE_KEYS } from './biomeFallbackTiles';
  * Mapping von Tile-Index zu Sprite-Texture-Key fuer das Stardew-Style-Tileset.
  * Die echten 32x32 PNGs liegen unter public/assets/generated/.
  *
- * Phaser laedt sie in BootScene, OverworldScene rendert Image-Sprites
+ * Phaser laedt sie in MenuScene, OverworldScene rendert Image-Sprites
  * mit setDisplaySize(TILE_SIZE) damit unser 16-Tile-Logic-System unveraendert bleibt.
  */
 
