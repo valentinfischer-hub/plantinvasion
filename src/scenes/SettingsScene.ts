@@ -171,6 +171,39 @@ export class SettingsScene extends Phaser.Scene {
     void _resetBtn;
 
     by += 60;
+    // S-POLISH-B2-R17: Export + Import Spielstand
+    this.add.text(width / 2 - 150, by, 'Spielstand Export/Import', {
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
+    });
+    by += 26;
+    const exportBtn = this.makeButton(width / 2 - 90, by, 'JSON exportieren', COLOR_INFO, () => {
+      const json = gameStore.exportSaveJSON();
+      try {
+        navigator.clipboard.writeText(json).then(() => {
+          exportBtn.getAt(1) && ((exportBtn.getAt(1) as Phaser.GameObjects.Text).setText('Kopiert!'));
+          this.time.delayedCall(2000, () => {
+            (exportBtn.getAt(1) as Phaser.GameObjects.Text).setText('JSON exportieren');
+          });
+        }).catch(() => {
+          (exportBtn.getAt(1) as Phaser.GameObjects.Text).setText('Copy failed');
+        });
+      } catch {}
+      sfx.click();
+    });
+    const importBtn = this.makeButton(width / 2 + 90, by, 'JSON importieren', COLOR_INFO, () => {
+      const json = prompt('Spielstand-JSON einfügen:');
+      if (!json) return;
+      const r = gameStore.importSaveJSON(json);
+      if (r.ok) {
+        this.showFlash('Import erfolgreich!', COLOR_SUCCESS);
+      } else {
+        this.showFlash(`Import-Fehler: ${r.error ?? '?'}`, COLOR_ERROR);
+      }
+      sfx.click();
+    });
+    void importBtn;
+    by += 52;
+
     // Save-Info
     const save = gameStore.get();
     this.add.text(width / 2, by, `Spielstand: v${save.version ?? '?'}   Coins: ${save.coins}   Pflanzen: ${save.plants.length}`, {
@@ -189,6 +222,20 @@ export class SettingsScene extends Phaser.Scene {
   private back(): void {
     sfx.dialogAdvance();
     this.scene.start('MenuScene');
+  }
+
+  private flashText?: Phaser.GameObjects.Text;
+  private showFlash(msg: string, color: string): void {
+    if (this.flashText) this.flashText.destroy();
+    const { width } = this.scale;
+    this.flashText = this.add.text(width / 2, 80, msg, {
+      fontFamily: FONT_FAMILY, fontSize: '12px', color,
+      backgroundColor: '#111', padding: { x: 8, y: 4 }
+    }).setOrigin(0.5).setDepth(3000);
+    this.tweens.add({
+      targets: this.flashText, alpha: 0, delay: 2500, duration: 500,
+      onComplete: () => { this.flashText?.destroy(); }
+    });
   }
 
   private setSfxVol(v: number): void {

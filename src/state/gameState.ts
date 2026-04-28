@@ -436,6 +436,55 @@ class GameStore {
     return { ok: true };
   }
 
+  // -------- Save Export / Import + Cloud-Sync Stub (S-POLISH-B2-R17) --------
+
+  /**
+   * Exportiert den aktuellen Spielstand als JSON-String.
+   * Kann in die Zwischenablage kopiert oder heruntergeladen werden.
+   */
+  exportSaveJSON(): string {
+    return JSON.stringify(this.state, null, 2);
+  }
+
+  /**
+   * Importiert einen JSON-Spielstand. Gibt { ok: true } zurück wenn erfolgreich,
+   * sonst { ok: false, error: '<Grund>' }.
+   */
+  importSaveJSON(json: string): { ok: boolean; error?: string } {
+    try {
+      const parsed = JSON.parse(json);
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        return { ok: false, error: 'Kein valides JSON-Objekt' };
+      }
+      if (typeof parsed.version !== 'number') {
+        return { ok: false, error: 'Fehlende version-Nummer im Spielstand' };
+      }
+      if (typeof parsed.playerId !== 'string') {
+        return { ok: false, error: 'Fehlende playerId' };
+      }
+      // Spielstand als neuen State übernehmen (in-Memory + save)
+      this.state = parsed as GameState;
+      this.save();
+      this.notify();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: `JSON-Fehler: ${String(e)}` };
+    }
+  }
+
+  /**
+   * Cloud-Sync Stub (S-POLISH-B2-R17).
+   * Wird in Sprint S-12 (Multiplayer) mit echtem Supabase-Aufruf ersetzt.
+   * Gibt immer { ok: false, reason: 'stub' } zurück solange MP_ENABLED = false.
+   */
+  async cloudSyncUpload(): Promise<{ ok: boolean; reason?: string }> {
+    return { ok: false, reason: 'Cloud-Sync noch nicht aktiviert (kommt in S-12)' };
+  }
+
+  async cloudSyncDownload(): Promise<{ ok: boolean; reason?: string }> {
+    return { ok: false, reason: 'Cloud-Sync noch nicht aktiviert (kommt in S-12)' };
+  }
+
   // -------- Login-Streak Tracking (S-POLISH-B2-R12) --------
 
   getLoginStreak(): number {
