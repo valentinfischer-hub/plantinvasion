@@ -122,13 +122,61 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // Title
-    const _title = this.add.text(cx, plantY + 75, 'Plantinvasion', {
+    // S-POLISH-START: Logo-Reveal-Animation
+    const title = this.add.text(cx, plantY + 75, 'Plantinvasion', {
       fontFamily: 'monospace', fontSize: '36px', color: '#9be36e'
     }).setOrigin(0.5);
-    const _subtitle = this.add.text(cx, plantY + 110, 'Cozy Botanik-RPG', {
+    title.setAlpha(0);
+    title.setScale(0.7);
+    this.tweens.add({
+      targets: title,
+      alpha: 1,
+      scale: 1,
+      duration: 700,
+      ease: 'Back.Out',
+      delay: 100
+    });
+    // Subtle Idle-Float auf Title nach Reveal
+    this.tweens.add({
+      targets: title,
+      y: title.y + 4,
+      duration: 2400,
+      ease: 'Sine.InOut',
+      yoyo: true,
+      repeat: -1,
+      delay: 900
+    });
+
+    // S-POLISH-START: Subtitle-Rotation (3 Taglines im Loop, je 3.5s sichtbar plus 0.5s Cross-Fade)
+    const taglines = ['Cozy Botanik-RPG', 'Pflanzen-Sammler-Hybrid', 'Stardew trifft Pokemon'];
+    const subtitle = this.add.text(cx, plantY + 110, taglines[0], {
       fontFamily: 'monospace', fontSize: '12px', color: '#8a6e4a'
     }).setOrigin(0.5);
+    subtitle.setAlpha(0);
+    this.tweens.add({
+      targets: subtitle,
+      alpha: 1,
+      duration: 600,
+      delay: 600
+    });
+    let taglineIndex = 0;
+    this.time.addEvent({
+      delay: 4000,
+      loop: true,
+      callback: () => {
+        this.tweens.add({
+          targets: subtitle,
+          alpha: 0,
+          duration: 400,
+          ease: 'Cubic.Out',
+          onComplete: () => {
+            taglineIndex = (taglineIndex + 1) % taglines.length;
+            subtitle.setText(taglines[taglineIndex]);
+            this.tweens.add({ targets: subtitle, alpha: 1, duration: 400, ease: 'Cubic.Out' });
+          }
+        });
+      }
+    });
 
     const save = loadGame();
 
@@ -143,7 +191,7 @@ export class MenuScene extends Phaser.Scene {
       });
       by += 60;
     }
-    const _newGameBtn = this.makeButton(cx, by, save ? 'Neues Spiel' : 'Spiel starten', '#fcd95c', () => {
+    const newGameBtn = this.makeButton(cx, by, save ? 'Neues Spiel' : 'Spiel starten', '#fcd95c', () => {
       // V0.2 (Critic-Review-Fix): Bei Neues-Spiel direkt in OverworldScene
       // mit Tutorial-Step 0. Vorher startete man in GardenScene mit
       // einer einsamen Sunflower und kam sich verloren vor.
@@ -152,6 +200,16 @@ export class MenuScene extends Phaser.Scene {
       sfx.dialogAdvance();
       startAmbientBGM();
       this.scene.start('OverworldScene');
+    });
+    // S-POLISH-START: Primary-CTA Pulse-Animation um neue Spieler zum Klick zu fuehren
+    this.tweens.add({
+      targets: newGameBtn,
+      scale: 1.04,
+      duration: 1200,
+      ease: 'Sine.InOut',
+      yoyo: true,
+      repeat: -1,
+      delay: 1400
     });
     by += 60;
     const _settingsBtn = this.makeButton(cx, by, 'Einstellungen', '#8eaedd', () => {
@@ -168,7 +226,7 @@ export class MenuScene extends Phaser.Scene {
     const _hint = this.add.text(cx, height - 24, 'v0.8 - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
-    void _hint; void _title; void _subtitle; void _newGameBtn; void _settingsBtn; void _helpBtn;
+    void _hint; void _settingsBtn; void _helpBtn; void newGameBtn; void title; void subtitle;
   }
 
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
