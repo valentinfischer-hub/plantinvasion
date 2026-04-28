@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { QUESTS, getQuest } from '../data/quests';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 /**
  * Quest-Log: zeigt aktive und abgeschlossene Quests.
@@ -16,7 +17,7 @@ export class QuestLogScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#1a2820');
 
     this.add.text(width / 2, 30, 'Tagebuch', {
-      fontFamily: 'monospace', fontSize: '20px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
 
     const dex = gameStore.getPokedex();
@@ -28,13 +29,13 @@ export class QuestLogScene extends Phaser.Scene {
     for (const q of QUESTS) {
       const status = gameStore.getQuestState(q.id);
       if (status === 'pending') continue;
-      const color = status === 'completed' ? '#9be36e' : '#fcd95c';
+      const color = status === 'completed' ? COLOR_SUCCESS : COLOR_REWARD;
       this.add.text(width / 2, by, `[${status}] ${q.title}`, {
-        fontFamily: 'monospace', fontSize: '13px', color
+        fontFamily: FONT_FAMILY, fontSize: '13px', color
       }).setOrigin(0.5);
       by += 18;
       this.add.text(width / 2, by, q.description, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#ffffff',
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#ffffff',
         wordWrap: { width: width - 40 }, align: 'center'
       }).setOrigin(0.5);
       by += 22;
@@ -51,24 +52,24 @@ export class QuestLogScene extends Phaser.Scene {
         progress = `Bestand: ${inv[g.itemSlug] ?? 0}`;
       }
       this.add.text(width / 2, by, progress, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#8a6e4a'
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#8a6e4a'
       }).setOrigin(0.5);
       by += 24;
       count++;
     }
     if (count === 0) {
       this.add.text(width / 2, by, 'Noch keine Quests aktiv. Sprich mit NPCs.', {
-        fontFamily: 'monospace', fontSize: '12px', color: '#8a6e4a'
+        fontFamily: FONT_FAMILY, fontSize: '12px', color: '#8a6e4a'
       }).setOrigin(0.5);
     }
 
     // Back
     const backY = height - 30;
     const bg = this.add.rectangle(width / 2, backY, 160, 32, 0x000000, 0.7)
-      .setStrokeStyle(1, 0x9be36e)
+      .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
     this.add.text(width / 2, backY, 'Zurueck (B)', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');
     bg.on('pointerup', back);

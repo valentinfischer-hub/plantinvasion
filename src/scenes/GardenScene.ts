@@ -31,7 +31,7 @@ import { getAllele } from '../data/genes';
 import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
 import { showToast, type ToastType } from '../ui/Toast';
-import { drawModalBox } from '../ui/uiTheme';
+import { COLOR_ERROR, COLOR_INFO, COLOR_MUTATION, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DEFAULT, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR, TILE_BG_COLOR, TILE_BORDER_COLOR, drawModalBox } from '../ui/uiTheme';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -114,9 +114,9 @@ export class GardenScene extends Phaser.Scene {
 
 
     this.headerText = this.add.text(width / 2, 16, '', {
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#9be36e'
+      fontFamily: FONT_FAMILY,
+      fontSize: FONT_SIZE_TITLE,
+      color: COLOR_SUCCESS
     }).setOrigin(0.5, 0);
 
     const gridWidth = GRID_COLUMNS * (TILE + TILE_PAD) - TILE_PAD;
@@ -139,9 +139,9 @@ export class GardenScene extends Phaser.Scene {
         const sx = this.gridOriginX + x * (TILE + TILE_PAD);
         const sy = this.gridOriginY + y * (TILE + TILE_PAD);
         const slot = this.add.graphics();
-        slot.fillStyle(0x223520, 0.5);
+        slot.fillStyle(TILE_BG_COLOR, 0.5);
         slot.fillRoundedRect(sx, sy, TILE, TILE, 4);
-        slot.lineStyle(1, 0x44603f, 0.5);
+        slot.lineStyle(1, TILE_BORDER_COLOR, 0.5);
         slot.strokeRoundedRect(sx, sy, TILE, TILE, 4);
 
         // Slot-spezifischer Boden-Tile (Sprint 1 Atlas) als visuelle Variation.
@@ -191,12 +191,12 @@ export class GardenScene extends Phaser.Scene {
       crossKey.on('down', () => {
         const state = gameStore.get();
         if (state.plants.length < 2) {
-          this.showFlash('Brauchst 2 Pflanzen zum Kreuzen', '#ff7e7e');
+          this.showFlash('Brauchst 2 Pflanzen zum Kreuzen', COLOR_ERROR);
           return;
         }
         ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
         // s-polish-02: Eltern-Anflug Pre-Animation, dann Crossing plus Hybrid-Reveal
-        void this.runCrossWithDrift(state.plants[0].id, state.plants[1].id, '#9be36e');
+        void this.runCrossWithDrift(state.plants[0].id, state.plants[1].id, COLOR_SUCCESS);
       });
       const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
       owKey.on('down', () => this.gotoOverworld());
@@ -210,20 +210,20 @@ export class GardenScene extends Phaser.Scene {
 
     // Header-Button "Pflanze einsaeen"
     const seedBtn = this.add.text(width - 70, 14, 'Saeen', {
-      fontFamily: 'monospace',
-      fontSize: '11px',
+      fontFamily: FONT_FAMILY,
+      fontSize: FONT_SIZE_BODY,
       color: '#1a1f1a',
-      backgroundColor: '#9be36e',
+      backgroundColor: COLOR_SUCCESS,
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
     seedBtn.on('pointerdown', () => this.openSeedPlantModal());
 
     // Welt-Erkunden-Button: prominent oben links, fuehrt zur OverworldScene
     const worldBtn = this.add.text(70, 14, 'Welt (W)', {
-      fontFamily: 'monospace',
-      fontSize: '11px',
+      fontFamily: FONT_FAMILY,
+      fontSize: FONT_SIZE_BODY,
       color: '#1a1f1a',
-      backgroundColor: '#fcd95c',
+      backgroundColor: COLOR_REWARD,
       padding: { left: 10, right: 10, top: 4, bottom: 4 }
     }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
     worldBtn.on('pointerdown', () => this.gotoOverworld());
@@ -234,12 +234,12 @@ export class GardenScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     this.crossBtnTxt = this.add.text(width - 140, 22, 'Kreuzen', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#b86ee3'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_MUTATION
     }).setOrigin(0.5);
     this.crossBtnBg.on('pointerdown', () => this.toggleCrossMode());
 
     this.crossModeHint = this.add.text(width / 2, 50, '', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#b86ee3', backgroundColor: '#1a1f1a', padding: { x: 6, y: 2 }
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_MUTATION, backgroundColor: '#1a1f1a', padding: { x: 6, y: 2 }
     }).setOrigin(0.5).setVisible(false);
   }
 
@@ -255,7 +255,7 @@ export class GardenScene extends Phaser.Scene {
       this.crossBtnBg.setStrokeStyle(2, this.crossMode ? 0xfcd95c : 0xb86ee3);
     }
     if (this.crossBtnTxt) {
-      this.crossBtnTxt.setColor(this.crossMode ? '#fcd95c' : '#b86ee3');
+      this.crossBtnTxt.setColor(this.crossMode ? COLOR_REWARD : COLOR_MUTATION);
       this.crossBtnTxt.setText(this.crossMode ? 'Aktiv' : 'Kreuzen');
     }
     if (this.crossModeHint) {
@@ -279,7 +279,7 @@ export class GardenScene extends Phaser.Scene {
       return;
     }
     if (this.crossFirstPlantId === plantId) {
-      this.showFlash('Selbe Pflanze - waehle eine andere', '#ff7e7e');
+      this.showFlash('Selbe Pflanze - waehle eine andere', COLOR_ERROR);
       return;
     }
     // Preview-Modal vor Bestaetigung
@@ -293,7 +293,7 @@ export class GardenScene extends Phaser.Scene {
     }
     const preview = gameStore.previewCross(parentAId, parentBId);
     if (!preview.ok) {
-      this.showFlash(preview.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      this.showFlash(preview.reason ?? 'Crossing fehlgeschlagen', COLOR_ERROR);
       this.crossMode = false;
       this.crossFirstPlantId = null;
       this.refreshCrossUI();
@@ -308,11 +308,11 @@ export class GardenScene extends Phaser.Scene {
     drawModalBox(bg, { width: panelW, height: panelH, borderColor: 0xb86ee3, borderAlpha: 0.9 });
     c.add(bg);
     const title = this.add.text(0, -panelH / 2 + 12, 'Kreuzungs-Vorschau', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#b86ee3'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_MUTATION
     }).setOrigin(0.5, 0);
     c.add(title);
     const childLabel = this.add.text(0, -panelH / 2 + 38, `Kind: ${preview.childSlug}`, {
-      fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5, 0);
     c.add(childLabel);
     const r = preview.statRange!;
@@ -326,11 +326,11 @@ export class GardenScene extends Phaser.Scene {
         `Mutation-Chance: ${(preview.mutationChance! * 100).toFixed(0)}%`,
         `Kosten: 50 Coins`
       ].join('\n'),
-      { fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc' });
+      { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_TEXT_DEFAULT });
     c.add(stats);
     const okBtn = this.add.text(-60, panelH / 2 - 30, 'Kreuzen!', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#1a1f1a',
-      backgroundColor: '#b86ee3', padding: { left: 14, right: 14, top: 6, bottom: 6 }
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: '#1a1f1a',
+      backgroundColor: COLOR_MUTATION, padding: { left: 14, right: 14, top: 6, bottom: 6 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     okBtn.on('pointerdown', () => {
       ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
@@ -340,11 +340,11 @@ export class GardenScene extends Phaser.Scene {
       this.crossMode = false;
       this.crossFirstPlantId = null;
       this.refreshCrossUI();
-      void this.runCrossWithDrift(parentAId, parentBId, '#b86ee3');
+      void this.runCrossWithDrift(parentAId, parentBId, COLOR_MUTATION);
     });
     c.add(okBtn);
     const cancelBtn = this.add.text(60, panelH / 2 - 30, 'Abbruch', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc',
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_TEXT_DEFAULT,
       backgroundColor: '#3a3a3a', padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     cancelBtn.on('pointerdown', () => {
@@ -367,13 +367,13 @@ export class GardenScene extends Phaser.Scene {
     const inv = gameStore.getInventory();
     const seedSlugs = Object.keys(inv).filter((k) => isSeedItem(k) && (inv[k] ?? 0) > 0);
     if (seedSlugs.length === 0) {
-      this.showFlash('Keine Samen im Inventar', '#ff7e7e');
+      this.showFlash('Keine Samen im Inventar', COLOR_ERROR);
       return;
     }
     // B-012: Vorab-Check Garten-voll, sonst landen wir im Modal mit deaktivierten Klicks und der Toast kommt erst danach
     const freeSlots = gameStore.getFreeSlotCount();
     if (freeSlots === 0) {
-      this.showFlash('Garten voll. Ernte oder verschiebe Pflanzen.', '#ff7e7e');
+      this.showFlash('Garten voll. Ernte oder verschiebe Pflanzen.', COLOR_ERROR);
       return;
     }
     const { width, height } = this.scale;
@@ -385,32 +385,32 @@ export class GardenScene extends Phaser.Scene {
     drawModalBox(bg, { width: panelW, height: panelH });
     container.add(bg);
     const title = this.add.text(0, -panelH / 2 + 12, `Pflanze einsaeen (${freeSlots} frei)`, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_SUCCESS
     }).setOrigin(0.5, 0);
     container.add(title);
     seedSlugs.forEach((slug, i) => {
       const item = getItem(slug);
       const label = `${item?.name ?? slug} (${inv[slug]})`;
       const btn = this.add.text(-panelW / 2 + 14, -panelH / 2 + 38 + i * 26, label, {
-        fontFamily: 'monospace', fontSize: '11px',
-        color: '#dcdcdc',
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY,
+        color: COLOR_TEXT_DEFAULT,
         backgroundColor: '#2a3325',
         padding: { left: 8, right: 8, top: 4, bottom: 4 }
       }).setInteractive({ useHandCursor: true });
       btn.on('pointerdown', () => {
         const result = gameStore.plantSeed(slug);
         if (result.ok) {
-          this.showFlash(`${item?.name ?? slug} eingesaeet`, '#9be36e');
+          this.showFlash(`${item?.name ?? slug} eingesaeet`, COLOR_SUCCESS);
           container.destroy();
           this.detailPanel = undefined;
         } else {
-          this.showFlash(result.reason ?? 'Fehlgeschlagen', '#ff7e7e');
+          this.showFlash(result.reason ?? 'Fehlgeschlagen', COLOR_ERROR);
         }
       });
       container.add(btn);
     });
     const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_TEXT_DIM
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     close.on('pointerdown', () => {
       container.destroy();
@@ -444,7 +444,7 @@ export class GardenScene extends Phaser.Scene {
     const inv = gameStore.getInventory();
     const seedSlugs = Object.keys(inv).filter((k) => isSeedItem(k) && (inv[k] ?? 0) > 0);
     if (seedSlugs.length === 0) {
-      this.showFlash('Keine Samen im Inventar', '#ff7e7e');
+      this.showFlash('Keine Samen im Inventar', COLOR_ERROR);
       return;
     }
     const { width, height } = this.scale;
@@ -455,32 +455,32 @@ export class GardenScene extends Phaser.Scene {
     drawModalBox(bg, { width: panelW, height: panelH });
     container.add(bg);
     const title = this.add.text(0, -panelH / 2 + 12, `Slot ${gridX},${gridY} bepflanzen`, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_SUCCESS
     }).setOrigin(0.5, 0);
     container.add(title);
     seedSlugs.forEach((slug, i) => {
       const item = getItem(slug);
       const label = `${item?.name ?? slug} (${inv[slug]})`;
       const btn = this.add.text(-panelW / 2 + 14, -panelH / 2 + 38 + i * 26, label, {
-        fontFamily: 'monospace', fontSize: '11px',
-        color: '#dcdcdc',
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY,
+        color: COLOR_TEXT_DEFAULT,
         backgroundColor: '#2a3325',
         padding: { left: 8, right: 8, top: 4, bottom: 4 }
       }).setInteractive({ useHandCursor: true });
       btn.on('pointerdown', () => {
         const result = gameStore.plantSeedAt(slug, gridX, gridY);
         if (result.ok) {
-          this.showFlash(`${item?.name ?? slug} in Slot ${gridX},${gridY} eingesaeet`, '#9be36e');
+          this.showFlash(`${item?.name ?? slug} in Slot ${gridX},${gridY} eingesaeet`, COLOR_SUCCESS);
           container.destroy();
           this.detailPanel = undefined;
         } else {
-          this.showFlash(result.reason ?? 'Fehlgeschlagen', '#ff7e7e');
+          this.showFlash(result.reason ?? 'Fehlgeschlagen', COLOR_ERROR);
         }
       });
       container.add(btn);
     });
     const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_TEXT_DIM
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     close.on('pointerdown', () => {
       container.destroy();
@@ -558,7 +558,7 @@ export class GardenScene extends Phaser.Scene {
     const drifted = await this.playParentDrift(parentAId, parentBId);
     const result = gameStore.crossPlants(parentAId, parentBId);
     if (!result.ok) {
-      this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', COLOR_ERROR);
       return;
     }
     const isMutation = !!result.child?.isMutation;
@@ -759,9 +759,9 @@ export class GardenScene extends Phaser.Scene {
     // Hint-Text oberhalb Garten-Grid
     const hint = this.add.text(this.scale.width / 2, this.gridOriginY - 28,
       'Klick hier um deine erste Pflanze zu setzen', {
-      fontFamily: 'monospace',
-      fontSize: '11px',
-      color: '#fcd95c',
+      fontFamily: FONT_FAMILY,
+      fontSize: FONT_SIZE_BODY,
+      color: COLOR_REWARD,
       backgroundColor: '#1a1f1a',
       padding: { x: 8, y: 4 }
     }).setOrigin(0.5).setDepth(51);
@@ -769,9 +769,9 @@ export class GardenScene extends Phaser.Scene {
 
     // Pfeil von Hint runter zum Slot (Bouncy)
     const arrow = this.add.text(sx + TILE / 2, sy - 16, 'v', {
-      fontFamily: 'monospace',
+      fontFamily: FONT_FAMILY,
       fontSize: '20px',
-      color: '#fcd95c'
+      color: COLOR_REWARD
     }).setOrigin(0.5).setDepth(51);
     this.tutorialArrow = arrow;
     this.tweens.add({
@@ -840,8 +840,8 @@ export class GardenScene extends Phaser.Scene {
     // Erscheint kurz ueber der Pflanze und faded weg
     if (plant.isMutation) {
       const mutBadge = this.add.text(0, -TILE / 2 + 4, 'MUTATION', {
-        fontFamily: 'monospace', fontSize: '8px', color: '#ffffff',
-        backgroundColor: '#b86ee3', padding: { x: 4, y: 1 }
+        fontFamily: FONT_FAMILY, fontSize: '8px', color: '#ffffff',
+        backgroundColor: COLOR_MUTATION, padding: { x: 4, y: 1 }
       }).setOrigin(0.5);
       container.add(mutBadge);
       this.tweens.add({
@@ -875,9 +875,9 @@ export class GardenScene extends Phaser.Scene {
     }
 
     const levelText = this.add.text(0, TILE / 2 - 22, '', {
-      fontFamily: 'monospace',
+      fontFamily: FONT_FAMILY,
       fontSize: '9px',
-      color: '#dcdcdc'
+      color: COLOR_TEXT_DEFAULT
     }).setOrigin(0.5, 0);
     container.add(levelText);
 
@@ -888,8 +888,8 @@ export class GardenScene extends Phaser.Scene {
     container.add(hydrationBar);
 
     const thirstIcon = this.add.text(TILE / 2 - 10, -TILE / 2 + 4, '', {
-      fontFamily: 'monospace',
-      fontSize: '10px',
+      fontFamily: FONT_FAMILY,
+      fontSize: FONT_SIZE_SMALL,
       color: '#ff8c42'
     }).setOrigin(1, 0);
     container.add(thirstIcon);
@@ -970,7 +970,7 @@ export class GardenScene extends Phaser.Scene {
     const barY = TILE / 2 - 10;
     card.xpBar.fillStyle(0x222a20, 1);
     card.xpBar.fillRoundedRect(barX, barY, barW, 4, 2);
-    card.xpBar.fillStyle(plant.level >= 100 ? 0xffd166 : 0x9be36e, 1);
+    card.xpBar.fillStyle(plant.level >= 100 ? 0xffd166 : MODAL_BORDER_COLOR, 1);
     card.xpBar.fillRoundedRect(barX, barY, Math.max(0, Math.min(1, ratio)) * barW, 4, 2);
 
     // Hydration-Bar (unter XP-Bar)
@@ -1088,12 +1088,12 @@ export class GardenScene extends Phaser.Scene {
     container.add(bg);
 
     const title = this.add.text(0, -panelH / 2 + 10, species?.commonName ?? plant.speciesSlug, {
-      fontFamily: 'monospace', fontSize: '14px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_SUCCESS
     }).setOrigin(0.5, 0);
     container.add(title);
 
     const sci = this.add.text(0, -panelH / 2 + 28, species?.scientificName ?? '', {
-      fontFamily: 'monospace', fontSize: '8px', color: '#888888'
+      fontFamily: FONT_FAMILY, fontSize: '8px', color: COLOR_TEXT_DIM
     }).setOrigin(0.5, 0);
     container.add(sci);
 
@@ -1121,7 +1121,7 @@ export class GardenScene extends Phaser.Scene {
       plant.genes ? this.formatGeneSummary(plant) : ''
     ].filter((l) => l !== '');
     const stats = this.add.text(-panelW / 2 + 14, -panelH / 2 + 50, lines.join('\n'), {
-      fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_TEXT_DEFAULT
     });
     container.add(stats);
 
@@ -1130,7 +1130,7 @@ export class GardenScene extends Phaser.Scene {
     if (plant.qualityTier) {
       const color = `#${TIER_COLORS[plant.qualityTier].toString(16).padStart(6, '0')}`;
       const tierText = this.add.text(-panelW / 2 + 14, tierY, `Tier: ${this.tierLabel(plant.qualityTier)}`, {
-        fontFamily: 'monospace', fontSize: '11px', color
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color
       });
       container.add(tierText);
     } else {
@@ -1139,11 +1139,11 @@ export class GardenScene extends Phaser.Scene {
         np.next
           ? `Care: ${Math.floor(plant.careScore)} (${np.remaining.toFixed(0)} bis ${this.tierLabel(np.next)})`
           : `Care: ${Math.floor(plant.careScore)}`,
-        { fontFamily: 'monospace', fontSize: '11px', color: '#bbbbbb' }
+        { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#bbbbbb' }
       );
       container.add(careText);
       const hint = this.add.text(-panelW / 2 + 14, tierY + 14,
-        'Tier wird bei Adult fixiert', { fontFamily: 'monospace', fontSize: '8px', color: '#666666' });
+        'Tier wird bei Adult fixiert', { fontFamily: FONT_FAMILY, fontSize: '8px', color: '#666666' });
       container.add(hint);
     }
 
@@ -1155,9 +1155,9 @@ export class GardenScene extends Phaser.Scene {
     for (let i = 0; i < 5; i++) {
       const filled = i < tierIdx;
       const star = this.add.text(-panelW / 2 + 14 + i * 14, starsY, filled ? '*' : '.', {
-        fontFamily: 'monospace', fontSize: '14px',
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE,
         color: filled
-          ? (plant.qualityTier ? `#${TIER_COLORS[plant.qualityTier].toString(16).padStart(6, '0')}` : '#dcdcdc')
+          ? (plant.qualityTier ? `#${TIER_COLORS[plant.qualityTier].toString(16).padStart(6, '0')}` : COLOR_TEXT_DEFAULT)
           : '#444444'
       });
       container.add(star);
@@ -1169,7 +1169,7 @@ export class GardenScene extends Phaser.Scene {
       const bpY = starsY + 22;
       const bpText = this.add.text(-panelW / 2 + 14, bpY,
         plant.pendingHarvest ? 'Ernte bereit!' : `Bloom: ${Math.floor(bp * 100)}%`,
-        { fontFamily: 'monospace', fontSize: '11px', color: plant.pendingHarvest ? '#ffd166' : '#bbbbbb' }
+        { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: plant.pendingHarvest ? '#ffd166' : '#bbbbbb' }
       );
       container.add(bpText);
     }
@@ -1185,7 +1185,7 @@ export class GardenScene extends Phaser.Scene {
         return `${tag} (${remMin}m)`;
       });
       const boostText = this.add.text(-panelW / 2 + 14, boostY, `Boost: ${labels.join(', ')}`, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#ffd166'
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#ffd166'
       });
       container.add(boostText);
     }
@@ -1194,7 +1194,7 @@ export class GardenScene extends Phaser.Scene {
     const soilTier = gameStore.getSoilTier(plant.gridX, plant.gridY);
     const soilY = boostY + (activeBoosters.length > 0 ? 14 : 0);
     const soilText = this.add.text(-panelW / 2 + 14, soilY, `Soil: ${soilTier}`, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#bbbbbb'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#bbbbbb'
     });
     container.add(soilText);
 
@@ -1203,7 +1203,7 @@ export class GardenScene extends Phaser.Scene {
     if (cBonus.bonus > 0) {
       const compText = this.add.text(-panelW / 2 + 14, soilY + 14,
         `Companion +${(cBonus.bonus * 100).toFixed(0)}%: ${cBonus.hint ?? ''}`, {
-        fontFamily: 'monospace', fontSize: '9px', color: '#9be36e'
+        fontFamily: FONT_FAMILY, fontSize: '9px', color: COLOR_SUCCESS
       });
       container.add(compText);
     } else {
@@ -1212,7 +1212,7 @@ export class GardenScene extends Phaser.Scene {
         const partnerHint = partners.slice(0, 2).map((p) => p.partner).join(', ');
         const compText = this.add.text(-panelW / 2 + 14, soilY + 14,
           `Companion-Hint: ${partnerHint} nebenan`, {
-          fontFamily: 'monospace', fontSize: '9px', color: '#888888'
+          fontFamily: FONT_FAMILY, fontSize: '9px', color: COLOR_TEXT_DIM
         });
         container.add(compText);
       }
@@ -1222,17 +1222,17 @@ export class GardenScene extends Phaser.Scene {
     const bonsaiY = soilY + 28;
     const bonsaiLabel = plant.bonsaiMode ? 'Bonsai aktiv (Cap L44)' : 'Normal (Stage-Up moeglich)';
     const bonsaiBtn = this.add.text(-panelW / 2 + 14, bonsaiY, `${bonsaiLabel}  [Bonsai-Toggle]`, {
-      fontFamily: 'monospace', fontSize: '9px',
-      color: plant.bonsaiMode ? '#fcd95c' : '#bbbbbb',
+      fontFamily: FONT_FAMILY, fontSize: '9px',
+      color: plant.bonsaiMode ? COLOR_REWARD : '#bbbbbb',
       backgroundColor: '#1a1f1a',
       padding: { x: 4, y: 2 }
     }).setInteractive({ useHandCursor: true });
     bonsaiBtn.on('pointerdown', () => {
       const r = gameStore.toggleBonsai(plant.id);
       if (!r.ok) {
-        this.showFlash(r.reason ?? 'Toggle fehlgeschlagen', '#ff7e7e');
+        this.showFlash(r.reason ?? 'Toggle fehlgeschlagen', COLOR_ERROR);
       } else {
-        this.showFlash(r.bonsai ? 'Bonsai aktiviert (+30% maxHp im Battle)' : 'Bonsai deaktiviert', r.bonsai ? '#fcd95c' : '#bbbbbb');
+        this.showFlash(r.bonsai ? 'Bonsai aktiviert (+30% maxHp im Battle)' : 'Bonsai deaktiviert', r.bonsai ? COLOR_REWARD : '#bbbbbb');
         this.openDetailPanel(plant.id);
       }
     });
@@ -1244,9 +1244,9 @@ export class GardenScene extends Phaser.Scene {
       ? (plant.hydration < 50 ? 'Giessen (+5 XP, +Care)' : 'Giessen (+5 XP)')
       : `Wasser CD ${Math.ceil(waterCooldownRemaining(plant) / 1000)}s`;
     const waterBtn = this.add.text(-90, panelH / 2 - 30, btnLabelW, {
-      fontFamily: 'monospace',
-      fontSize: '11px',
-      color: ready ? '#1a1f1a' : '#888888',
+      fontFamily: FONT_FAMILY,
+      fontSize: FONT_SIZE_BODY,
+      color: ready ? '#1a1f1a' : COLOR_TEXT_DIM,
       backgroundColor: ready ? '#5b8de8' : '#3a3a3a',
       padding: { left: 10, right: 10, top: 6, bottom: 6 }
     }).setOrigin(0.5);
@@ -1264,8 +1264,8 @@ export class GardenScene extends Phaser.Scene {
     // Harvest-Button (nur Blooming + ready)
     if (isHarvestReady(plant)) {
       const harvestBtn = this.add.text(90, panelH / 2 - 30, 'Ernten', {
-        fontFamily: 'monospace',
-        fontSize: '11px',
+        fontFamily: FONT_FAMILY,
+        fontSize: FONT_SIZE_BODY,
         color: '#1a1f1a',
         backgroundColor: '#ffd166',
         padding: { left: 14, right: 14, top: 6, bottom: 6 }
@@ -1286,9 +1286,9 @@ export class GardenScene extends Phaser.Scene {
     } else if (isBlooming(plant)) {
       const lockBtn = this.add.text(90, panelH / 2 - 30,
         `Ernte ${Math.floor(bloomProgress(plant) * 100)}%`, {
-        fontFamily: 'monospace',
-        fontSize: '10px',
-        color: '#888888',
+        fontFamily: FONT_FAMILY,
+        fontSize: FONT_SIZE_SMALL,
+        color: COLOR_TEXT_DIM,
         backgroundColor: '#2a2a2a',
         padding: { left: 12, right: 12, top: 6, bottom: 6 }
       }).setOrigin(0.5);
@@ -1297,7 +1297,7 @@ export class GardenScene extends Phaser.Scene {
 
     // Booster-Apply-Button
     const boosterBtn = this.add.text(-90, panelH / 2 - 56, 'Booster anwenden', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#1a1f1a',
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#1a1f1a',
       backgroundColor: '#ffd166',
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -1308,24 +1308,24 @@ export class GardenScene extends Phaser.Scene {
 
     // Soil-Upgrade-Button
     const soilBtn = this.add.text(90, panelH / 2 - 56, 'Soil upgraden', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#1a1f1a',
-      backgroundColor: '#b86ee3',
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#1a1f1a',
+      backgroundColor: COLOR_MUTATION,
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     soilBtn.on('pointerdown', () => {
       const result = gameStore.upgradeSoil(plant.gridX, plant.gridY);
       if (result.ok) {
-        this.showFlash(`Soil aufgeruestet zu ${result.newTier}`, '#b86ee3');
+        this.showFlash(`Soil aufgeruestet zu ${result.newTier}`, COLOR_MUTATION);
         this.openDetailPanel(plant.id);
       } else {
-        this.showFlash(result.reason ?? 'Soil-Upgrade fehlgeschlagen', '#ff7e7e');
+        this.showFlash(result.reason ?? 'Soil-Upgrade fehlgeschlagen', COLOR_ERROR);
       }
     });
     container.add(soilBtn);
 
     // Close-Button
     const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_TEXT_DIM
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     close.on('pointerdown', () => {
       container.destroy();
@@ -1348,7 +1348,7 @@ export class GardenScene extends Phaser.Scene {
       return item && applicableKinds.includes(item.kind) && (inv[k] ?? 0) > 0;
     });
     if (slugs.length === 0) {
-      this.showFlash('Keine Booster im Inventar', '#ff7e7e');
+      this.showFlash('Keine Booster im Inventar', COLOR_ERROR);
       this.openDetailPanel(plantId);
       return;
     }
@@ -1360,15 +1360,15 @@ export class GardenScene extends Phaser.Scene {
     drawModalBox(bg, { width: panelW, height: panelH, borderColor: 0xffd166 });
     container.add(bg);
     const title = this.add.text(0, -panelH / 2 + 12, 'Booster anwenden', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#ffd166'
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: '#ffd166'
     }).setOrigin(0.5, 0);
     container.add(title);
     slugs.forEach((slug, i) => {
       const item = getItem(slug);
       const label = `${item?.name ?? slug} (${inv[slug]})`;
       const btn = this.add.text(-panelW / 2 + 14, -panelH / 2 + 38 + i * 28, label, {
-        fontFamily: 'monospace', fontSize: '11px',
-        color: '#dcdcdc',
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY,
+        color: COLOR_TEXT_DEFAULT,
         backgroundColor: '#2a3325',
         padding: { left: 8, right: 8, top: 4, bottom: 4 }
       }).setInteractive({ useHandCursor: true });
@@ -1380,13 +1380,13 @@ export class GardenScene extends Phaser.Scene {
           this.detailPanel = undefined;
           this.openDetailPanel(plantId);
         } else {
-          this.showFlash(r.reason ?? 'Fehlgeschlagen', '#ff7e7e');
+          this.showFlash(r.reason ?? 'Fehlgeschlagen', COLOR_ERROR);
         }
       });
       container.add(btn);
     });
     const close = this.add.text(panelW / 2 - 12, -panelH / 2 + 6, 'X', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_TEXT_DIM
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     close.on('pointerdown', () => {
       container.destroy();
@@ -1400,11 +1400,11 @@ export class GardenScene extends Phaser.Scene {
 
 function mapLegacyColor(color: string): ToastType {
   switch (color) {
-    case '#9be36e': return 'success';
-    case '#ff7e7e': return 'error';
-    case '#fcd95c': return 'reward';
-    case '#b86ee3': return 'mutation';
-    case '#8eaedd': return 'info';
+    case COLOR_SUCCESS: return 'success';
+    case COLOR_ERROR: return 'error';
+    case COLOR_REWARD: return 'reward';
+    case COLOR_MUTATION: return 'mutation';
+    case COLOR_INFO: return 'info';
     default: return 'info';
   }
 }

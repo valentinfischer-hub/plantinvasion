@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { getItem } from '../data/items';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 /**
  * Inventory-Scene V0.1 (2026-04-25).
@@ -30,16 +31,16 @@ export class InventoryScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, 30, 'Inventar', {
-        fontFamily: 'monospace',
+        fontFamily: FONT_FAMILY,
         fontSize: '22px',
-        color: '#9be36e'
+        color: COLOR_SUCCESS
       })
       .setOrigin(0.5);
 
     this.headerText = this.add
       .text(width / 2, 56, '', {
-        fontFamily: 'monospace',
-        fontSize: '11px',
+        fontFamily: FONT_FAMILY,
+        fontSize: FONT_SIZE_BODY,
         color: '#ffffff'
       })
       .setOrigin(0.5);
@@ -60,8 +61,8 @@ export class InventoryScene extends Phaser.Scene {
     // Hint
     this.add
       .text(width / 2, this.viewportBottom + 4, 'Klick auf Item fuer Details   ↑↓ scrollen   I/Esc zurueck', {
-        fontFamily: 'monospace',
-        fontSize: '10px',
+        fontFamily: FONT_FAMILY,
+        fontSize: FONT_SIZE_SMALL,
         color: '#553e2d'
       })
       .setOrigin(0.5, 0);
@@ -70,13 +71,13 @@ export class InventoryScene extends Phaser.Scene {
     const backY = height - 24;
     const backBg = this.add
       .rectangle(width / 2, backY, 160, 28, 0x000000, 0.7)
-      .setStrokeStyle(1, 0x9be36e)
+      .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
     this.add
       .text(width / 2, backY, 'Zurueck (I)', {
-        fontFamily: 'monospace',
+        fontFamily: FONT_FAMILY,
         fontSize: '12px',
-        color: '#9be36e'
+        color: COLOR_SUCCESS
       })
       .setOrigin(0.5);
 
@@ -99,7 +100,7 @@ export class InventoryScene extends Phaser.Scene {
     if (slugs.length === 0) {
       const empty = this.add
         .text(this.scale.width / 2, 0, '(Inventar leer - kaufe Items im Markt oder finde sie als Forage-Drop)', {
-          fontFamily: 'monospace',
+          fontFamily: FONT_FAMILY,
           fontSize: '12px',
           color: '#553e2d',
           wordWrap: { width: this.scale.width - 80 }
@@ -129,9 +130,9 @@ export class InventoryScene extends Phaser.Scene {
     for (const kind of sortedKinds) {
       const head = this.add
         .text(colX, by, this.kindLabel(kind), {
-          fontFamily: 'monospace',
+          fontFamily: FONT_FAMILY,
           fontSize: '12px',
-          color: '#fcd95c',
+          color: COLOR_REWARD,
           fontStyle: 'bold'
         })
         .setOrigin(0, 0);
@@ -143,13 +144,13 @@ export class InventoryScene extends Phaser.Scene {
         const count = inv[slug];
         const row = this.add
           .text(colX + 12, by, `${name}  x${count}`, {
-            fontFamily: 'monospace',
+            fontFamily: FONT_FAMILY,
             fontSize: '12px',
             color: '#ffffff'
           })
           .setOrigin(0, 0)
           .setInteractive({ useHandCursor: true });
-        row.on('pointerover', () => row.setColor('#9be36e'));
+        row.on('pointerover', () => row.setColor(COLOR_SUCCESS));
         row.on('pointerout', () => row.setColor('#ffffff'));
         row.on('pointerup', () => this.selectItem(slug));
         this.listContainer.add(row);
@@ -166,21 +167,21 @@ export class InventoryScene extends Phaser.Scene {
     if (!def) return;
     const w = 200;
     const bg = this.add.rectangle(0, 0, w, 220, 0x000000, 0.85)
-      .setStrokeStyle(2, 0x9be36e)
+      .setStrokeStyle(2, MODAL_BORDER_COLOR)
       .setOrigin(0, 0);
     const title = this.add.text(8, 8, def.name, {
-      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e', fontStyle: 'bold',
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_SUCCESS, fontStyle: 'bold',
       wordWrap: { width: w - 16 }
     });
     const kind = this.add.text(8, 30, `Typ: ${this.kindLabel(def.kind)}`, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#fcd95c'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_REWARD
     });
     const desc = this.add.text(8, 50, def.description, {
-      fontFamily: 'monospace', fontSize: '11px', color: '#ffffff',
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#ffffff',
       wordWrap: { width: w - 16 }
     });
     const price = this.add.text(8, 160, `Kauf: ${def.buyPrice}c   Verkauf: ${def.sellPrice}c`, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#553e2d'
     });
     this.detailPanel.add([bg, title, kind, desc, price]);
     this.detailPanel.setVisible(true);

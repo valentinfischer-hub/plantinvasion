@@ -39,7 +39,7 @@ import { showToast } from '../ui/Toast';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
 import { evaluateAct2Progress, autoSetAct2Flags } from '../data/storyAct2';
-import { FONT_FAMILY } from '../ui/uiTheme';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -271,7 +271,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Debug
     this.debugText = this.add.text(8, 8, '', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS
     }).setScrollFactor(0).setDepth(2000);
 
     // Touch-Controls (D-Pad) - nur auf Touch-Geraeten sichtbar
@@ -311,7 +311,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Interact-Hint (E-Icon) ueber NPC oder Schild wenn Spieler benachbart
     this.interactHint = this.add.text(0, 0, '[E]', {
-      fontFamily: 'monospace', fontSize: '8px', color: '#ffffff',
+      fontFamily: FONT_FAMILY, fontSize: '8px', color: '#ffffff',
       backgroundColor: '#222222', padding: { x: 2, y: 1 }
     }).setDepth(50).setVisible(false).setOrigin(0.5, 1);
 
@@ -333,13 +333,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     const camS = this.cameras.main;
     const zS = camS.zoom || 1;
     this.saveIcon = this.add.text(8 / zS, 24 / zS, '* gespeichert', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#9be36e', backgroundColor: '#1a1f1a', padding: { x: 4, y: 2 }
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_SUCCESS, backgroundColor: '#1a1f1a', padding: { x: 4, y: 2 }
     }).setScrollFactor(0).setDepth(1900).setScale(1 / zS).setAlpha(0);
     this.registerInAllUiCams(this.saveIcon);
 
     // Coin-HUD oben-links unter saveIcon
     this.coinHud = this.add.text(8 / zS, 42 / zS, '', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#fcd95c', backgroundColor: '#1a1f1a', padding: { x: 6, y: 3 }
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD, backgroundColor: '#1a1f1a', padding: { x: 6, y: 3 }
     }).setScrollFactor(0).setDepth(1850).setScale(1 / zS);
     this.registerInAllUiCams(this.coinHud);
     this.refreshCoinHud();
@@ -387,7 +387,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: '#1a1f1a'
     }).setOrigin(0.5, 0);
     const name = this.add.text(0, 4, def.name, {
-      fontFamily: FONT_FAMILY, fontSize: '14px', color: '#1a1f1a'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: '#1a1f1a'
     }).setOrigin(0.5, 0);
     container.add([title, name]);
     this.registerInAllUiCams(container);
@@ -408,15 +408,15 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     const btnY = 22;
     const c = this.add.container(btnX, btnY).setScrollFactor(0).setDepth(1900);
     const bg = this.add.graphics();
-    bg.fillStyle(0x9be36e, 0.92);
+    bg.fillStyle(MODAL_BORDER_COLOR, 0.92);
     bg.fillRoundedRect(-44, -16, 88, 32, 6);
     bg.lineStyle(2, 0x4a8228, 1);
     bg.strokeRoundedRect(-44, -16, 88, 32, 6);
     const txt = this.add.text(0, -2, 'FARM (G)', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#1a1f1a'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#1a1f1a'
     }).setOrigin(0.5);
     const hint = this.add.text(0, 9, 'giessen', {
-      fontFamily: 'monospace', fontSize: '7px', color: '#1a1f1a'
+      fontFamily: FONT_FAMILY, fontSize: '7px', color: '#1a1f1a'
     }).setOrigin(0.5);
     c.add([bg, txt, hint]);
     bg.setInteractive(new Phaser.Geom.Rectangle(-44, -16, 88, 32), Phaser.Geom.Rectangle.Contains);

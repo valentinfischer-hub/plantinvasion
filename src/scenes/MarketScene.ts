@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { ITEMS, type ItemDef } from '../data/items';
 import { sfx } from '../audio/sfxGenerator';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL } from '../ui/uiTheme';
 
 /**
  * Markt-UI mit Buy/Sell-Liste.
@@ -28,16 +29,16 @@ export class MarketScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#1a2820');
 
     this.add.text(width / 2, 30, 'Anyas Markt', {
-      fontFamily: 'monospace', fontSize: '20px', color: '#fcd95c'
+      fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_REWARD
     }).setOrigin(0.5);
 
     this.coinsText = this.add.text(width / 2, 56, '', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     this.updateCoinsText();
 
     // Mode-Toggle
-    this.modeButton = this.makeButton(width / 2, 88, this.modeLabel(), '#9be36e', () => {
+    this.modeButton = this.makeButton(width / 2, 88, this.modeLabel(), COLOR_SUCCESS, () => {
       this.mode = this.mode === 'roster' ? 'buy' : (this.mode === 'buy' ? 'sell' : 'roster');
       this.refreshList();
     });
@@ -47,7 +48,7 @@ export class MarketScene extends Phaser.Scene {
 
     // Back-Button
     const backY = height - 30;
-    this.makeButton(width / 2, backY, 'Zurueck (B)', '#fcd95c', () => this.scene.start('OverworldScene'));
+    this.makeButton(width / 2, backY, 'Zurueck (B)', COLOR_REWARD, () => this.scene.start('OverworldScene'));
     if (this.input.keyboard) {
       const backKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
       backKey.on('down', () => this.scene.start('OverworldScene'));
@@ -95,13 +96,13 @@ export class MarketScene extends Phaser.Scene {
       const bg = this.add.rectangle(0, 0, width - 40, 36, 0x000000, 0.5)
         .setStrokeStyle(1, 0x8a6e4a);
       const nameTxt = this.add.text(-(width - 40) / 2 + 10, -8, item.name, {
-        fontFamily: 'monospace', fontSize: '12px', color: '#ffffff'
+        fontFamily: FONT_FAMILY, fontSize: '12px', color: '#ffffff'
       });
       const detailTxt = this.add.text(-(width - 40) / 2 + 10, 6, `Bestand: ${have}  Preis: ${price}`, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#8a6e4a'
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#8a6e4a'
       });
       const buyBtn = this.add.text((width - 40) / 2 - 70, 0, action, {
-        fontFamily: 'monospace', fontSize: '11px', color: isBuy ? '#9be36e' : '#fcd95c',
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: isBuy ? COLOR_SUCCESS : COLOR_REWARD,
         backgroundColor: '#222222', padding: { x: 6, y: 4 }
       }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
       buyBtn.on('pointerup', () => this.tryTransaction(item));
@@ -113,7 +114,7 @@ export class MarketScene extends Phaser.Scene {
     if (listToShow.length === 0) {
       this.listContainer.add(
         this.add.text(width / 2, by, 'Keine Items verfuegbar.', {
-          fontFamily: 'monospace', fontSize: '12px', color: '#8a6e4a'
+          fontFamily: FONT_FAMILY, fontSize: '12px', color: '#8a6e4a'
         }).setOrigin(0.5)
       );
     }
@@ -147,7 +148,7 @@ export class MarketScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     const txt = this.add.text(0, 0, label, {
-      fontFamily: 'monospace', fontSize: '12px', color
+      fontFamily: FONT_FAMILY, fontSize: '12px', color
     }).setOrigin(0.5);
     bg.on('pointerup', onClick);
     c.add([bg, txt]);

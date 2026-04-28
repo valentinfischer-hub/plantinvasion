@@ -15,6 +15,7 @@ import { getSpecies } from '../data/species';
 import { getMove, defaultMovesForFamily, type MoveDef } from '../data/moves';
 import { getBoss, type BossDef } from '../data/bosses';
 import { debugLog } from '../utils/debugLog';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 interface BattleSceneInitData {
   poolKey?: string;
@@ -89,7 +90,7 @@ export class BattleScene extends Phaser.Scene {
       family: 'Asteraceae',
       level: playerPlant.level,
       isPlayer: true,
-      spriteColor: 0x9be36e,
+      spriteColor: MODAL_BORDER_COLOR,
       atkBias: playerPlant.stats.atk - 50,
       defBias: playerPlant.stats.def - 50,
       spdBias: playerPlant.stats.spd - 50
@@ -144,10 +145,10 @@ export class BattleScene extends Phaser.Scene {
 
     // Wild oben
     this.add.text(width / 2, 24, `${this.wild.name} (Lv${this.wild.level})`, {
-      fontFamily: 'monospace', fontSize: '14px', color: '#ffffff'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: '#ffffff'
     }).setOrigin(0.5);
     this.add.text(width / 2, 42, this.wild.family, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const wildSpriteKey = this.bossDef?.spriteKey ?? this.pickWildSpriteKey(this.capturedEnc?.slug ?? 'common-daisy');
     this.wildSprite = this.add.sprite(width / 2, 110, wildSpriteKey);
@@ -155,40 +156,40 @@ export class BattleScene extends Phaser.Scene {
     this.wildHpBar = this.add.rectangle(width / 2, 162, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
     this.wildHpText = this.add.text(width / 2, 180, '', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#ffffff'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#ffffff'
     }).setOrigin(0.5);
     this.statusTextWild = this.add.text(width / 2, 196, '', {
-      fontFamily: 'monospace', fontSize: '9px', color: '#fcd95c'
+      fontFamily: FONT_FAMILY, fontSize: '9px', color: COLOR_REWARD
     }).setOrigin(0.5);
 
     // Player unten
     this.add.text(width / 2, height - 248, `${this.player.name} (Lv${this.player.level})`, {
-      fontFamily: 'monospace', fontSize: '14px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_SUCCESS
     }).setOrigin(0.5);
     this.add.text(width / 2, height - 230, this.player.family, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#82d44e'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#82d44e'
     }).setOrigin(0.5);
     this.playerSprite = this.add.sprite(width / 2, height - 170, 'tile_flowerbed');
     this.playerSprite.setDisplaySize(80, 80);
     this.playerHpBar = this.add.rectangle(width / 2, height - 118, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
     this.playerHpText = this.add.text(width / 2, height - 100, '', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#ffffff'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#ffffff'
     }).setOrigin(0.5);
     this.statusTextPlayer = this.add.text(width / 2, height - 84, '', {
-      fontFamily: 'monospace', fontSize: '9px', color: '#fcd95c'
+      fontFamily: FONT_FAMILY, fontSize: '9px', color: COLOR_REWARD
     }).setOrigin(0.5);
 
     // Status / Round-Log
     this.statusText = this.add.text(width / 2, height / 2 - 8, 'Was soll deine Pflanze tun?', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#fcd95c',
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_REWARD,
       align: 'center', wordWrap: { width: width - 40 }
     }).setOrigin(0.5);
 
     // Move-Buttons
     this.buildMoveButtons();
     // Run + Capture buttons (small row)
-    this.makeSmallButton(width / 4, 32, 'Fluechten', '#fcd95c', () => this.tryRun());
+    this.makeSmallButton(width / 4, 32, 'Fluechten', COLOR_REWARD, () => this.tryRun());
     this.makeSmallButton((width / 4) * 3, 32, 'Fangen', '#ff7eb8', () => this.tryCapture());
 
     this.updateBars();
@@ -239,18 +240,18 @@ export class BattleScene extends Phaser.Scene {
 
       const c = this.add.container(x, y);
       const bg = this.add.rectangle(0, 0, slotW - 4, slotH, 0x000000, 0.85)
-        .setStrokeStyle(2, m ? 0x9be36e : 0x444444)
+        .setStrokeStyle(2, m ? MODAL_BORDER_COLOR : 0x444444)
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: !!m });
       const nameTxt = this.add.text(-slotW / 2 + 8, -10, m ? m.name : '-', {
-        fontFamily: 'monospace', fontSize: '11px', color: m ? '#ffffff' : '#666666'
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: m ? '#ffffff' : '#666666'
       });
       const detailTxt = this.add.text(-slotW / 2 + 8, 4, m ? `${m.power > 0 ? `Power ${m.power}` : 'Status'} | ${Math.round(m.accuracy * 100)}%` : '', {
-        fontFamily: 'monospace', fontSize: '9px', color: '#9be36e'
+        fontFamily: FONT_FAMILY, fontSize: '9px', color: COLOR_SUCCESS
       });
       if (m) {
         bg.on('pointerdown', () => {
-          bg.setFillStyle(0x9be36e, 0.3);
+          bg.setFillStyle(MODAL_BORDER_COLOR, 0.3);
         });
         bg.on('pointerup', () => {
           bg.setFillStyle(0x000000, 0.85);
@@ -274,7 +275,7 @@ export class BattleScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     const txt = this.add.text(0, 0, label, {
-      fontFamily: 'monospace', fontSize: '10px', color
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color
     }).setOrigin(0.5);
     bg.on('pointerup', () => {
       bg.setFillStyle(0x000000, 0.85);
@@ -389,13 +390,13 @@ if (this.bossDef && outcome.winner === this.player) {
   private spawnDamageFloater(target: Phaser.GameObjects.Sprite, dmg: number, crit: boolean, effLabel: string): void {
     const color = crit ? '#ff5c5c' : '#ffffff';
     const text = this.add.text(target.x, target.y - 20, `-${dmg}${crit ? '!' : ''}`, {
-      fontFamily: 'monospace', fontSize: crit ? '20px' : '15px', color,
+      fontFamily: FONT_FAMILY, fontSize: crit ? '20px' : '15px', color,
       stroke: '#000000', strokeThickness: 3
     }).setOrigin(0.5).setDepth(1500);
     this.tweens.add({ targets: text, y: target.y - 60, alpha: 0, duration: 1100, ease: 'Quad.easeOut', onComplete: () => text.destroy() });
     if (effLabel) {
       const eff = this.add.text(target.x, target.y, effLabel, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#fcd95c', stroke: '#000', strokeThickness: 2
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_REWARD, stroke: '#000', strokeThickness: 2
       }).setOrigin(0.5).setDepth(1499);
       this.tweens.add({ targets: eff, y: target.y - 40, alpha: 0, duration: 1500, onComplete: () => eff.destroy() });
     }
@@ -403,7 +404,7 @@ if (this.bossDef && outcome.winner === this.player) {
 
   private spawnHealFloater(target: Phaser.GameObjects.Sprite, amt: number): void {
     const text = this.add.text(target.x, target.y - 20, `+${amt}`, {
-      fontFamily: 'monospace', fontSize: '14px', color: '#9be36e',
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_SUCCESS,
       stroke: '#000000', strokeThickness: 2
     }).setOrigin(0.5).setDepth(1500);
     this.tweens.add({ targets: text, y: target.y - 50, alpha: 0, duration: 1000, onComplete: () => text.destroy() });

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { sfx } from '../audio/sfxGenerator';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 interface HelpSection {
   title: string;
@@ -96,15 +97,15 @@ export class HelpScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, 32, 'Hilfe & Hotkeys', {
-        fontFamily: 'monospace',
+        fontFamily: FONT_FAMILY,
         fontSize: '22px',
-        color: '#9be36e'
+        color: COLOR_SUCCESS
       })
       .setOrigin(0.5);
     this.add
       .text(width / 2, 56, 'Scrollen mit Mouse-Wheel oder Pfeiltasten', {
-        fontFamily: 'monospace',
-        fontSize: '11px',
+        fontFamily: FONT_FAMILY,
+        fontSize: FONT_SIZE_BODY,
         color: '#553e2d'
       })
       .setOrigin(0.5);
@@ -113,13 +114,13 @@ export class HelpScene extends Phaser.Scene {
     let by = 0;
     for (const sec of HELP) {
       const head = this.add.text(width / 2, by, sec.title, {
-        fontFamily: 'monospace', fontSize: '14px', color: '#fcd95c', fontStyle: 'bold'
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_REWARD, fontStyle: 'bold'
       }).setOrigin(0.5, 0);
       this.listContainer.add(head);
       by += 22;
       for (const line of sec.lines) {
         const t = this.add.text(width / 2, by, line, {
-          fontFamily: 'monospace', fontSize: '11px', color: '#ffffff',
+          fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#ffffff',
           wordWrap: { width: width - 80 }, align: 'center'
         }).setOrigin(0.5, 0);
         this.listContainer.add(t);
@@ -142,11 +143,11 @@ export class HelpScene extends Phaser.Scene {
     const backY = height - 24;
     const backBg = this.add
       .rectangle(width / 2, backY, 160, 28, 0x000000, 0.7)
-      .setStrokeStyle(1, 0x9be36e)
+      .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
     this.add
       .text(width / 2, backY, 'Zurueck (Esc)', {
-        fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
+        fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
       })
       .setOrigin(0.5);
     const back = () => { sfx.click(); this.scene.start('MenuScene'); };

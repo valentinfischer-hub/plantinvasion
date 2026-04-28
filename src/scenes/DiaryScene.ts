@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 /**
  * Tildas Tagebuch: zeigt alle gesammelten Eintraege der Story.
@@ -108,7 +109,7 @@ export class DiaryScene extends Phaser.Scene {
 
     // Titel
     this.add.text(width / 2, 24, 'Tildas Tagebuch', {
-      fontFamily: 'monospace', fontSize: '20px', color: '#fcd95c'
+      fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_REWARD
     }).setOrigin(0.5);
 
     const collected = gameStore.getDiaryEntries();
@@ -116,7 +117,7 @@ export class DiaryScene extends Phaser.Scene {
 
     if (this.entries.length === 0) {
       this.add.text(width / 2, height / 2, 'Noch keine Eintraege gesammelt.\nLoese Story-Quests um Tildas Geschichte zu erfahren.', {
-        fontFamily: 'monospace', fontSize: '11px', color: '#8a6e4a',
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#8a6e4a',
         align: 'center', wordWrap: { width: width - 40 }
       }).setOrigin(0.5);
     } else {
@@ -126,26 +127,26 @@ export class DiaryScene extends Phaser.Scene {
       this.add.rectangle(width / 2, bookY + bookH / 2, width - 30, bookH, 0x2d2418, 0.95)
         .setStrokeStyle(2, 0x8b6e3a);
       this.dateText = this.add.text(width / 2, bookY + 14, '', {
-        fontFamily: 'monospace', fontSize: '10px', color: '#8b6e3a'
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#8b6e3a'
       }).setOrigin(0.5);
       this.titleText = this.add.text(width / 2, bookY + 36, '', {
-        fontFamily: 'monospace', fontSize: '14px', color: '#fcd95c', fontStyle: 'bold'
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: COLOR_REWARD, fontStyle: 'bold'
       }).setOrigin(0.5);
       this.contentText = this.add.text(width / 2, bookY + 80, '', {
-        fontFamily: 'monospace', fontSize: '11px', color: '#ffffff',
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#ffffff',
         wordWrap: { width: width - 60 }, lineSpacing: 4
       }).setOrigin(0.5, 0);
       this.indexText = this.add.text(width / 2, height - 80, '', {
-        fontFamily: 'monospace', fontSize: '11px', color: '#9be36e'
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_SUCCESS
       }).setOrigin(0.5);
 
       // Navigation
       const prevBtn = this.add.rectangle(width / 4, height - 56, 80, 28, 0x222222, 0.9)
-        .setStrokeStyle(1, 0x9be36e).setInteractive({ useHandCursor: true });
+        .setStrokeStyle(1, MODAL_BORDER_COLOR).setInteractive({ useHandCursor: true });
       const nextBtn = this.add.rectangle((width / 4) * 3, height - 56, 80, 28, 0x222222, 0.9)
-        .setStrokeStyle(1, 0x9be36e).setInteractive({ useHandCursor: true });
-      this.add.text(width / 4, height - 56, '< Prev', { fontFamily: 'monospace', fontSize: '10px', color: '#9be36e' }).setOrigin(0.5);
-      this.add.text((width / 4) * 3, height - 56, 'Next >', { fontFamily: 'monospace', fontSize: '10px', color: '#9be36e' }).setOrigin(0.5);
+        .setStrokeStyle(1, MODAL_BORDER_COLOR).setInteractive({ useHandCursor: true });
+      this.add.text(width / 4, height - 56, '< Prev', { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS }).setOrigin(0.5);
+      this.add.text((width / 4) * 3, height - 56, 'Next >', { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS }).setOrigin(0.5);
       prevBtn.on('pointerup', () => this.navigate(-1));
       nextBtn.on('pointerup', () => this.navigate(1));
       if (this.input.keyboard) {
@@ -157,10 +158,10 @@ export class DiaryScene extends Phaser.Scene {
 
     // Back-Button
     const backBg = this.add.rectangle(width / 2, height - 24, 160, 32, 0x000000, 0.7)
-      .setStrokeStyle(1, 0x9be36e)
+      .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
     this.add.text(width / 2, height - 24, 'Zurueck (B)', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');
     backBg.on('pointerup', back);

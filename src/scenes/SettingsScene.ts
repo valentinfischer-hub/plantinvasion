@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM } from '../audio/sfxGenerator';
 import { getLocale, setLocale } from '../i18n/index';
+import { COLOR_ERROR, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 /**
  * Settings-Scene V0.2 (2026-04-28).
@@ -26,16 +27,16 @@ export class SettingsScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, 40, 'Einstellungen', {
-        fontFamily: 'monospace',
+        fontFamily: FONT_FAMILY,
         fontSize: '22px',
-        color: '#9be36e'
+        color: COLOR_SUCCESS
       })
       .setOrigin(0.5);
 
     let by = 100;
     // Volume-Slider
     this.add.text(width / 2 - 150, by, 'Lautstaerke', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#fcd95c'
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_REWARD
     });
     by += 24;
     const barW = 300;
@@ -47,11 +48,11 @@ export class SettingsScene extends Phaser.Scene {
       .setOrigin(0, 0)
       .setInteractive(new Phaser.Geom.Rectangle(0, 0, barW, barH), Phaser.Geom.Rectangle.Contains);
     this.volumeBarFill = this.add
-      .rectangle(barX, by, barW * getMasterVolume(), barH, 0x9be36e, 0.85)
+      .rectangle(barX, by, barW * getMasterVolume(), barH, MODAL_BORDER_COLOR, 0.85)
       .setOrigin(0, 0);
     this.volumeText = this.add
       .text(width / 2, by + barH + 14, `${Math.round(getMasterVolume() * 100)}%`, {
-        fontFamily: 'monospace', fontSize: '12px', color: '#ffffff'
+        fontFamily: FONT_FAMILY, fontSize: '12px', color: '#ffffff'
       })
       .setOrigin(0.5, 0);
     barBg.on('pointerdown', (p: Phaser.Input.Pointer) => {
@@ -67,19 +68,19 @@ export class SettingsScene extends Phaser.Scene {
     by += 60;
     // BGM Toggle
     this.add.text(width / 2 - 150, by, 'Hintergrundmusik', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#fcd95c'
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_REWARD
     });
     by += 24;
     this.bgmStatusText = this.add.text(width / 2, by, this.bgmEnabled ? 'AN' : 'AUS', {
-      fontFamily: 'monospace', fontSize: '13px', color: this.bgmEnabled ? '#9be36e' : '#ff7e7e'
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: this.bgmEnabled ? COLOR_SUCCESS : COLOR_ERROR
     }).setOrigin(0.5, 0);
-    const bgmToggle = this.makeButton(width / 2, by + 30, 'BGM umschalten', '#fcd95c', () => this.toggleBGM());
+    const bgmToggle = this.makeButton(width / 2, by + 30, 'BGM umschalten', COLOR_REWARD, () => this.toggleBGM());
     void bgmToggle;
 
     by += 80;
     // Locale-Toggle DE | EN
     this.add.text(width / 2 - 150, by, 'Sprache', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#fcd95c'
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_REWARD
     });
     by += 8;
     const locale = getLocale();
@@ -90,28 +91,28 @@ export class SettingsScene extends Phaser.Scene {
     // Layout-Info
     const layout = (globalThis as { __layout?: string }).__layout || 'unknown';
     this.add.text(width / 2, by, `Layout: ${layout}`, {
-      fontFamily: 'monospace', fontSize: '11px', color: '#553e2d'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#553e2d'
     }).setOrigin(0.5, 0);
     by += 16;
     this.add.text(width / 2, by, '(Window-Resize beim Reload aendert das Layout)', {
-      fontFamily: 'monospace', fontSize: '9px', color: '#553e2d'
+      fontFamily: FONT_FAMILY, fontSize: '9px', color: '#553e2d'
     }).setOrigin(0.5, 0);
 
     by += 50;
     // Save-Reset (mit Bestaetigung)
-    const _resetBtn = this.makeButton(width / 2, by, 'Spielstand loeschen', '#ff7e7e', () => this.confirmReset());
+    const _resetBtn = this.makeButton(width / 2, by, 'Spielstand loeschen', COLOR_ERROR, () => this.confirmReset());
     void _resetBtn;
 
     by += 60;
     // Save-Info
     const save = gameStore.get();
     this.add.text(width / 2, by, `Spielstand: v${save.version ?? '?'}   Coins: ${save.coins}   Pflanzen: ${save.plants.length}`, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS
     }).setOrigin(0.5, 0);
 
     // Back
     const backY = height - 30;
-    const _backBtn = this.makeButton(width / 2, backY, 'Zurueck (Esc)', '#9be36e', () => this.back());
+    const _backBtn = this.makeButton(width / 2, backY, 'Zurueck (Esc)', COLOR_SUCCESS, () => this.back());
     void _backBtn;
     if (this.input.keyboard) {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => this.back());
@@ -135,7 +136,7 @@ export class SettingsScene extends Phaser.Scene {
     if (this.bgmEnabled) startAmbientBGM();
     else stopAmbientBGM();
     this.bgmStatusText.setText(this.bgmEnabled ? 'AN' : 'AUS');
-    this.bgmStatusText.setColor(this.bgmEnabled ? '#9be36e' : '#ff7e7e');
+    this.bgmStatusText.setColor(this.bgmEnabled ? COLOR_SUCCESS : COLOR_ERROR);
     sfx.click();
   }
 
@@ -153,21 +154,21 @@ export class SettingsScene extends Phaser.Scene {
     // Container-Zugriff via getAt(0) = bg-Rectangle, getAt(1) = Text
     const deBg = this.localeDeBtn.getAt(0) as Phaser.GameObjects.Rectangle;
     const enBg = this.localeEnBtn.getAt(0) as Phaser.GameObjects.Rectangle;
-    deBg.setStrokeStyle(2, locale === 'de' ? 0x9be36e : 0x553e2d);
-    enBg.setStrokeStyle(2, locale === 'en' ? 0x9be36e : 0x553e2d);
+    deBg.setStrokeStyle(2, locale === 'de' ? MODAL_BORDER_COLOR : 0x553e2d);
+    enBg.setStrokeStyle(2, locale === 'en' ? MODAL_BORDER_COLOR : 0x553e2d);
   }
 
   private makeLocaleButton(x: number, y: number, label: string, active: boolean, onClick: () => void): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
     const w = 80;
     const h = 32;
-    const accent = active ? 0x9be36e : 0x553e2d;
+    const accent = active ? MODAL_BORDER_COLOR : 0x553e2d;
     const bg = this.add.rectangle(0, 0, w, h, 0x000000, 0.7)
       .setStrokeStyle(2, accent)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     const txt = this.add.text(0, 0, label, {
-      fontFamily: 'monospace', fontSize: '13px', color: active ? '#9be36e' : '#888888'
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: active ? COLOR_SUCCESS : COLOR_TEXT_DIM
     }).setOrigin(0.5);
     bg.on('pointerup', () => { sfx.click(); onClick(); });
     c.add([bg, txt]);
@@ -181,9 +182,9 @@ export class SettingsScene extends Phaser.Scene {
       .setStrokeStyle(2, 0xff7e7e)
       .setDepth(2000);
     const text = this.add.text(width / 2, height / 2 - 30, 'Spielstand wirklich loeschen?\n\nAlle Pflanzen, Items, Achievements\nund Story-Fortschritt gehen verloren!', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#ffffff', align: 'center'
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#ffffff', align: 'center'
     }).setOrigin(0.5).setDepth(2001);
-    const yesBtn = this.makeButton(width / 2 - 80, height / 2 + 50, 'Ja, loeschen', '#ff7e7e', () => {
+    const yesBtn = this.makeButton(width / 2 - 80, height / 2 + 50, 'Ja, loeschen', COLOR_ERROR, () => {
       gameStore.resetToNewGame();
       sfx.click();
       overlay.destroy();
@@ -193,7 +194,7 @@ export class SettingsScene extends Phaser.Scene {
       this.scene.start('MenuScene');
     });
     yesBtn.setDepth(2001);
-    const noBtn = this.makeButton(width / 2 + 80, height / 2 + 50, 'Abbrechen', '#9be36e', () => {
+    const noBtn = this.makeButton(width / 2 + 80, height / 2 + 50, 'Abbrechen', COLOR_SUCCESS, () => {
       overlay.destroy();
       text.destroy();
       yesBtn.destroy();
@@ -211,7 +212,7 @@ export class SettingsScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     const txt = this.add.text(0, 0, label, {
-      fontFamily: 'monospace', fontSize: '11px', color: accent
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: accent
     }).setOrigin(0.5);
     bg.on('pointerup', () => { sfx.click(); onClick(); });
     c.add([bg, txt]);
