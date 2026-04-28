@@ -36,11 +36,12 @@ export class SeasonTintOverlay {
     const t = gameStore.getTime();
     let color = 0x000000;
     let alpha = 0;
+    // S-POLISH-B2-R5: Stärkere Saison-Farbton-Shifts
     switch (t.season) {
-      case 0: color = 0xffd4e8; alpha = 0.025; break; // Fruehling rosa (V0.2: halbiert wegen Stacking)
-      case 1: color = 0xffe6a0; alpha = 0.02; break; // Sommer warm
-      case 2: color = 0xff9a3d; alpha = 0.05; break; // Herbst orange
-      case 3: color = 0xb0c8ff; alpha = 0.06; break; // Winter blau-weiss
+      case 0: color = 0xc8f0b0; alpha = 0.07; break; // Frühling: frisches Grünlich
+      case 1: color = 0xffe066; alpha = 0.06; break; // Sommer: warmes Sonnen-Gelb
+      case 2: color = 0xff8c30; alpha = 0.09; break; // Herbst: intensives Orange-Braun
+      case 3: color = 0xa0c0ff; alpha = 0.10; break; // Winter: kühles Blau
     }
     this.tintRect.fillColor = color;
     this.tintRect.fillAlpha = alpha;

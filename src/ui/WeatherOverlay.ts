@@ -109,12 +109,12 @@ export class WeatherOverlay {
     const H = cam.height;
 
     if (w === 'rain' || w === 'storm') {
-      const count = w === 'storm' ? 80 : 45;
+      const count = w === 'storm' ? 100 : 50; // S-POLISH-B2-R5: dichterer Regen
       for (let i = 0; i < count; i++) {
         const sprite = this.scene.add.rectangle(
           Math.random() * W,
           Math.random() * H,
-          2, 8,
+          2, 10, // S-POLISH-B2-R5: etwas längere Regen-Tropfen
           0x9bc4e8, 0.6
         ).setOrigin(0.5).setDepth(950).setScrollFactor(0);
         cam.ignore(sprite);
@@ -122,7 +122,7 @@ export class WeatherOverlay {
       }
       if (this.windOverlay) {
         this.windOverlay.fillColor = 0x223844;
-        this.windOverlay.fillAlpha = w === 'storm' ? 0.30 : 0.18;
+        this.windOverlay.fillAlpha = w === 'storm' ? 0.32 : 0.20; // S-POLISH-B2-R5: Regen-Overlay
       }
     } else if (w === 'snow') {
       const count = 60;
@@ -134,7 +134,7 @@ export class WeatherOverlay {
           0xffffff, 0.9
         ).setOrigin(0.5).setDepth(950).setScrollFactor(0);
         cam.ignore(sprite);
-        this.particles.push({ sprite, vx: (Math.random() - 0.5) * 1.5, vy: 1.5 + Math.random() * 1.5 });
+        this.particles.push({ sprite, vx: (Math.random() - 0.5) * 0.8, vy: 0.8 + Math.random() * 0.8 }); // S-POLISH-B2-R5: sanftere Schnee-Drift
       }
       if (this.windOverlay) {
         this.windOverlay.fillColor = 0xc8d8e8;
