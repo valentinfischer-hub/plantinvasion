@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM, setPersistedVolume, getPersistedVolume, setSfxVolume, getSfxVolume, setMusicVolume, getMusicVolume, getPersistedSfxVolume, setPersistedSfxVolume, getPersistedMusicVolume, setPersistedMusicVolume } from '../audio/sfxGenerator';
 import { getLocale, setLocale } from '../i18n/index';
-import { COLOR_ERROR, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { COLOR_ERROR, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR, getColorblindMode, setColorblindMode, type ColorblindMode } from '../ui/uiTheme';
 
 /**
  * Settings-Scene V0.2 (2026-04-28).
@@ -142,7 +142,30 @@ export class SettingsScene extends Phaser.Scene {
       fontFamily: FONT_FAMILY, fontSize: '9px', color: '#553e2d'
     }).setOrigin(0.5, 0);
 
-    by += 50;
+    by += 36;
+    // S-POLISH-B2-R16: Colorblind-Mode Selector
+    this.add.text(width / 2 - 150, by, 'Farbenblind-Modus', {
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
+    });
+    by += 22;
+    const cbModes: ColorblindMode[] = ['normal', 'deuteranopia', 'protanopia', 'tritanopia'];
+    const cbLabels: Record<ColorblindMode, string> = {
+      normal: 'Normal', deuteranopia: 'Deuteranopie (R/G)', protanopia: 'Protanopie (R/G)', tritanopia: 'Tritanopie (B/G)'
+    };
+    let currentCbMode = getColorblindMode();
+    const cbModeText = this.add.text(width / 2, by, cbLabels[currentCbMode], {
+      fontFamily: FONT_FAMILY, fontSize: '11px', color: COLOR_SUCCESS,
+      backgroundColor: '#222', padding: { x: 6, y: 3 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    cbModeText.on('pointerup', () => {
+      const nextIdx = (cbModes.indexOf(currentCbMode) + 1) % cbModes.length;
+      currentCbMode = cbModes[nextIdx];
+      setColorblindMode(currentCbMode);
+      cbModeText.setText(cbLabels[currentCbMode]);
+      sfx.click();
+    });
+    by += 42;
+
     // Save-Reset (mit Bestaetigung)
     const _resetBtn = this.makeButton(width / 2, by, 'Spielstand loeschen', COLOR_ERROR, () => this.confirmReset());
     void _resetBtn;

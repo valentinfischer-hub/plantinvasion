@@ -92,3 +92,85 @@ export const DEPTH_OVERLAY = 1000;
 export const DEPTH_MODAL = 1500;
 export const DEPTH_TOAST = 2000;
 export const DEPTH_DEBUG = 9999;
+
+// ============================================================
+// S-POLISH-B2-R16: Accessibility — Colorblind-Mode + Kontrast-Check
+// ============================================================
+
+/** Colorblind-Modus-Typen: normal | deuteranopia | protanopia | tritanopia */
+export type ColorblindMode = 'normal' | 'deuteranopia' | 'protanopia' | 'tritanopia';
+
+let _colorblindMode: ColorblindMode = 'normal';
+const CB_STORAGE_KEY = 'pi_colorblind_mode';
+
+export function getColorblindMode(): ColorblindMode {
+  if (typeof localStorage === 'undefined') return _colorblindMode;
+  const stored = localStorage.getItem(CB_STORAGE_KEY) as ColorblindMode | null;
+  if (stored) _colorblindMode = stored;
+  return _colorblindMode;
+}
+
+export function setColorblindMode(mode: ColorblindMode): void {
+  _colorblindMode = mode;
+  try { localStorage.setItem(CB_STORAGE_KEY, mode); } catch {}
+}
+
+/**
+ * Gibt eine Farbe zurück, die für den aktuellen Colorblind-Modus angepasst ist.
+ * Ersetzt grün/rot durch unterscheidbare Farben.
+ */
+export function cbColor(role: 'success' | 'error' | 'warning' | 'info' | 'mutation'): string {
+  const mode = getColorblindMode();
+  if (mode === 'normal') {
+    const map: Record<string, string> = {
+      success: COLOR_SUCCESS, error: COLOR_ERROR, warning: COLOR_REWARD,
+      info: COLOR_INFO, mutation: COLOR_MUTATION
+    };
+    return map[role] ?? '#ffffff';
+  }
+  // Deuteranopia + Protanopia: Grün/Rot nicht unterscheidbar → Blau/Orange nutzen
+  if (mode === 'deuteranopia' || mode === 'protanopia') {
+    const map: Record<string, string> = {
+      success: '#5599ff',   // Blau statt Grün
+      error: '#ff8800',     // Orange statt Rot
+      warning: '#ffee00',   // Gelb-intensiv
+      info: '#aaddff',
+      mutation: '#cc99ff'
+    };
+    return map[role] ?? '#ffffff';
+  }
+  // Tritanopia: Blau/Gelb nicht unterscheidbar → Magenta/Türkis nutzen
+  if (mode === 'tritanopia') {
+    const map: Record<string, string> = {
+      success: '#00ddaa',   // Türkis statt Grün
+      error: '#ff5588',     // Magenta statt Rot
+      warning: '#ff9944',   // Orange statt Gelb
+      info: '#aaccee',
+      mutation: '#dd88ff'
+    };
+    return map[role] ?? '#ffffff';
+  }
+  return '#ffffff';
+}
+
+/** Minimal-Kontrast-Prüfung für Debugging-Outputs (vereinfachter WC3-Check). */
+export function wcagContrastRatio(hex1: string, hex2: string): number {
+  function lum(hex: string): number {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    const linearize = (c: number) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
+  }
+  const l1 = lum(hex1), l2 = lum(hex2);
+  const lighter = Math.max(l1, l2), darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/** Font-Size-Audit: alle UI-Sizes müssen ≥ 9px sein */
+export const MIN_ACCESSIBLE_FONT_SIZE = 9;
+export const UI_FONT_SIZES = [
+  FONT_SIZE_TITLE, // '14px'
+  FONT_SIZE_BODY,  // '11px'
+  FONT_SIZE_SMALL  // '10px'
+];
