@@ -91,18 +91,28 @@ export class MarketScene extends Phaser.Scene {
       const price = isBuy ? item.buyPrice : item.sellPrice;
       const action = isBuy ? 'Kaufen' : 'Verkaufen';
 
+      // S-POLISH-B2-R9: Greyed-out fuer heute bereits gekaufte Roster-Items
+      const boughtCount = this.mode === 'roster' ? gameStore.getMarketBoughtToday(item.slug) : 0;
+      const alreadyBought = this.mode === 'roster' && boughtCount > 0;
+      const rowAlpha = alreadyBought ? 0.45 : 1.0;
+
       const row = this.add.container(width / 2, by);
       // S-POLISH Run18: 44px Touch-Target
+      const borderColor = alreadyBought ? 0x556655 : 0x8a6e4a;
       const bg = this.add.rectangle(0, 0, width - 40, 44, 0x000000, 0.5)
-        .setStrokeStyle(1, 0x8a6e4a);
+        .setStrokeStyle(1, borderColor);
+      const nameColor = alreadyBought ? '#888888' : '#ffffff';
       const nameTxt = this.add.text(-(width - 40) / 2 + 10, -8, item.name, {
-        fontFamily: 'monospace', fontSize: '12px', color: '#ffffff'
+        fontFamily: 'monospace', fontSize: '12px', color: nameColor
       });
-      const detailTxt = this.add.text(-(width - 40) / 2 + 10, 6, `Bestand: ${have}  Preis: ${price}`, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#8a6e4a'
+      const boughtLabel = alreadyBought ? `  (${boughtCount}x gekauft)` : '';
+      const detailTxt = this.add.text(-(width - 40) / 2 + 10, 6, `Bestand: ${have}  Preis: ${price}${boughtLabel}`, {
+        fontFamily: 'monospace', fontSize: '10px', color: alreadyBought ? '#556655' : '#8a6e4a'
       });
-      const buyBtn = this.add.text((width - 40) / 2 - 70, 0, action, {
-        fontFamily: 'monospace', fontSize: '11px', color: isBuy ? '#9be36e' : '#fcd95c',
+      const btnLabel = alreadyBought ? 'Nochmal' : action;
+      const btnColor = alreadyBought ? '#6a9e6a' : (isBuy ? '#9be36e' : '#fcd95c');
+      const buyBtn = this.add.text((width - 40) / 2 - 70, 0, btnLabel, {
+        fontFamily: 'monospace', fontSize: '11px', color: btnColor,
         backgroundColor: '#222222', padding: { x: 6, y: 4 }
       }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
       buyBtn.on('pointerup', () => {
@@ -110,12 +120,15 @@ export class MarketScene extends Phaser.Scene {
         this.tweens.add({ targets: buyBtn, scaleX: 1.25, scaleY: 1.25, duration: 80, yoyo: true, ease: 'Back.Out' });
         this.tryTransaction(item);
       });
-      // S-POLISH-09b: Row Hover-Glow
+      // S-POLISH-09b: Row Hover-Glow (nur wenn nicht alreadyBought)
       bg.setInteractive({ useHandCursor: false });
-      bg.on('pointerover', () => { bg.setStrokeStyle(2, 0xc9a96a); });
-      bg.on('pointerout', () => { bg.setStrokeStyle(1, 0x8a6e4a); });
+      if (!alreadyBought) {
+        bg.on('pointerover', () => { bg.setStrokeStyle(2, 0xc9a96a); });
+        bg.on('pointerout', () => { bg.setStrokeStyle(1, 0x8a6e4a); });
+      }
       buyBtn.on('pointerover', () => { buyBtn.setAlpha(0.75); });
       buyBtn.on('pointerout', () => { buyBtn.setAlpha(1.0); });
+      row.setAlpha(rowAlpha);
       row.add([bg, nameTxt, detailTxt, buyBtn]);
       this.listContainer.add(row);
       by += 42;
@@ -138,6 +151,10 @@ export class MarketScene extends Phaser.Scene {
         return;
       }
       gameStore.addItem(item.slug);
+      // S-POLISH-B2-R9: Bought-Today-Tracking fuer Roster-Modus
+      if (this.mode === 'roster') {
+        gameStore.recordMarketRosterBought(item.slug);
+      }
       sfx.pickup();
     } else {
       const has = gameStore.consumeItem(item.slug);

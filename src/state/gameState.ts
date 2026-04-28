@@ -435,6 +435,31 @@ class GameStore {
     return { ok: true };
   }
 
+  // -------- Market: Bought-Today Tracking (S-POLISH-B2-R9) --------
+
+  /** Holt und migriert das Bought-Today-Tracking. Tag-Reset wenn dayIndex anders. */
+  private getBoughtTodayMap(now = Date.now()): Record<string, number> {
+    const dayIndex = Math.floor((now - this.state.createdAt) / (24 * 60 * 60 * 1000));
+    if (this.state.marketBoughtTodayDay !== dayIndex) {
+      this.state.marketBoughtToday = {};
+      this.state.marketBoughtTodayDay = dayIndex;
+    }
+    if (!this.state.marketBoughtToday) this.state.marketBoughtToday = {};
+    return this.state.marketBoughtToday;
+  }
+
+  /** Gibt zurueck wie viele eines Items heute im Roster-Modus gekauft wurden. */
+  getMarketBoughtToday(itemSlug: string, now = Date.now()): number {
+    return this.getBoughtTodayMap(now)[itemSlug] ?? 0;
+  }
+
+  /** Markiert einen Kauf im Roster-Modus. */
+  recordMarketRosterBought(itemSlug: string, now = Date.now()): void {
+    const map = this.getBoughtTodayMap(now);
+    map[itemSlug] = (map[itemSlug] ?? 0) + 1;
+    this.save();
+  }
+
   // -------- Helpers fuer Mutation-Bonus aus Soil --------
   getMutationBonusForSlot(gridX: number, gridY: number): number {
     const tier = this.getSoilTier(gridX, gridY);

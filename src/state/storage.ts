@@ -84,6 +84,9 @@ export interface GameState {
   avatarId?: number;
   // S-POLISH-B2-R1: Energy-System
   energy?: number;  // 0..100, startet bei 100, regeneriert bei endDay()
+  // S-POLISH-B2-R9: Market-Bought-Today Tracking
+  marketBoughtToday?: Record<string, number>;  // slug -> count bought today (in roster mode)
+  marketBoughtTodayDay?: number;               // dayIndex when this was last reset
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
@@ -228,6 +231,8 @@ function migrate(parsedRaw: unknown): GameState | null {
       parsed.locale = (storedLocale === 'en') ? 'en' : 'de';
     }
     if (typeof parsed.energy !== 'number') parsed.energy = 100; // energy default
+    if (!parsed.marketBoughtToday) parsed.marketBoughtToday = {};
+    if (typeof parsed.marketBoughtTodayDay !== 'number') parsed.marketBoughtTodayDay = -1;
     debugLog('[storage] migrated save v10 -> v11 (i18n locale field)');
   }
   if (parsed.version === 5) {
@@ -281,6 +286,8 @@ function migrate(parsedRaw: unknown): GameState | null {
       parsed.locale = (storedLocale === 'en') ? 'en' : 'de';
     }
     if (typeof parsed.energy !== 'number') parsed.energy = 100; // S-POLISH-B2-R1: Energy default
+    if (!parsed.marketBoughtToday) parsed.marketBoughtToday = {};
+    if (typeof parsed.marketBoughtTodayDay !== 'number') parsed.marketBoughtTodayDay = -1;
     return parsed as GameState;
   }
   if (parsed.version === 2) {
