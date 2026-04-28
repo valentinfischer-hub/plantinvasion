@@ -16,6 +16,7 @@ import {
 } from '../utils/constants';
 import { PlayerController, type CollisionChecker } from '../entities/PlayerController';
 import { NPC } from '../entities/NPC';
+import { buildWallsSet } from '../entities/npcMovement';
 import { DialogBox } from '../ui/DialogBox';
 import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
 import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
@@ -120,6 +121,7 @@ function checkQuestComplete(quest: QuestDef): boolean {
 
 export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private map: MapDef = wurzelheim;
+  private npcWalls: ReadonlySet<string> = new Set();
   private currentZone: string = 'wurzelheim';
   private player!: PlayerController;
   private npcs: NPC[] = [];
@@ -184,6 +186,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     const ow = gameStore.getOverworldPos();
     this.currentZone = ow.zone || 'wurzelheim';
     this.map = MAPS[this.currentZone] ?? wurzelheim;
+    this.npcWalls = buildWallsSet(this.map.tiles);
     this.player = new PlayerController(
       this,
       ow.tileX,
@@ -471,7 +474,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Performance: Max 5-10 NPCs, jeweils ein Funktions-Call alle Frames mit fruehem Return wenn Idle. Vernachlaessigbar bei 60fps.
     if (this.npcs && this.npcs.length > 0) {
       const dialogActive = this.dialog?.open_ ?? false;
-      const npcWalls: ReadonlySet<string> = new Set();
+      const npcWalls = this.npcWalls;
       const now = gameTimeNow();
       for (const npc of this.npcs) npc.step(now, npcWalls, dialogActive);
     }
