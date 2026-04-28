@@ -127,3 +127,95 @@ describe('NPC-Movement V0.1: makeNpcMovementState Defaults', () => {
     expect(makeNpcMovementState('a', 0, 0).lastMoveAt).toBe(0);
   });
 });
+
+// ===========================
+// V0.2 Tests: Pathfinding-Modus + buildWallsSet
+// ===========================
+import { setNpcTarget, buildWallsSet } from '../npcMovement';
+
+describe('NPC-Movement V0.2: Pathfinding-Modus (targetTile)', () => {
+  it('mit targetTile bewegt sich NPC Richtung Ziel', () => {
+    const s = makeNpcMovementState('npc_path', 0, 0, 'down', 20);
+    const withTarget = setNpcTarget(s, { x: 5, y: 0 });
+    const r = npcMovementTick(withTarget, NPC_MOVE_INTERVAL_MS + 100, NO_WALLS);
+    // A* waehlt naechsten Schritt auf dem Pfad -> x sollte steigen
+    expect(r.tileX).toBe(1);
+    expect(r.tileY).toBe(0);
+    expect(r.facing).toBe('right');
+  });
+
+  it('mit targetTile und Wall findet Umweg', () => {
+    // Wand bei x=1 y=0 -> muss ueber y=1 gehen
+    const walls = new Set(['1,0']);
+    const s = setNpcTarget(makeNpcMovementState('npc_wall', 0, 0, 'down', 20), { x: 3, y: 0 });
+    const r = npcMovementTick(s, NPC_MOVE_INTERVAL_MS + 100, walls);
+    // Naechster Schritt muss nicht die geblockte Wall sein
+    expect(r.tileX !== 1 || r.tileY !== 0).toBe(true);
+    // Bewegung ist erfolgt
+    expect(r.tileX !== 0 || r.tileY !== 0).toBe(true);
+  });
+
+  it('bereits am Ziel -> kein Schritt (lastMoveAt gesetzt)', () => {
+    const s = setNpcTarget(makeNpcMovementState('npc_atgoal', 5, 5, 'down', 20), { x: 5, y: 5 });
+    const r = npcMovementTick(s, NPC_MOVE_INTERVAL_MS + 100, NO_WALLS);
+    expect(r.tileX).toBe(5);
+    expect(r.tileY).toBe(5);
+    expect(r.lastMoveAt).toBe(NPC_MOVE_INTERVAL_MS + 100);
+  });
+
+  it('kein erreichbarer Pfad -> kein Schritt, lastMoveAt gesetzt', () => {
+    // target (5,5) komplett eingemauert (alle 4 Nachbarn geblockt) -> null von findPath
+    const walls = new Set(['4,5', '6,5', '5,4', '5,6']);
+    const s = setNpcTarget(makeNpcMovementState('npc_stuck', 0, 0, 'down', 30), { x: 5, y: 5 });
+    const r = npcMovementTick(s, NPC_MOVE_INTERVAL_MS + 100, walls);
+    expect(r.tileX).toBe(0);
+    expect(r.tileY).toBe(0);
+    expect(r.lastMoveAt).toBe(NPC_MOVE_INTERVAL_MS + 100);
+  });
+});
+
+describe('setNpcTarget', () => {
+  it('setzt targetTile auf State', () => {
+    const s = makeNpcMovementState('npc_x', 0, 0);
+    const r = setNpcTarget(s, { x: 5, y: 3 });
+    expect(r.targetTile).toEqual({ x: 5, y: 3 });
+    // Original unveraendert
+    expect(s.targetTile).toBeUndefined();
+  });
+
+  it('null cleared targetTile', () => {
+    const s = setNpcTarget(makeNpcMovementState('npc_x', 0, 0), { x: 5, y: 3 });
+    const r = setNpcTarget(s, null);
+    expect(r.targetTile).toBeUndefined();
+  });
+});
+
+describe('buildWallsSet', () => {
+  it('Tile-Typ 3 (Wasser) wird zu Wall', () => {
+    const tiles = [[0, 3], [0, 0]];
+    const walls = buildWallsSet(tiles);
+    expect(walls.has('1,0')).toBe(true);
+    expect(walls.has('0,0')).toBe(false);
+  });
+
+  it('Tile-Typen 4,5,6,8 werden zu Walls', () => {
+    const tiles = [[4, 5], [6, 8]];
+    const walls = buildWallsSet(tiles);
+    expect(walls.has('0,0')).toBe(true); // 4
+    expect(walls.has('1,0')).toBe(true); // 5
+    expect(walls.has('0,1')).toBe(true); // 6
+    expect(walls.has('1,1')).toBe(true); // 8
+  });
+
+  it('begehbare Tiles (0,1,2,7,9,12) sind nicht in walls', () => {
+    const tiles = [[0, 1, 2, 7, 9, 12]];
+    const walls = buildWallsSet(tiles);
+    for (let x = 0; x < 6; x++) {
+      expect(walls.has(`${x},0`)).toBe(false);
+    }
+  });
+
+  it('leere Tilemap -> leere walls', () => {
+    expect(buildWallsSet([]).size).toBe(0);
+  });
+});
