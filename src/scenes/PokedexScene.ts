@@ -241,6 +241,13 @@ export class PokedexScene extends Phaser.Scene {
           color
         })
         .setOrigin(0.5, 0);
+      // S-POLISH Run6: glow-pulse fuer entdeckte (aber noch nicht gefangene) Entries
+      if (isDiscovered && !isCaptured) {
+        this.tweens.add({
+          targets: t, alpha: { from: 1, to: 0.55 }, duration: 900,
+          ease: 'Sine.InOut', yoyo: true, repeat: -1
+        });
+      }
       this.listContainer.add(t);
       by += this.rowHeight;
     }

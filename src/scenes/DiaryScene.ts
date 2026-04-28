@@ -174,7 +174,12 @@ export class DiaryScene extends Phaser.Scene {
   private navigate(delta: number): void {
     if (this.entries.length === 0) return;
     this.currentIdx = (this.currentIdx + delta + this.entries.length) % this.entries.length;
-    this.refresh();
+    // S-POLISH Run6: fade-out content, wechseln, fade-in
+    this.tweens.add({
+      targets: [this.contentText, this.titleText, this.dateText],
+      alpha: 0, duration: 100, ease: 'Cubic.Out',
+      onComplete: () => { this.refresh(); }
+    });
   }
 
   private refresh(): void {
@@ -184,5 +189,10 @@ export class DiaryScene extends Phaser.Scene {
     this.titleText.setText(e.title);
     this.contentText.setText(e.content);
     this.indexText.setText(`${this.currentIdx + 1} / ${this.entries.length}`);
+    // S-POLISH Run6: fade-in nach Textwechsel
+    this.tweens.add({
+      targets: [this.contentText, this.titleText, this.dateText],
+      alpha: 1, duration: 200, ease: 'Cubic.Out'
+    });
   }
 }
