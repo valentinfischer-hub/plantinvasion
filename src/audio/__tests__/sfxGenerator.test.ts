@@ -55,3 +55,7 @@ describe('sfxGenerator API-Vollständigkeit', () => {
     expect(typeof sfx.footstep).toBe('function');
   });
 });
+
+  it('sfx.achievementJingle ist eine Funktion', () => {
+    expect(typeof sfx.achievementJingle).toBe('function');
+  });

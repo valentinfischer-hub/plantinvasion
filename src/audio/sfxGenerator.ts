@@ -99,6 +99,17 @@ export const sfx = {
     } else {
       blip({ freq: 80, duration: 0.1, volume: 0.28, type: 'sawtooth' });
     }
+  },
+  /** S-POLISH-B2-R6: Achievement-Jingle - aufsteigende Tonfolge */
+  achievementJingle(): void {
+    const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6 (Major-Akkord aufsteigend)
+    notes.forEach((freq, i) => {
+      setTimeout(() => {
+        blip({ freq, freqEnd: freq * 1.05, duration: 0.18, volume: 0.35, type: 'sine' });
+      }, i * 120);
+    });
+    // Finaler Glocken-Ton
+    setTimeout(() => blip({ freq: 1568, freqEnd: 1568, duration: 0.4, volume: 0.25, type: 'sine' }), 480);
   }
 };
 

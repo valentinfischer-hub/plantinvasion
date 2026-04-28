@@ -384,45 +384,65 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (!def) return;
     const cam = this.cameras.main;
     const z = cam.zoom || 1;
-    // Camera-Zoom-aware Position (siehe DialogBox.ts)
+    // S-POLISH-B2-R6: Aufwändigerer Achievement-Toast
+    const W = 340, H = 80;
     const container = this.add
-      .container(cam.width / 2 / z, 80 / z)
+      .container(cam.width / 2 / z, 90 / z)
       .setScrollFactor(0)
-      .setDepth(2100)
+      .setDepth(2200)
       .setScale(1 / z);
     const bg = this.add.graphics();
-    bg.fillStyle(0xffd166, 0.95);
-    bg.fillRoundedRect(-160, -28, 320, 56, 8);
-    bg.lineStyle(2, 0xb86ee3, 1);
-    bg.strokeRoundedRect(-160, -28, 320, 56, 8);
+    // Goldener Hintergrund mit doppeltem Rahmen
+    bg.fillStyle(0x1a1400, 0.96);
+    bg.fillRoundedRect(-W / 2, -H / 2, W, H, 10);
+    bg.lineStyle(3, 0xffd700, 1);
+    bg.strokeRoundedRect(-W / 2, -H / 2, W, H, 10);
+    bg.lineStyle(1, 0xb8860b, 0.6);
+    bg.strokeRoundedRect(-W / 2 + 4, -H / 2 + 4, W - 8, H - 8, 7);
     container.add(bg);
-    const title = this.add.text(0, -16, 'Achievement!', {
-      fontFamily: FONT_FAMILY, fontSize: '12px', color: '#1a1f1a'
+    // Stern-Icon links
+    const icon = this.add.text(-W / 2 + 20, 0, '★', {
+      fontFamily: FONT_FAMILY, fontSize: '22px', color: '#ffd700'
+    }).setOrigin(0.5);
+    // "Achievement freigeschaltet!" Header
+    const header = this.add.text(10, -H / 2 + 14, 'Achievement freigeschaltet!', {
+      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#ffd700', alpha: 0.9
     }).setOrigin(0.5, 0);
-    const name = this.add.text(0, 4, def.name, {
-      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: '#1a1f1a'
+    // Achievement-Name gross
+    const name = this.add.text(10, -H / 2 + 28, def.name, {
+      fontFamily: FONT_FAMILY, fontSize: '14px', color: '#ffffff'
     }).setOrigin(0.5, 0);
-    container.add([title, name]);
+    // Beschreibung klein
+    const desc = this.add.text(10, -H / 2 + 48, def.description.slice(0, 45) + (def.description.length > 45 ? '…' : ''), {
+      fontFamily: FONT_FAMILY, fontSize: '9px', color: '#bbbbbb'
+    }).setOrigin(0.5, 0);
+    container.add([bg, icon, header, name, desc]);
     this.registerInAllUiCams(container);
-    sfx.dialogOpen();
-    // S-POLISH Run-2: Entrance-Animation (Scale + Alpha-In) dann Fade-Out
-    container.setScale(0.85);
+    // S-POLISH-B2-R6: Achievement-Jingle statt simples dialogOpen
+    sfx.achievementJingle();
+    // Entrance: Scale + Alpha-In mit mehr Bounce
+    container.setScale(0.7);
     container.setAlpha(0);
     this.tweens.add({
-      targets: container,
-      scale: 1,
-      alpha: 1,
-      duration: 280,
-      ease: 'Back.Out'
+      targets: container, scale: 1 / z, alpha: 1, duration: 350, ease: 'Back.Out'
     });
+    // 4s sichtbar (statt 3.2s)
     this.tweens.add({
-      targets: container,
-      alpha: 0,
-      delay: 3200,
-      duration: 600,
-      ease: 'Cubic.Out',
+      targets: container, alpha: 0, delay: 4000, duration: 700, ease: 'Cubic.Out',
       onComplete: () => container.destroy()
     });
+    // Konfetti-Burst um den Toast
+    for (let i = 0; i < 8; i++) {
+      const conf = this.add.circle(
+        cam.width / 2 / z + (Math.random() - 0.5) * W,
+        90 / z + (Math.random() - 0.5) * H,
+        3, [0xffd700, 0xff6b6b, 0x4ecdc4, 0x95e56e][Math.floor(Math.random() * 4)], 0.9
+      ).setScrollFactor(0).setDepth(2199);
+      this.tweens.add({
+        targets: conf, y: conf.y - 40, alpha: 0, duration: 800, delay: i * 60,
+        ease: 'Power2', onComplete: () => conf.destroy()
+      });
+    }
   }
 
 
