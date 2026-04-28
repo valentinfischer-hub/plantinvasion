@@ -59,6 +59,7 @@ export class GardenScene extends Phaser.Scene {
   // S-POLISH Run16: Subscribe-Throttle — renderPlants() max 1x alle 500ms aus der store-Subscription
   private _renderPending = false;
   private crossMode = false;
+  private companionLineGraphics?: Phaser.GameObjects.Graphics;
   private crossFirstPlantId: string | null = null;
   private crossModeHint?: Phaser.GameObjects.Text;
   private crossBtnBg?: Phaser.GameObjects.Rectangle;
@@ -785,7 +786,32 @@ export class GardenScene extends Phaser.Scene {
         this.cards.delete(id);
       }
     });
+    // S-POLISH-B2-R3: Companion-Aura - grüne Aura auf Karten bei aktiven Companion-Paaren
+    this.updateCompanionAuras(state.plants);
     this.refreshHeader();
+  }
+
+  private updateCompanionAuras(plants: Plant[]): void {
+    if (!this.companionLineGraphics) {
+      this.companionLineGraphics = this.add.graphics();
+      this.companionLineGraphics.setDepth(50);
+    }
+    const g = this.companionLineGraphics;
+    g.clear();
+    const drawn = new Set<string>();
+    for (const plant of plants) {
+      const { bonus } = companionBonus(plant, plants);
+      if (bonus <= 0) continue;
+      // Zeichne einen grünen Glow-Ring um die Card
+      const card = this.cards.get(plant.id);
+      if (!card) continue;
+      const cx = card.container.x, cy = card.container.y;
+      const pairKey = `${plant.gridX},${plant.gridY}`;
+      if (drawn.has(pairKey)) continue;
+      drawn.add(pairKey);
+      g.lineStyle(2, 0x9be36e, 0.5);
+      g.strokeCircle(cx, cy, TILE * 0.52);
+    }
   }
 
   /**

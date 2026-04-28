@@ -103,3 +103,40 @@ describe('getCompanionsFor', () => {
     expect(mint.find(c => c.partner === 'sunflower')).toBeDefined();
   });
 });
+
+describe('companionBonus - erweiterte Tests', () => {
+  it('Venus Flytrap + Sundew haben höchsten Bonus (0.20)', () => {
+    const vf = makePlant('venus-flytrap', 0, 0);
+    const sd = makePlant('sundew', 1, 0);
+    expect(companionBonus(vf, [vf, sd]).bonus).toBe(0.20);
+  });
+
+  it('Water-Lily + Iris haben hohen Bonus', () => {
+    const wl = makePlant('water-lily', 0, 0);
+    const ir = makePlant('iris', 0, 1);
+    expect(companionBonus(wl, [wl, ir]).bonus).toBe(0.20);
+  });
+
+  it('Fern + Orchid geben 0.15 Bonus', () => {
+    const fern = makePlant('fern', 1, 1);
+    const orchid = makePlant('orchid', 2, 1);
+    expect(companionBonus(fern, [fern, orchid]).bonus).toBe(0.15);
+  });
+
+  it('drei Pflanzen - nimmt maximalen Bonus wenn mehrere Matches', () => {
+    // venus-flytrap hat sundew (0.20) als besten Partner
+    const vf = makePlant('venus-flytrap', 1, 1);
+    const sundew = makePlant('sundew', 0, 1); // links (0.20)
+    const rose = makePlant('rose', 2, 1);     // rechts (kein Match mit vf)
+    const r = companionBonus(vf, [vf, sundew, rose]);
+    expect(r.bonus).toBe(0.20);
+  });
+
+  it('getCompanionsFor gibt alle Partner zurück', () => {
+    const result = getCompanionsFor('lavender');
+    expect(result.length).toBeGreaterThan(0);
+    const tomatoPartner = result.find(c => c.partner === 'tomato-plant');
+    expect(tomatoPartner).toBeDefined();
+    expect(tomatoPartner?.bonus).toBe(0.15);
+  });
+});
