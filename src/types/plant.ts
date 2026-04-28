@@ -11,7 +11,7 @@ export type StatTriple = {
 export type GrowthStage = 0 | 1 | 2 | 3 | 4;
 export const GROWTH_STAGE_NAMES = ['Seed', 'Sprout', 'Juvenile', 'Adult', 'Blooming'] as const;
 
-export type Rarity = 1 | 2 | 3 | 4 | 5;
+export type Rarity = 1 | 2 | 3 | 4 | 5 | 6;  // 6 = Mythic-Tier (S-09 Erweiterung)
 
 export type QualityTier = 'common' | 'fine' | 'quality' | 'premium' | 'pristine';
 export const QUALITY_TIERS: readonly QualityTier[] = ['common', 'fine', 'quality', 'premium', 'pristine'] as const;

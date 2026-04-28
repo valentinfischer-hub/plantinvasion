@@ -74,9 +74,18 @@ export class NPC {
       return;
     }
     if (this.questIndicator) {
-      this.questIndicator.setText(mode === 'turnin' ? '?' : '!');
-      this.questIndicator.setColor(mode === 'turnin' ? '#9be36e' : '#fcd95c');
-      return;
+      // B-013: Safety-Check. Wenn questIndicator nach Scene-Teardown noch referenziert
+      // aber bereits destroyed ist, knickt setColor mit "Cannot read properties of null
+      // (reading 'drawImage')" ab. Pruefe active-Flag und re-create wenn noetig.
+      if (this.questIndicator.active && this.questIndicator.scene) {
+        this.questIndicator.setText(mode === 'turnin' ? '?' : '!');
+        this.questIndicator.setColor(mode === 'turnin' ? '#9be36e' : '#fcd95c');
+        return;
+      }
+      // Stale-Reference - cleanup und neu erstellen
+      this.questIndicatorTween?.stop();
+      this.questIndicator = undefined;
+      this.questIndicatorTween = undefined;
     }
     const px = this.data.tileX * TILE_SIZE + TILE_SIZE / 2;
     const py = this.data.tileY * TILE_SIZE - 4;
