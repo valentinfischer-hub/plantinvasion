@@ -661,6 +661,23 @@ class GameStore {
     this.notify();
   }
 
+  /** S-POLISH-START-17: Charakter-Profil (Name + Avatar) nach Charakter-Erstellung setzen. */
+  setPlayerProfile(name: string, avatarId: number): void {
+    const trimmed = name.trim().slice(0, 16) || 'Botaniker';
+    this.state.playerName = trimmed;
+    this.state.avatarId   = Math.max(0, Math.min(3, avatarId));
+    this.save();
+    this.notify();
+  }
+
+  /** S-POLISH-START-17: Charakter-Profil abrufen. */
+  getPlayerProfile(): { name: string; avatarId: number } {
+    return {
+      name:     this.state.playerName ?? 'Botaniker',
+      avatarId: this.state.avatarId   ?? 0,
+    };
+  }
+
   getTutorial(): { step: number; done: boolean } {
     return this.state.tutorial ?? { step: 5, done: true };
   }

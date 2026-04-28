@@ -77,6 +77,9 @@ export interface GameState {
     metNpcs: string[];
     diaryEntries: number[];
   };
+  // S-POLISH-START-17: Charakter-Erstellung
+  playerName?: string;   // Frei gewählt, Default "Botaniker"
+  avatarId?: number;     // 0-3, Default 0
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';

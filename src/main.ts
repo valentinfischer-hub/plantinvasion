@@ -12,6 +12,7 @@ import { DiaryScene } from './scenes/DiaryScene';
 import { InventoryScene } from './scenes/InventoryScene';
 import { SettingsScene } from './scenes/SettingsScene';
 import { HelpScene } from './scenes/HelpScene';
+import { CharacterCreationScene } from './scenes/CharacterCreationScene';
 
 /**
  * Adaptive Resolution (D-001 Fix 2026-04-25):
@@ -74,7 +75,7 @@ const config: Phaser.Types.Core.GameConfig = {
     target: 60,
     forceSetTimeOut: true
   },
-  scene: [MenuScene, OverworldScene, GardenScene, BattleScene, PokedexScene, MarketScene, QuestLogScene, DiaryScene, InventoryScene, SettingsScene, HelpScene]
+  scene: [MenuScene, CharacterCreationScene, OverworldScene, GardenScene, BattleScene, PokedexScene, MarketScene, QuestLogScene, DiaryScene, InventoryScene, SettingsScene, HelpScene]
 };
 
 const game = new Phaser.Game(config);

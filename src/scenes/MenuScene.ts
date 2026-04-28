@@ -206,7 +206,8 @@ export class MenuScene extends Phaser.Scene {
       gameStore.resetToNewGame();
       gameStore.advanceTutorial(0);
       sfx.dialogAdvance();
-      this.transitionTo('OverworldScene', true);
+      // S-POLISH-START-17: Charakter-Erstellung vor OverworldScene
+      this.transitionTo('CharacterCreationScene', true);
     });
     // S-POLISH-START: Primary-CTA Pulse-Animation um neue Spieler zum Klick zu fuehren
     this.tweens.add({
