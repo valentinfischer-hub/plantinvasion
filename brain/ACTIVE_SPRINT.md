@@ -1,66 +1,49 @@
 # Active Sprint
 
-**Sprint**: S-09 Story-Akt-1 spielbar plus NPC-Walking plus Saison-Tile-Variationen
-**Start**: 2026-04-26 (geplant)
-**Geplantes Ende**: 2026-05-04
-**Ziel**: Story-Akt-1 voll spielbar mit Iris-Dialog-Choices und Auto-Quest-Akzept. NPC-Walking-Cycles. Saison-Tile-Variationen. Wetter als Encounter-Modifier.
+**Sprint:** S-09 Story-Akt-1 spielbar plus NPC-Walking plus Saison-Tile-Variationen
+**Start:** 2026-04-26
+**Geplantes Ende:** 2026-05-04
+**Aktueller Stand (2026-04-28):** ALLE TIER-4-DoD-ITEMS V0.1 LIVE.
 
-## Vorgaengiger Sprint S-08
-**Status**: ABGESCHLOSSEN am 2026-04-25.
-Postmortem: `brain/postmortems/S-08_giant_sprint.md`
-Devlog #3: `brain/devlogs/2026-04-25_devlog_03.md`
+## Sprint-DoD-Checkliste (V0.1)
 
-S-08 war der groesste Sprint mit 8 Biomen, Storyline V1, Day-Night, Wetter, Bossen, Tagebuch, Achievements.
+### NPC-Walking-Cycles ✓ V0.1 LIVE
+- [x] Spec geschrieben: brain/sprints/S-09/npc-walking.md
+- [x] Pure-Function: src/entities/npcMovement.ts (Spawn-Radius, Wall-Check, Dialog-Pause)
+- [x] Vitest: 13 Tests gruen
+- [x] NPC.step() + initMovement() Hooks
+- [x] OverworldScene-Integration in update() live
+- [ ] Browser-Smoke (Chrome MCP, 20:00-QA-Run)
+- [ ] V0.2 Pathfinding (Folge-Sprint S-10)
 
-## S-08-Zusatz-Iteration (2026-04-25 spaet)
-Nach Sprint-Ende noch 5 weitere Patches:
-- Booster-System V0.1 (D-021)
-- Seed-Acquisition V0.2 mit Pokemon-Style Foraging (D-024)
-- Achievements V0.1 plus Forage-Tiles biom-weit plus Daily-Login-Toast (D-025)
-- Achievement-Unlock-Toast plus MarketScene-Tagesangebot-Mode
-- Glaciara-Biom V0.1 plus PokedexScene-Achievement-Tab
-- Farm-Button (G-Hotkey) plus 14 neue NPCs plus 14 Lore-Schilder mit Zone-Pos-Lookup
+### Story-Akt-1 ✓ V0.1 LIVE
+- [x] Spec geschrieben: brain/sprints/S-09/story-akt-1.md
+- [x] Pure-Function: src/data/storyAct1.ts (evaluateAct1Progress + autoSetAct1Flags)
+- [x] Vitest: 12 Tests gruen
+- [x] OverworldScene-Integration in update() live: Auto-Flag-Setting + advanceAct(1) + collectDiaryEntry(1) + reward-Toast
+- [ ] Browser-Smoke End-to-End-Test
+- [ ] Story-Akt-2-Spec (Folge-Run)
 
-## Definition of Done S-09
-1. Story-Akt-1 spielbar: Iris-NPC mit Dialog-Choices, Auto-Quest-Akzept, Quest-Completion-Check
-2. NPC-Walking-Cycles: 4-Frame-Loop pro Richtung mit subtiler Idle-Animation
-3. Saison-Tile-Variationen: Fruehling-Bluete, Herbst-Blaetter, Winter-Schnee-Overlay
-4. Wetter als Encounter-Modifier: Regen +20% Bromelia, Schnee +20% Frostkamm-Pflanzen
-5. Performance-Pass: Map-Tile-Render via Phaser-Tilemap statt Image-Sprite pro Tile
-6. Theo-Tausch-Modus in Verdanto NPC (Item-fuer-Item statt Coin)
-7. Crossing-UI Click-Click-Modus statt nur C-Hotkey
-8. Build, Test, Push, Brain-Update, Slack, Devlog #4 (in S-10)
+### Saison-Tile-Variationen ✓ ABGESCHLOSSEN
+- [x] Atlas-Pack Sprint 0+1 plus 16 Tile-Variationen integriert (Control-Center 59d1d9a, a5eb995)
+- [x] BootScene + MenuScene laden Atlases
+- [ ] GardenScene rendert Atlas-Frames (Folge-Run, kosmetisch nicht blockierend)
 
-## Tasks
-### Spec-Phase
-- [ ] design/dialog_choices.md V0.1 (Choice-System Spec)
-- [ ] design/seasons.md V0.1 (Tile-Variations + Encounter-Modifier)
+## Quality-Gates Stand
+- TS-strict: GRUEN
+- Vitest: 586/586 ueber 35 Suiten
+- ESLint: 0/0
+- Coverage: heilige Pfade 100/99-100, all-files >99% Lines
+- Bundle: ~1.7 MB total, im Budget
 
-### Code-Phase
-- [ ] DialogBox V2 mit Choice-Buttons und Branch-Logic
-- [ ] Iris-Dialog-Tree mit Story-Choices
-- [ ] NPC-Animation-System (4-Frame-Walking pro Richtung)
-- [ ] Saison-Tile-Overlay-Layer in OverworldScene
-- [ ] Wetter-Encounter-Modifier in OverworldScene.encounter-trigger
-- [ ] Phaser-Tilemap Migration (Performance)
-- [ ] Theo-NPC mit Trade-Modus in Verdanto-Map
-- [ ] GardenScene-Cross-Click-Logic auf PlantCard
+## Naechste Tech-Run-Prios
+1. Browser-Smoke via Chrome MCP (Pflicht im 20:00-QA-Run)
+2. Sprint-S-10 Vorplanung (PixelLab-Walking-Sprites, Pathfinding-V0.2)
+3. Save-V11-Bump bei NPC-Walking-State-Persistence (Plan: brain/tech/save_v11_plan.md)
 
-### QA und Release
-- [ ] Self-Test-Loop nach jedem Push
-- [ ] Live-Browser-Test gegen Netlify-Deploy
-- [ ] Slack-Update bei jedem Milestone
+## Sprint-Closure-Bedingung
+- [ ] Browser-Smoke ALLE 4 Tier-Tests PASS
+- [ ] Producer-Review der DoD-Specs
+- [ ] Sprint-Postmortem in brain/postmortems/S-09.md
 
-## Naechster Sprint S-10 (Plan)
-- Story-Akt-2 (Verdanto Boss-Battle Captain Schimmelpilz spielbar)
-- Iris-Cameos in mehreren Maps
-- Day-Night-Encounter-Modifier (nokturne Pflanzen nur Nacht)
-- Festival-System V0.1 (4 saisonale Events)
-
-## Risiken
-- Phaser-Tilemap-Migration kann viel umkonfigurieren. Mitigation: nur in OverworldScene, GardenScene bleibt
-- NPC-Animation braucht Sprite-Multi-Frame: PixelLab generiert 32x32 Single-Frames. Animation via Single-Frame-Tween-Bounce als V0.1-Stand-In
-
-## Tracking
-- Slack-DM: D0ATT08EPU2
-- Branch: direkt main fuer kleine Fixes, feature-branches fuer groessere Features
+Stand 2026-04-28: 4 von 6 Closure-Items offen, alle abhaengig vom 20:00-QA-Browser-Smoke.

@@ -31,7 +31,16 @@ brain/
 ├── tech/                       (Technische Notizen)
 │   ├── architecture.md         (Phaser-Scenes, Code-Layout)
 │   ├── save_system.md          (Save-Struktur, Versioning)
+│   ├── save_v11_plan.md        (PROPOSED V11-Bump fuer NPC-State-Persistence)
+│   ├── tier_status.md          (Tier 1-6 Status, V2-SKILL)
 │   └── tool_learnings.md       (Was funktioniert wie mit MCPs)
+├── sprints/                    (Aktive DoD-Specs)
+│   └── S-09/                   (npc-walking.md, story-akt-1.md)
+├── qa/
+│   └── bugs.md                 (Bug-Tracker, B-012 RESOLVED)
+├── agents/
+│   ├── tech-code/              (Tech-Code STATE.md)
+│   └── qa-critic/              (browser_smoke_plan.md)
 ├── playtests/                  (Test-Ergebnisse, Feedback, Bugs)
 └── postmortems/                (Sprint-Rueckblicke)
 ```
