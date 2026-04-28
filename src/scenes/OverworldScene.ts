@@ -22,7 +22,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
 import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
-import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
+import { sfx, startAmbientBGM, setBiomeAmbience, stopBiomeAmbience } from '../audio/sfxGenerator';
 import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
 import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
@@ -362,6 +362,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.showZoneToast(this.currentZone);
     // Zone-Visit fuer Achievement-Tracking
     gameStore.recordZoneVisit(this.currentZone);
+    // S-POLISH-B2-R14: Biom-spezifische Ambience starten
+    setBiomeAmbience(this.currentZone as Parameters<typeof setBiomeAmbience>[0]);
 
     // Initial-Snapshot der bekannten Achievements
     this.knownAchievements = new Set(gameStore.getAchievements());

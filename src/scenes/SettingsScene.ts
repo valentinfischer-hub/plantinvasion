@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
-import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM, setPersistedVolume, getPersistedVolume } from '../audio/sfxGenerator';
+import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM, setPersistedVolume, getPersistedVolume, setSfxVolume, getSfxVolume, setMusicVolume, getMusicVolume, getPersistedSfxVolume, setPersistedSfxVolume, getPersistedMusicVolume, setPersistedMusicVolume } from '../audio/sfxGenerator';
 import { getLocale, setLocale } from '../i18n/index';
 import { COLOR_ERROR, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
@@ -12,6 +12,11 @@ import { COLOR_ERROR, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, 
 export class SettingsScene extends Phaser.Scene {
   private volumeBarFill!: Phaser.GameObjects.Rectangle;
   private volumeText!: Phaser.GameObjects.Text;
+  // S-POLISH-B2-R14: SFX + Music separate Lautstärke
+  private sfxBarFill!: Phaser.GameObjects.Rectangle;
+  private sfxText!: Phaser.GameObjects.Text;
+  private musicBarFill!: Phaser.GameObjects.Rectangle;
+  private musicText!: Phaser.GameObjects.Text;
   private bgmEnabled = true;
   private bgmStatusText!: Phaser.GameObjects.Text;
   private localeDeBtn!: Phaser.GameObjects.Container;
@@ -25,6 +30,8 @@ export class SettingsScene extends Phaser.Scene {
     const { width, height } = this.scale;
     // Volume-Persist: Gespeicherten Wert laden (Safety-Check falls Settings direkt gebootet)
     setMasterVolume(getPersistedVolume());
+    setSfxVolume(getPersistedSfxVolume());
+    setMusicVolume(getPersistedMusicVolume());
     this.cameras.main.setBackgroundColor('#1a2820');
 
     this.add
@@ -67,7 +74,42 @@ export class SettingsScene extends Phaser.Scene {
       this.setVolume(Math.max(0, Math.min(1, localX / barW)));
     });
 
-    by += 60;
+    by += 50;
+    // S-POLISH-B2-R14: SFX-Lautstärke-Slider
+    this.add.text(width / 2 - 150, by, 'SFX-Lautstaerke', {
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
+    });
+    by += 22;
+    const sfxBarW = 300;
+    const sfxBarX = width / 2 - sfxBarW / 2;
+    const sfxBarBg = this.add.rectangle(sfxBarX, by, sfxBarW, 16, 0x000000, 0.6)
+      .setStrokeStyle(1, 0x553e2d).setOrigin(0, 0)
+      .setInteractive(new Phaser.Geom.Rectangle(0, 0, sfxBarW, 16), Phaser.Geom.Rectangle.Contains);
+    this.sfxBarFill = this.add.rectangle(sfxBarX, by, sfxBarW * getSfxVolume(), 16, 0x5b8de8, 0.85).setOrigin(0, 0);
+    this.sfxText = this.add.text(width / 2, by + 20, `${Math.round(getSfxVolume() * 100)}%`, {
+      fontFamily: FONT_FAMILY, fontSize: '11px', color: '#ffffff'
+    }).setOrigin(0.5, 0);
+    sfxBarBg.on('pointerdown', (p: Phaser.Input.Pointer) => { this.setSfxVol(Math.max(0, Math.min(1, (p.x - sfxBarX) / sfxBarW))); });
+    sfxBarBg.on('pointermove', (p: Phaser.Input.Pointer) => { if (!p.isDown) return; this.setSfxVol(Math.max(0, Math.min(1, (p.x - sfxBarX) / sfxBarW))); });
+
+    by += 44;
+    // S-POLISH-B2-R14: Musik-Lautstärke-Slider
+    this.add.text(width / 2 - 150, by, 'Musik-Lautstaerke', {
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
+    });
+    by += 22;
+    const musicBarX = width / 2 - sfxBarW / 2;
+    const musicBarBg = this.add.rectangle(musicBarX, by, sfxBarW, 16, 0x000000, 0.6)
+      .setStrokeStyle(1, 0x553e2d).setOrigin(0, 0)
+      .setInteractive(new Phaser.Geom.Rectangle(0, 0, sfxBarW, 16), Phaser.Geom.Rectangle.Contains);
+    this.musicBarFill = this.add.rectangle(musicBarX, by, sfxBarW * getMusicVolume(), 16, 0xfcd95c, 0.85).setOrigin(0, 0);
+    this.musicText = this.add.text(width / 2, by + 20, `${Math.round(getMusicVolume() * 100)}%`, {
+      fontFamily: FONT_FAMILY, fontSize: '11px', color: '#ffffff'
+    }).setOrigin(0.5, 0);
+    musicBarBg.on('pointerdown', (p: Phaser.Input.Pointer) => { this.setMusicVol(Math.max(0, Math.min(1, (p.x - musicBarX) / sfxBarW))); });
+    musicBarBg.on('pointermove', (p: Phaser.Input.Pointer) => { if (!p.isDown) return; this.setMusicVol(Math.max(0, Math.min(1, (p.x - musicBarX) / sfxBarW))); });
+
+    by += 44;
     // BGM Toggle
     this.add.text(width / 2 - 150, by, 'Hintergrundmusik', {
       fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_REWARD
@@ -124,6 +166,21 @@ export class SettingsScene extends Phaser.Scene {
   private back(): void {
     sfx.dialogAdvance();
     this.scene.start('MenuScene');
+  }
+
+  private setSfxVol(v: number): void {
+    setSfxVolume(v);
+    setPersistedSfxVolume(v);
+    this.sfxBarFill.width = 300 * v;
+    this.sfxText.setText(`${Math.round(v * 100)}%`);
+    sfx.click();
+  }
+
+  private setMusicVol(v: number): void {
+    setMusicVolume(v);
+    setPersistedMusicVolume(v);
+    this.musicBarFill.width = 300 * v;
+    this.musicText.setText(`${Math.round(v * 100)}%`);
   }
 
   private setVolume(v: number): void {

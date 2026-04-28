@@ -16,11 +16,31 @@ function ctx(): AudioContext {
 }
 
 let _masterVolume = 0.4;
+// S-POLISH-B2-R14: Separate SFX + Music-Lautstärke
+let _sfxVolume = 1.0;   // 0..1, relativ zu _masterVolume
+let _musicVolume = 1.0; // 0..1, relativ zu _masterVolume
+
 export function setMasterVolume(v: number): void {
   _masterVolume = Math.max(0, Math.min(1, v));
 }
 export function getMasterVolume(): number {
   return _masterVolume;
+}
+export function setSfxVolume(v: number): void {
+  _sfxVolume = Math.max(0, Math.min(1, v));
+}
+export function getSfxVolume(): number {
+  return _sfxVolume;
+}
+export function setMusicVolume(v: number): void {
+  _musicVolume = Math.max(0, Math.min(1, v));
+  // Aktuell laufende BGM-Nodes live anpassen
+  for (const n of _bgmNodes) {
+    n.gain.gain.value = (n as { _baseVol?: number })._baseVol! * _masterVolume * _musicVolume;
+  }
+}
+export function getMusicVolume(): number {
+  return _musicVolume;
 }
 
 interface BlipOptions {
@@ -42,7 +62,7 @@ function blip({ freq, freqEnd, duration, volume = 0.5, type = 'square' }: BlipOp
     if (freqEnd !== undefined) {
       osc.frequency.linearRampToValueAtTime(freqEnd, c.currentTime + duration);
     }
-    gain.gain.setValueAtTime(volume * _masterVolume, c.currentTime);
+    gain.gain.setValueAtTime(volume * _masterVolume * _sfxVolume, c.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + duration);
     osc.connect(gain);
     gain.connect(c.destination);
@@ -134,7 +154,7 @@ export function startAmbientBGM(): void {
       osc.type = 'sine';
       osc.frequency.value = t.freq;
       const gain = c.createGain();
-      gain.gain.value = t.vol * _masterVolume;
+      gain.gain.value = t.vol * _masterVolume * _musicVolume;
       osc.connect(gain);
       gain.connect(c.destination);
       // LFO auf Frequenz fuer leichtes Wabern
@@ -147,7 +167,8 @@ export function startAmbientBGM(): void {
       lfoGain.connect(osc.frequency);
       osc.start();
       lfo.start();
-      _bgmNodes.push({ osc, gain, lfo, lfoGain });
+      const node = { osc, gain, lfo, lfoGain, _baseVol: t.vol };
+      _bgmNodes.push(node as typeof node & { osc: OscillatorNode; gain: GainNode; lfo: OscillatorNode; lfoGain: GainNode });
     }
   } catch (e) {
     console.warn('[bgm] failed', e);
@@ -162,6 +183,116 @@ export function stopAmbientBGM(): void {
     } catch {}
   }
   _bgmNodes = [];
+}
+
+// ---- S-POLISH-B2-R14: Biome-Ambience ----
+// Biom-spezifische Ton-Signatur via procedurale Töne
+type Biome = 'wurzelheim' | 'verdanto' | 'kaktoria' | 'frostkamm' | 'salzbucht' | 'mordwald' | 'magmabluete';
+
+let _currentBiome: Biome | null = null;
+
+const BIOME_TONES: Record<Biome, { freq: number; vol: number; type: OscillatorType; lfoFreq: number }[]> = {
+  wurzelheim: [
+    { freq: 130, vol: 0.025, type: 'sine', lfoFreq: 0.08 },
+    { freq: 196, vol: 0.018, type: 'sine', lfoFreq: 0.12 }
+  ],
+  verdanto: [
+    { freq: 174, vol: 0.022, type: 'sine', lfoFreq: 0.15 },
+    { freq: 220, vol: 0.016, type: 'sine', lfoFreq: 0.10 }
+  ],
+  kaktoria: [
+    { freq: 220, vol: 0.020, type: 'sawtooth', lfoFreq: 0.06 },
+    { freq: 330, vol: 0.012, type: 'sine', lfoFreq: 0.20 }
+  ],
+  frostkamm: [
+    { freq: 196, vol: 0.018, type: 'sine', lfoFreq: 0.05 },
+    { freq: 294, vol: 0.012, type: 'sine', lfoFreq: 0.07 }
+  ],
+  salzbucht: [
+    { freq: 147, vol: 0.025, type: 'sine', lfoFreq: 0.18 },
+    { freq: 220, vol: 0.020, type: 'sine', lfoFreq: 0.25 }
+  ],
+  mordwald: [
+    { freq: 110, vol: 0.030, type: 'sine', lfoFreq: 0.04 },
+    { freq: 165, vol: 0.018, type: 'triangle', lfoFreq: 0.06 }
+  ],
+  magmabluete: [
+    { freq: 98, vol: 0.028, type: 'sawtooth', lfoFreq: 0.08 },
+    { freq: 147, vol: 0.022, type: 'sine', lfoFreq: 0.11 }
+  ]
+};
+
+let _biomeNodes: { osc: OscillatorNode; gain: GainNode; lfo: OscillatorNode; lfoGain: GainNode }[] = [];
+
+/** Wechselt Biom-Ambience mit sanftem Crossfade (500ms). */
+export function setBiomeAmbience(biome: Biome | null): void {
+  if (_currentBiome === biome) return;
+  _currentBiome = biome;
+  // Stop alte Biome-Nodes
+  for (const n of _biomeNodes) {
+    try { n.osc.stop(); n.lfo.stop(); } catch {}
+  }
+  _biomeNodes = [];
+  if (!biome) return;
+  const tones = BIOME_TONES[biome];
+  if (!tones) return;
+  try {
+    const c = ctx();
+    if (c.state === 'suspended') c.resume();
+    for (const t of tones) {
+      const osc = c.createOscillator();
+      osc.type = t.type;
+      osc.frequency.value = t.freq;
+      const gain = c.createGain();
+      gain.gain.setValueAtTime(0, c.currentTime);
+      // Fade in
+      gain.gain.linearRampToValueAtTime(t.vol * _masterVolume * _musicVolume, c.currentTime + 0.5);
+      osc.connect(gain);
+      gain.connect(c.destination);
+      const lfo = c.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = t.lfoFreq;
+      const lfoGain = c.createGain();
+      lfoGain.gain.value = 1.5;
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      osc.start();
+      lfo.start();
+      _biomeNodes.push({ osc, gain, lfo, lfoGain });
+    }
+  } catch {
+    // Audio nicht verfügbar
+  }
+}
+
+export function stopBiomeAmbience(): void {
+  _currentBiome = null;
+  for (const n of _biomeNodes) {
+    try { n.osc.stop(); n.lfo.stop(); } catch {}
+  }
+  _biomeNodes = [];
+}
+
+// Volume-Persist-Keys fuer SFX + Music
+const SFX_VOL_KEY = 'pi_sfx_volume';
+const MUSIC_VOL_KEY = 'pi_music_volume';
+export function getPersistedSfxVolume(): number {
+  try {
+    const raw = localStorage.getItem(SFX_VOL_KEY);
+    return raw === null ? 1.0 : Math.max(0, Math.min(1, parseFloat(raw) || 1.0));
+  } catch { return 1.0; }
+}
+export function setPersistedSfxVolume(v: number): void {
+  try { localStorage.setItem(SFX_VOL_KEY, String(v)); } catch {}
+}
+export function getPersistedMusicVolume(): number {
+  try {
+    const raw = localStorage.getItem(MUSIC_VOL_KEY);
+    return raw === null ? 1.0 : Math.max(0, Math.min(1, parseFloat(raw) || 1.0));
+  } catch { return 1.0; }
+}
+export function setPersistedMusicVolume(v: number): void {
+  try { localStorage.setItem(MUSIC_VOL_KEY, String(v)); } catch {}
 }
 
 // ============================================================
