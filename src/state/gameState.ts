@@ -1,4 +1,5 @@
 import type { GardenSlotMeta, Plant, SoilTier } from '../types/plant';
+import { ENERGY_MAX, canAffordEnergy, spendEnergy, regenEnergy } from '../systems/EnergySystem';
 import { rollStarterStats, crossStats, rollMutation } from '../data/genetics';
 import { defaultGenome, crossGenomes, canCross, setCrossCooldown, inheritQualityTier, formatCooldown } from '../data/breedingV2';
 import { tickPlant, defaultGrowthFields, harvestPlant, isHarvestReady } from '../data/leveling';
@@ -134,7 +135,8 @@ export function newGame(): GameState {
     gardenSlots: defaultGardenSlots(),
     lastDailyLoginAt: 0,
     marketShopRosterDay: 0,
-    marketShopRoster: { seedSlugs: [], boosterSlugs: [] }
+    marketShopRoster: { seedSlugs: [], boosterSlugs: [] },
+    energy: ENERGY_MAX  // S-POLISH-B2-R1: Startet mit vollem Energie-Tank
   };
   const starter = createPlantOfSpecies('sunflower', state.plants);
   if (starter) state.plants.push(starter);
@@ -169,6 +171,16 @@ class GameStore {
 
   get(): GameState {
     return this.state;
+  }
+
+  getEnergy(): number {
+    return this.state.energy ?? ENERGY_MAX;
+  }
+
+  /** Energie vollständig regenerieren (nach dem Schlafen / Tagesende). */
+  regenEnergyForNewDay(): void {
+    this.state.energy = regenEnergy(this.state.energy ?? 0);
+    this.notify();
   }
 
   /** Wendet einen Tick auf alle Pflanzen an. Garten ist immer neutrale Zone "wurzelheim". */
@@ -308,6 +320,7 @@ class GameStore {
   plantSeed(seedSlug: string): { ok: boolean; reason?: string; plant?: Plant } {
     if (!isSeedItem(seedSlug)) return { ok: false, reason: 'Kein Seed-Item' };
     if (!this.hasItem(seedSlug)) return { ok: false, reason: 'Seed nicht im Inventar' };
+    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'sow')) return { ok: false, reason: 'Zu müde zum Säen (Energy leer)' };
     const speciesSlug = speciesSlugFromSeed(seedSlug);
     if (!speciesSlug) return { ok: false, reason: 'Ungueltiger Seed-Slug' };
     // B-012: separater Reason fuer Garten-voll vs unbekannte Spezies (vorher beide vermischt -> User wusste nicht warum)
@@ -317,6 +330,7 @@ class GameStore {
     this.state.plants.push(plant);
     this.consumeItem(seedSlug);
     this.captureSpecies(speciesSlug);
+    this.state.energy = spendEnergy(this.state.energy ?? ENERGY_MAX, 'sow');
     this.notify();
     return { ok: true, plant };
   }
@@ -329,6 +343,7 @@ class GameStore {
   plantSeedAt(seedSlug: string, gridX: number, gridY: number): { ok: boolean; reason?: string; plant?: Plant } {
     if (!isSeedItem(seedSlug)) return { ok: false, reason: 'Kein Seed-Item' };
     if (!this.hasItem(seedSlug)) return { ok: false, reason: 'Seed nicht im Inventar' };
+    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'sow')) return { ok: false, reason: 'Zu müde zum Säen (Energy leer)' };
     const speciesSlug = speciesSlugFromSeed(seedSlug);
     if (!speciesSlug) return { ok: false, reason: 'Ungueltiger Seed-Slug' };
     if (gridX < 0 || gridX >= GRID_COLUMNS || gridY < 0 || gridY >= GRID_ROWS) {
@@ -342,6 +357,7 @@ class GameStore {
     this.state.plants.push(plant);
     this.consumeItem(seedSlug);
     this.captureSpecies(speciesSlug);
+    this.state.energy = spendEnergy(this.state.energy ?? ENERGY_MAX, 'sow');
     this.notify();
     return { ok: true, plant };
   }
@@ -615,6 +631,7 @@ class GameStore {
     if (output.pollenChance) {
       this.addItem('pristine-pollen', 1);
     }
+    this.state.energy = spendEnergy(this.state.energy ?? ENERGY_MAX, 'harvest');
     this.notify();
     return {
       ok: true,
@@ -901,6 +918,7 @@ class GameStore {
     if (!ccA.ok) return { ok: false, reason: ccA.reason };
     const ccB = canCross(b);
     if (!ccB.ok) return { ok: false, reason: ccB.reason };
+    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'cross')) return { ok: false, reason: 'Zu müde zum Kreuzen (Energy leer)' };
     const COST = 50;
     if (this.state.coins < COST) return { ok: false, reason: `Du brauchst ${COST} Gold` };
     // Free Slot
@@ -978,6 +996,7 @@ class GameStore {
     this.captureSpecies(child.speciesSlug);
     this.incrementAchievementCounter('crossings');
     if (mutation.isMutation) this.incrementAchievementCounter('mutations');
+    this.state.energy = spendEnergy(this.state.energy ?? ENERGY_MAX, 'cross');
     this.save();
     return { ok: true, child };
   }

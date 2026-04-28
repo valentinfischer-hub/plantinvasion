@@ -82,6 +82,8 @@ export interface GameState {
   // S-POLISH-17: Charakter-Profil (Name + Avatar-ID)
   playerName?: string;
   avatarId?: number;
+  // S-POLISH-B2-R1: Energy-System
+  energy?: number;  // 0..100, startet bei 100, regeneriert bei endDay()
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
@@ -225,6 +227,7 @@ function migrate(parsedRaw: unknown): GameState | null {
         : null;
       parsed.locale = (storedLocale === 'en') ? 'en' : 'de';
     }
+    if (typeof parsed.energy !== 'number') parsed.energy = 100; // energy default
     debugLog('[storage] migrated save v10 -> v11 (i18n locale field)');
   }
   if (parsed.version === 5) {
@@ -277,6 +280,7 @@ function migrate(parsedRaw: unknown): GameState | null {
         : null;
       parsed.locale = (storedLocale === 'en') ? 'en' : 'de';
     }
+    if (typeof parsed.energy !== 'number') parsed.energy = 100; // S-POLISH-B2-R1: Energy default
     return parsed as GameState;
   }
   if (parsed.version === 2) {
