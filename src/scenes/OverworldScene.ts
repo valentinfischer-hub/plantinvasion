@@ -195,6 +195,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private timeOverlay!: TimeOverlay;
   private saveIcon!: Phaser.GameObjects.Text;
   private coinHud!: Phaser.GameObjects.Text;
+  private forageSparkleTimer?: Phaser.Time.TimerEvent;
   private weatherOverlay!: WeatherOverlay;
   private seasonTint!: SeasonTintOverlay;
   private particles!: AmbientParticles;
@@ -483,6 +484,30 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (this.seasonTint) this.seasonTint.ignoreInUICam(obj);
     if (this.particles) this.particles.ignoreInUICam(obj);
     if (this.weatherOverlay) this.weatherOverlay.ignoreInUICam(obj);
+  }
+
+  /** S-POLISH-B2-R4: Foraging-Fund-Animation - Item-Pop Bounce */
+  private spawnForagePop(x: number, y: number): void {
+    const star = this.add.text(x, y, '✦', {
+      fontFamily: 'monospace', fontSize: '18px', color: '#9be36e'
+    }).setOrigin(0.5).setDepth(500).setScale(0);
+    this.tweens.add({
+      targets: star, scale: 1.3, y: y - 10, duration: 180, ease: 'Back.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: star, scale: 1.0, y: y - 22, alpha: 0, duration: 400, ease: 'Power2',
+          onComplete: () => star.destroy()
+        });
+      }
+    });
+    for (let i = 0; i < 5; i++) {
+      const dot = this.add.circle(x, y, 3, 0x9be36e, 0.9).setDepth(499);
+      const angle = (i / 5) * Math.PI * 2;
+      this.tweens.add({
+        targets: dot, x: x + Math.cos(angle) * 18, y: y + Math.sin(angle) * 18,
+        alpha: 0, scale: 0.2, duration: 350, onComplete: () => dot.destroy()
+      });
+    }
   }
 
   private refreshNpcNameTags(): void {
@@ -982,6 +1007,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       const result = gameStore.forageTile(this.currentZone, front.tileX, front.tileY);
       if (result.ok) {
         sfx.dialogOpen();
+        // S-POLISH-B2-R4: Foraging-Find-Animation - Item-Pop
+        this.spawnForagePop(this.player.x, this.player.y - 24);
         this.dialog.open([result.toast ?? 'Du hast etwas gefunden!']);
       } else {
         this.dialog.open([result.reason ?? 'Hier ist gerade nichts.']);
