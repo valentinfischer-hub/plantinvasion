@@ -406,3 +406,46 @@ describe('resetGame', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 });
+
+describe('V11 Locale-Persistenz', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('migriert v10 zu v11 mit Default-Locale de', () => {
+    rawSave(10, { plants: [] });
+    const state = loadGame();
+    expect(state).not.toBeNull();
+    expect(state!.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(state!.locale).toBe('de');
+  });
+
+  it('migriert v10 zu v11 und liest locale aus localStorage', () => {
+    localStorage.setItem('plantinvasion_locale', 'en');
+    rawSave(10, { plants: [] });
+    const state = loadGame();
+    expect(state!.locale).toBe('en');
+  });
+
+  it('neuer Save hat locale-Feld', () => {
+    rawSave(SAVE_SCHEMA_VERSION, { plants: [] });
+    const state = loadGame();
+    expect(state).not.toBeNull();
+    expect(['de', 'en']).toContain(state!.locale);
+  });
+
+  it('saveGame persistiert locale-Feld', () => {
+    const st: GameState = {
+      version: SAVE_SCHEMA_VERSION,
+      playerId: 'locale-test',
+      plants: [],
+      coins: 0,
+      gems: 0,
+      createdAt: 0,
+      locale: 'en',
+    };
+    saveGame(st);
+    const loaded = loadGame();
+    expect(loaded!.locale).toBe('en');
+  });
+});

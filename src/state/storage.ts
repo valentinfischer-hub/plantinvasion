@@ -77,13 +77,12 @@ export interface GameState {
     metNpcs: string[];
     diaryEntries: number[];
   };
-  // S-POLISH-START-17: Charakter-Erstellung
-  playerName?: string;   // Frei gewählt, Default "Botaniker"
-  avatarId?: number;     // 0-3, Default 0
+  // V11: i18n Locale-Persistenz
+  locale?: 'de' | 'en';
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
-export const SAVE_SCHEMA_VERSION = 10;
+export const SAVE_SCHEMA_VERSION = 11;
 
 const DEFAULT_OVERWORLD: OverworldState = {
   tileX: 14,
@@ -214,6 +213,17 @@ function migrate(parsedRaw: unknown): GameState | null {
     }
     debugLog('[storage] migrated save v9 -> v10 (breeding-v2 genome backfill)');
   }
+  if (parsed.version === 10) {
+    parsed.version = 11;
+    // V11: Locale-Feld initialisieren (aus localStorage falls vorhanden, sonst 'de')
+    if (!parsed.locale) {
+      const storedLocale = typeof localStorage !== 'undefined'
+        ? localStorage.getItem('plantinvasion_locale')
+        : null;
+      parsed.locale = (storedLocale === 'en') ? 'en' : 'de';
+    }
+    debugLog('[storage] migrated save v10 -> v11 (i18n locale field)');
+  }
   if (parsed.version === 5) {
     parsed.version = 6;
     if (Array.isArray(parsed.plants)) {
@@ -258,6 +268,12 @@ function migrate(parsedRaw: unknown): GameState | null {
       }
     }
     if (!parsed.overworld) parsed.overworld = { ...DEFAULT_OVERWORLD };
+    if (!parsed.locale) {
+      const storedLocale = typeof localStorage !== 'undefined'
+        ? localStorage.getItem('plantinvasion_locale')
+        : null;
+      parsed.locale = (storedLocale === 'en') ? 'en' : 'de';
+    }
     return parsed as GameState;
   }
   if (parsed.version === 2) {
