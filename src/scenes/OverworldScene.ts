@@ -35,6 +35,7 @@ import { WeatherOverlay } from '../ui/WeatherOverlay';
 import { SeasonTintOverlay } from '../ui/SeasonTintOverlay';
 import { AmbientParticles } from '../ui/AmbientParticles';
 import { debugLog } from '../utils/debugLog';
+import { t } from '../i18n/index';
 import { showToast } from '../ui/Toast';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
@@ -603,7 +604,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       if (status === 'completed' && gameStore.getCurrentAct() < 1) {
         gameStore.advanceAct(1);
         if (gameStore.collectDiaryEntry(1)) {
-          showToast(this, 'Tagebuch: Mein erster Tag in Wurzelheim', 'reward', { yOffset: -100 });
+          showToast(this, t('diary.firstDay') || 'Tagebuch: Mein erster Tag in Wurzelheim', 'reward', { yOffset: -100 });
         }
       }
     }

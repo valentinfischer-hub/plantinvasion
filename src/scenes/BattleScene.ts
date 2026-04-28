@@ -15,6 +15,7 @@ import { getSpecies } from '../data/species';
 import { getMove, defaultMovesForFamily, type MoveDef } from '../data/moves';
 import { getBoss, type BossDef } from '../data/bosses';
 import { debugLog } from '../utils/debugLog';
+import { t } from '../i18n/index';
 
 interface BattleSceneInitData {
   poolKey?: string;
@@ -80,7 +81,7 @@ export class BattleScene extends Phaser.Scene {
     const state = gameStore.get();
     const playerPlant = state.plants[0];
     if (!playerPlant) {
-      this.endBattle('Keine Pflanze im Garten zum Kaempfen.');
+      this.endBattle(t('battle.noPlant'));
       return;
     }
     const speciesP = getSpecies(playerPlant.speciesSlug);
@@ -192,7 +193,7 @@ export class BattleScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Status / Round-Log
-    this.statusText = this.add.text(width / 2, height / 2 - 8, 'Was soll deine Pflanze tun?', {
+    this.statusText = this.add.text(width / 2, height / 2 - 8, t('battle.action'), {
       fontFamily: 'monospace', fontSize: '11px', color: '#fcd95c',
       align: 'center', wordWrap: { width: width - 40 }
     }).setOrigin(0.5);
@@ -208,7 +209,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.bossDef) {
       this.statusText.setText(this.bossDef.introText.join('\n'));
       this.time.delayedCall(3500, () => {
-        this.statusText.setText('Was soll deine Pflanze tun?');
+        this.statusText.setText(t('battle.action'));
         this.waitingForInput = true;
       });
     } else {
@@ -380,13 +381,13 @@ if (this.bossDef && outcome.winner === this.player) {
             }
             this.endBattle(`Sieg! +${this.xpReward} XP${dropMsg}`);
           } else {
-            this.endBattle('Deine Pflanze ist erschoepft.');
+            this.endBattle(t('battle.exhausted'));
           }
         });
       }
     } else {
       this.time.delayedCall(1500, () => {
-        this.statusText.setText('Was soll deine Pflanze tun?');
+        this.statusText.setText(t('battle.action'));
         this.waitingForInput = true;
       });
     }
@@ -465,18 +466,18 @@ if (this.bossDef && outcome.winner === this.player) {
   private tryCapture(): void {
     if (this.over || !this.waitingForInput) return;
     if (this.bossDef) {
-      this.statusText.setText('Bosse koennen nicht gefangen werden!');
+      this.statusText.setText(t('battle.bossNoCatch'));
       sfx.bump();
       return;
     }
     const wildPct = this.wild.stats.hp / this.wild.stats.maxHp;
     if (wildPct > 0.4) {
-      this.statusText.setText('Wilde Pflanze ist zu stark zum Fangen.\nReduziere ihre HP unter 40%.');
+      this.statusText.setText(t('battle.tooStrong'));
       sfx.bump();
       return;
     }
     if (!gameStore.hasItem('basic-lure')) {
-      this.statusText.setText('Du hast keine Lockstoffe!');
+      this.statusText.setText(t('battle.noLure'));
       sfx.bump();
       return;
     }
@@ -501,7 +502,7 @@ if (this.bossDef && outcome.winner === this.player) {
         void r;
       }
       this.time.delayedCall(1200, () => {
-        this.statusText.setText('Was soll deine Pflanze tun?');
+        this.statusText.setText(t('battle.action'));
         this.waitingForInput = true;
         this.updateBars();
       });
