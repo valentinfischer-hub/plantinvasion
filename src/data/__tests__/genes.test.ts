@@ -7,8 +7,7 @@ import {
   rollInitialGenes,
   inheritGenes,
   geneStatBonus,
-  type GeneSet,
-  type GeneSlot
+  type GeneSet
 } from '../genes';
 
 describe('ALLELES Datenstruktur', () => {
