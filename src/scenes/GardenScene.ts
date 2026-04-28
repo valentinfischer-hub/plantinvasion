@@ -60,6 +60,8 @@ export class GardenScene extends Phaser.Scene {
   private _renderPending = false;
   private crossMode = false;
   private companionLineGraphics?: Phaser.GameObjects.Graphics;
+  // S-POLISH-B2-R13: Bonsai-Aura-Ring Graphics
+  private bonsaiAuraGraphics?: Phaser.GameObjects.Graphics;
   private crossFirstPlantId: string | null = null;
   private crossModeHint?: Phaser.GameObjects.Text;
   private crossBtnBg?: Phaser.GameObjects.Rectangle;
@@ -812,6 +814,26 @@ export class GardenScene extends Phaser.Scene {
       g.lineStyle(2, 0x9be36e, 0.5);
       g.strokeCircle(cx, cy, TILE * 0.52);
     }
+
+    // S-POLISH-B2-R13: Bonsai-Aura — goldener Ring um Bonsai-Pflanzen
+    if (!this.bonsaiAuraGraphics) {
+      this.bonsaiAuraGraphics = this.add.graphics();
+      this.bonsaiAuraGraphics.setDepth(49);
+    }
+    const bg = this.bonsaiAuraGraphics;
+    bg.clear();
+    for (const plant of plants) {
+      if (!plant.bonsaiMode) continue;
+      const card = this.cards.get(plant.id);
+      if (!card) continue;
+      const cx = card.container.x, cy = card.container.y;
+      // Äusserer goldener Ring
+      bg.lineStyle(3, 0xfcd95c, 0.55);
+      bg.strokeCircle(cx, cy, TILE * 0.56);
+      // Innerer Ring (dünner)
+      bg.lineStyle(1, 0xffd700, 0.3);
+      bg.strokeCircle(cx, cy, TILE * 0.44);
+    }
   }
 
   /**
@@ -1164,6 +1186,12 @@ export class GardenScene extends Phaser.Scene {
         card.bg.strokeRoundedRect(-TILE / 2 + 2, -TILE / 2 + 2, TILE - 4, TILE - 4, 6);
       }
     }
+
+    // S-POLISH-B2-R13: Bonsai-Badge — gold Punkt oben-rechts wenn bonsaiMode aktiv
+    if (plant.bonsaiMode) {
+      card.bg.fillStyle(0xfcd95c, 0.9);
+      card.bg.fillCircle(TILE / 2 - 6, -TILE / 2 + 6, 4);
+    }
   }
 
   private refreshCards(): void {
@@ -1351,11 +1379,17 @@ export class GardenScene extends Phaser.Scene {
 
     // Bonsai-Toggle
     const bonsaiY = soilY + 28;
-    const bonsaiLabel = plant.bonsaiMode ? 'Bonsai aktiv (Cap L44)' : 'Normal (Stage-Up moeglich)';
-    const bonsaiBtn = this.add.text(-panelW / 2 + 14, bonsaiY, `${bonsaiLabel}  [Bonsai-Toggle]`, {
+    // S-POLISH-B2-R13: Grow-Modus-Selector mit visueller Differenzierung
+    const modeIcon = plant.bonsaiMode ? '🌿' : '🌱';
+    const modeColor = plant.bonsaiMode ? '#fcd95c' : '#9be36e';
+    const modeBg = plant.bonsaiMode ? '#2a2000' : '#1a2a1a';
+    const bonsaiLabel = plant.bonsaiMode
+      ? `${modeIcon} BONSAI  (Cap L44, +30% HP)`
+      : `${modeIcon} NORMAL  (unbegrenzt Level-Up)`;
+    const bonsaiBtn = this.add.text(-panelW / 2 + 14, bonsaiY, `${bonsaiLabel}  [Toggle]`, {
       fontFamily: 'monospace', fontSize: '9px',
-      color: plant.bonsaiMode ? '#fcd95c' : '#bbbbbb',
-      backgroundColor: '#1a1f1a',
+      color: modeColor,
+      backgroundColor: modeBg,
       padding: { x: 4, y: 2 }
     }).setInteractive({ useHandCursor: true });
     bonsaiBtn.on('pointerdown', () => {
