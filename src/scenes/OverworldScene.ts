@@ -38,6 +38,7 @@ import { debugLog } from '../utils/debugLog';
 import { showToast } from '../ui/Toast';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
+import { evaluateAct2Progress, autoSetAct2Flags } from '../data/storyAct2';
 import { FONT_FAMILY } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
@@ -557,6 +558,36 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         gameStore.advanceAct(1);
         if (gameStore.collectDiaryEntry(1)) {
           showToast(this, 'Tagebuch: Mein erster Tag in Wurzelheim', 'reward', { yOffset: -100 });
+        }
+      }
+    }
+
+    // S-10 V0.1: Story-Akt-2-Auto-Tracking ("Verdanto erkundet").
+    // Läuft nur wenn currentAct >= 1 (Akt-1 abgeschlossen).
+    if (gameStore.getCurrentAct() >= 1) {
+      const state = gameStore.get();
+      const flags = state.story?.flags ?? {};
+      const visitedZones = gameStore.getAchievementCounters().visitedZones;
+      const inventory = gameStore.getInventory();
+      const updatedFlags = autoSetAct2Flags(flags, visitedZones, inventory);
+      // Side-Effect nur bei Änderung
+      const flagsChanged = Object.keys(updatedFlags).some(k => updatedFlags[k] !== flags[k]);
+      if (flagsChanged) {
+        for (const [k, v] of Object.entries(updatedFlags)) {
+          if (v) gameStore.setStoryFlag(k, true);
+        }
+        // Achievement "verdanto_erkundet" triggern wenn Flag frisch gesetzt
+        if (updatedFlags['verdanto_erkundet'] && !flags['verdanto_erkundet']) {
+          gameStore.unlockAchievementBySlug('verdanto_erkundet');
+          showToast(this, 'Achievement: Verdanto-Erkundet!', 'reward', { yOffset: -100 });
+        }
+      }
+      // Akt-Abschluss-Check
+      const status = evaluateAct2Progress(updatedFlags);
+      if (status === 'completed' && gameStore.getCurrentAct() < 2) {
+        gameStore.advanceAct(2);
+        if (gameStore.collectDiaryEntry(5)) {
+          showToast(this, 'Tagebuch: Verdanto - Land der Bromelien', 'reward', { yOffset: -100 });
         }
       }
     }

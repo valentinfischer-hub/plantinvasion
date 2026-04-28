@@ -81,6 +81,13 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     description: '60 Spezies entdeckt plus 5 Hybrid-Recipes erfolgreich.',
     rewardCoins: 5000,
     cosmetic: 'statue-heimatdorf'
+  },
+  // S-10 Story-Akt-2
+  {
+    slug: 'verdanto_erkundet',
+    name: 'Verdanto-Erkundet',
+    description: 'Du hast Verdanto zum ersten Mal erkundet.',
+    rewardCoins: 100,
   }
 ];
 
