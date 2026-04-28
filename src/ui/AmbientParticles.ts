@@ -50,7 +50,8 @@ export class AmbientParticles {
     const cam = this.scene.cameras.main;
     const W = cam.width;
     const H = cam.height;
-    const count = this.currentMode === 'snow' ? 30 : this.currentMode === 'rain' ? 50 : 14;
+    // S-POLISH Run16: Partikel-Cap fuer 60fps-Budget (snow: 20, rain: 25, night: 12)
+    const count = this.currentMode === 'snow' ? 20 : this.currentMode === 'rain' ? 25 : 12;
     const color = this.currentMode === 'snow' ? 0xffffff : this.currentMode === 'rain' ? 0x77b0ff : 0xfff0a0;
     for (let i = 0; i < count; i++) {
       const x = Math.random() * W;

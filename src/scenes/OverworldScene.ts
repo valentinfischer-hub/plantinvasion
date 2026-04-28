@@ -544,6 +544,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       const dialogActive = this.dialog?.open_ ?? false;
       const npcWalls = this.npcWalls;
       const now = gameTimeNow();
+      // S-POLISH Run16: Camera-Frustum-Cull — NPCs > 200px ausserhalb des Viewports
+      // bekommen kein step(). Bewegung + Animationen pausiert ausserhalb des sichtbaren Bereichs.
+      const cam = this.cameras.main;
+      const camL = cam.scrollX - 200;
+      const camR = cam.scrollX + cam.width + 200;
+      const camT = cam.scrollY - 200;
+      const camB = cam.scrollY + cam.height + 200;
       for (const npc of this.npcs) {
         // S-10 Item-1: Wander-Ziel-Logik. Alle 30s neues Ziel setzen via pickWanderTarget.
         if (npc.movementState) {
@@ -564,7 +571,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
             npc.movementState = setNpcTarget(ms, target);
           }
         }
-        npc.step(now, npcWalls, dialogActive);
+        // Frustum-Cull: step() nur fuer sichtbare NPCs
+        const sx = npc.sprite.x;
+        const sy = npc.sprite.y;
+        if (sx >= camL && sx <= camR && sy >= camT && sy <= camB) {
+          npc.step(now, npcWalls, dialogActive);
+        }
       }
     }
 

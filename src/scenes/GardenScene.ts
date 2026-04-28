@@ -56,6 +56,8 @@ export class GardenScene extends Phaser.Scene {
   private gridOriginX = 0;
   private gridOriginY = 0;
   private cards: Map<string, PlantCard> = new Map();
+  // S-POLISH Run16: Subscribe-Throttle — renderPlants() max 1x alle 500ms aus der store-Subscription
+  private _renderPending = false;
   private crossMode = false;
   private crossFirstPlantId: string | null = null;
   private crossModeHint?: Phaser.GameObjects.Text;
@@ -203,7 +205,16 @@ export class GardenScene extends Phaser.Scene {
       }
     });
 
-    gameStore.subscribe(() => this.renderPlants());
+    gameStore.subscribe(() => {
+      // S-POLISH Run16: Throttle — verzoegert renderPlants() via rAF-Debounce (max 1x pro Frame)
+      if (!this._renderPending) {
+        this._renderPending = true;
+        this.time.delayedCall(500, () => {
+          this._renderPending = false;
+          this.renderPlants();
+        });
+      }
+    });
 
     this.refreshHeader();
 
