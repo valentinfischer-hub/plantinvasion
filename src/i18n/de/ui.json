@@ -25,5 +25,7 @@
   "garden.cross": "Bestäuben",
   "garden.plant": "Pflanzen",
   "overworld.talk": "Reden",
-  "overworld.examine": "Untersuchen"
+  "overworld.examine": "Untersuchen",
+  "errors.saveFailed": "Speichern fehlgeschlagen",
+  "errors.loadCorrupt": "Spielstand beschädigt, starte neu"
 }

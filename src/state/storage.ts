@@ -332,6 +332,7 @@ export function loadGame(): GameState | null {
 }
 
 export function saveGame(state: GameState): void {
+  // S-POLISH Run14: Sentry-Context bei save-Fehlern
   try {
     if (!state.overworld) state.overworld = { ...DEFAULT_OVERWORLD };
     if (!state.pokedex) state.pokedex = { discovered: [], captured: [] };
@@ -352,7 +353,15 @@ export function saveGame(state: GameState): void {
     }
     localStorage.setItem(STORAGE_KEY, json);
   } catch (e) {
-    console.error('Failed to save game state', e);
+    console.error('[storage] saveGame failed', e);
+    // S-POLISH Run14: Sentry-Context + User-Feedback hint
+    try {
+      const S = (window as unknown as { __sentry?: { captureException: (e: unknown, ctx: unknown) => void } }).__sentry;
+      if (S?.captureException) {
+        S.captureException(e, { contexts: { save: { playerId: state.playerId, plantCount: state.plants?.length } } });
+      }
+    } catch { /* noop */ }
+    console.warn('[storage] ui: errors.saveFailed');
   }
 }
 

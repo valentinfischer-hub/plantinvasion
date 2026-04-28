@@ -145,7 +145,7 @@ describe('saveGame catch-Block bei localStorage-Failure (Lines 274-275)', () => 
       createdAt: 1_700_000_000_000
     };
     expect(() => saveGame(state as GameState)).not.toThrow();
-    expect(errorSpy).toHaveBeenCalledWith('Failed to save game state', expect.any(DOMException));
+    expect(errorSpy).toHaveBeenCalledWith('[storage] saveGame failed', expect.any(DOMException));
 
     setItemSpy.mockRestore();
   });

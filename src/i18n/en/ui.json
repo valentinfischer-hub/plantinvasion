@@ -25,5 +25,7 @@
   "garden.cross": "Pollinate",
   "garden.plant": "Plant",
   "overworld.talk": "Talk",
-  "overworld.examine": "Examine"
+  "overworld.examine": "Examine",
+  "errors.saveFailed": "Save failed",
+  "errors.loadCorrupt": "Save corrupted, starting fresh"
 }
