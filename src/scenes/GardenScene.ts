@@ -175,9 +175,15 @@ export class GardenScene extends Phaser.Scene {
           .setInteractive({ useHandCursor: true })
           .setDepth(-1);
         hotspot.on('pointerdown', () => this.onSlotClick(x, y));
-        // S-POLISH-09b: Slot Hover-Glow
-        hotspot.on('pointerover', () => { hotspot.setStrokeStyle(3, 0x9be36e, 0.85); });
-        hotspot.on('pointerout', () => { hotspot.setStrokeStyle(0); });
+        // S-POLISH-09b + Run1: Slot Hover-Glow + subtle scale
+        hotspot.on('pointerover', () => {
+          hotspot.setStrokeStyle(3, 0x9be36e, 0.85);
+          this.tweens.add({ targets: hotspot, scaleX: 1.04, scaleY: 1.04, duration: 120, ease: 'Cubic.Out' });
+        });
+        hotspot.on('pointerout', () => {
+          hotspot.setStrokeStyle(0);
+          this.tweens.add({ targets: hotspot, scaleX: 1.0, scaleY: 1.0, duration: 100, ease: 'Cubic.Out' });
+        });
         this.slotHotspots.push({ gridX: x, gridY: y, hotspot });
       }
     }
@@ -394,11 +400,13 @@ export class GardenScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const panelW = 320;
     const panelH = Math.min(380, 80 + seedSlugs.length * 26);
-    const container = this.add.container(width / 2, height / 2);
+    const container = this.add.container(width / 2, height + panelH / 2);
     const bg = this.add.graphics();
 
     drawModalBox(bg, { width: panelW, height: panelH });
     container.add(bg);
+    // S-POLISH Run1: Slide-in von unten
+    this.tweens.add({ targets: container, y: height / 2, duration: 280, ease: 'Cubic.Out' });
     const title = this.add.text(0, -panelH / 2 + 12, `Pflanze einsaeen (${freeSlots} frei)`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
     }).setOrigin(0.5, 0);
@@ -465,10 +473,12 @@ export class GardenScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const panelW = 320;
     const panelH = Math.min(380, 80 + seedSlugs.length * 26);
-    const container = this.add.container(width / 2, height / 2);
+    const container = this.add.container(width / 2, height + panelH / 2);
     const bg = this.add.graphics();
     drawModalBox(bg, { width: panelW, height: panelH });
     container.add(bg);
+    // S-POLISH Run1: Slide-in von unten
+    this.tweens.add({ targets: container, y: height / 2, duration: 280, ease: 'Cubic.Out' });
     const title = this.add.text(0, -panelH / 2 + 12, `Slot ${gridX},${gridY} bepflanzen`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
     }).setOrigin(0.5, 0);
@@ -1360,6 +1370,10 @@ export class GardenScene extends Phaser.Scene {
     });
     container.add(close);
 
+    // S-POLISH Run1: Detail-Panel Scale-in Bounce
+    container.setScale(0.85);
+    container.setAlpha(0);
+    this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, alpha: 1, duration: 220, ease: 'Back.Out' });
     this.detailPanel = container;
   }
 
