@@ -87,6 +87,9 @@ export interface GameState {
   // S-POLISH-B2-R9: Market-Bought-Today Tracking
   marketBoughtToday?: Record<string, number>;  // slug -> count bought today (in roster mode)
   marketBoughtTodayDay?: number;               // dayIndex when this was last reset
+  // S-POLISH-B2-R12: Login-Streak
+  loginStreak?: number;                        // aufeinanderfolgende Tage mit Daily-Login
+  loginDaysTotal?: number;                     // Gesamtzahl der Login-Tage
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
@@ -233,6 +236,10 @@ function migrate(parsedRaw: unknown): GameState | null {
     if (typeof parsed.energy !== 'number') parsed.energy = 100; // energy default
     if (!parsed.marketBoughtToday) parsed.marketBoughtToday = {};
     if (typeof parsed.marketBoughtTodayDay !== 'number') parsed.marketBoughtTodayDay = -1;
+    if (typeof parsed.loginStreak !== 'number') parsed.loginStreak = 0;
+    if (typeof parsed.loginDaysTotal !== 'number') parsed.loginDaysTotal = 0;
+    if (typeof parsed.loginStreak !== 'number') parsed.loginStreak = 0;
+    if (typeof parsed.loginDaysTotal !== 'number') parsed.loginDaysTotal = 0;
     debugLog('[storage] migrated save v10 -> v11 (i18n locale field)');
   }
   if (parsed.version === 5) {

@@ -526,17 +526,70 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private tryClaimDailyLogin(): void {
     const r = gameStore.claimDailyLogin();
     if (!r.ok || !r.reward) return;
-    // Tier-3 V0.2: Tagesbelohnung-Toast als reward-Variante (gold), bottom-positioniert.
     const cam = this.cameras.main;
-    const toast = showToast(this, `Tagesbelohnung: ${r.reward.label}`, 'reward', {
+    const streak = gameStore.getLoginStreak();
+    const total = gameStore.getLoginDaysTotal();
+    // S-POLISH-B2-R12: Streak-Info in Toast-Label
+    const streakLabel = streak > 1 ? `  🔥 ${streak} Tage Streak!` : '';
+    const toast = showToast(this, `Tagesbelohnung: ${r.reward.label}${streakLabel}`, 'reward', {
       cameraZoom: cam.zoom || 1,
       yAbsolute: cam.height - 60,
       padding: { x: 12, y: 8 },
       duration: 4000,
       delay: 2500
     });
-    // Verhindere Doppel-Rendering durch UI-Cam des Tutorial-Overlays
     this.registerInAllUiCams(toast);
+    // S-POLISH-B2-R12: Kalender-Grid-Animation (7 Tage-Dots, nach 3s)
+    this.time.delayedCall(3000, () => {
+      this.showLoginCalendar(streak, total);
+    });
+  }
+
+  /** S-POLISH-B2-R12: Mini-Kalender mit 7 Dots (letzte Woche) */
+  private showLoginCalendar(streak: number, _total: number): void {
+    const cam = this.cameras.main;
+    const z = cam.zoom || 1;
+    const W = 230, H = 54;
+    const container = this.add
+      .container(cam.width / 2 / z, cam.height / 2 / z)
+      .setScrollFactor(0)
+      .setDepth(2205)
+      .setScale(1 / z);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x1a1400, 0.94);
+    bg.fillRoundedRect(-W / 2, -H / 2, W, H, 8);
+    bg.lineStyle(2, 0xfcd95c, 0.7);
+    bg.strokeRoundedRect(-W / 2, -H / 2, W, H, 8);
+    container.add(bg);
+    // Label
+    const lbl = this.add.text(0, -H / 2 + 10, `Streak: ${streak} Tage`, {
+      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#fcd95c'
+    }).setOrigin(0.5, 0);
+    container.add(lbl);
+    // 7 Dots (letzten 7 Tage als Kreise)
+    const dotSpacing = 28;
+    const dotY = 8;
+    for (let i = 0; i < 7; i++) {
+      const dotX = -3 * dotSpacing + i * dotSpacing;
+      const isActive = i >= 7 - Math.min(streak, 7);
+      const dotColor = isActive ? 0xfcd95c : 0x333333;
+      const dot = this.add.circle(dotX, dotY, 8, dotColor, isActive ? 1 : 0.5);
+      container.add(dot);
+      if (isActive) {
+        // Pulse-Animation für aktive Dots
+        this.tweens.add({
+          targets: dot, alpha: { from: 1, to: 0.6 }, duration: 400 + i * 60,
+          ease: 'Sine.InOut', yoyo: true, repeat: 2
+        });
+      }
+    }
+    this.registerInAllUiCams(container);
+    container.setAlpha(0);
+    this.tweens.add({ targets: container, alpha: 1, duration: 250, ease: 'Cubic.Out' });
+    this.tweens.add({
+      targets: container, alpha: 0, delay: 3000, duration: 500,
+      onComplete: () => container.destroy()
+    });
   }
 
   private registerInAllUiCams(obj: Phaser.GameObjects.GameObject): void {

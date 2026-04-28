@@ -394,6 +394,7 @@ class GameStore {
       this.addItem('pristine-pollen', 1);
       reward = { label: '1x Pristine-Pollen', itemSlug: 'pristine-pollen' };
     }
+    this.updateLoginStreak(now);
     this.state.lastDailyLoginAt = now;
     this.save();
     return { ok: true, reward };
@@ -433,6 +434,32 @@ class GameStore {
     this.addItem(itemSlug, 1);
     this.notify();
     return { ok: true };
+  }
+
+  // -------- Login-Streak Tracking (S-POLISH-B2-R12) --------
+
+  getLoginStreak(): number {
+    return this.state.loginStreak ?? 0;
+  }
+
+  getLoginDaysTotal(): number {
+    return this.state.loginDaysTotal ?? 0;
+  }
+
+  /** Interne Methode: Streak nach claimDailyLogin aktualisieren. */
+  updateLoginStreak(now = Date.now()): void {
+    const last = this.state.lastDailyLoginAt ?? 0;
+    const todayDay = Math.floor(now / (24 * 60 * 60 * 1000));
+    const lastDay = Math.floor(last / (24 * 60 * 60 * 1000));
+    const dayDiff = todayDay - lastDay;
+    if (dayDiff === 1) {
+      // Konsekutiver Tag → Streak erhöhen
+      this.state.loginStreak = (this.state.loginStreak ?? 0) + 1;
+    } else if (dayDiff > 1) {
+      // Streak gebrochen
+      this.state.loginStreak = 1;
+    }
+    this.state.loginDaysTotal = (this.state.loginDaysTotal ?? 0) + 1;
   }
 
   // -------- Market: Bought-Today Tracking (S-POLISH-B2-R9) --------
