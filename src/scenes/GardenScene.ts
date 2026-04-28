@@ -191,6 +191,7 @@ export class GardenScene extends Phaser.Scene {
           this.showFlash('Brauchst 2 Pflanzen zum Kreuzen', '#ff7e7e');
           return;
         }
+        ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
         const result = gameStore.crossPlants(state.plants[0].id, state.plants[1].id);
         if (!result.ok) {
           this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
@@ -334,6 +335,7 @@ export class GardenScene extends Phaser.Scene {
       backgroundColor: '#b86ee3', padding: { left: 14, right: 14, top: 6, bottom: 6 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     okBtn.on('pointerdown', () => {
+      ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
       const result = gameStore.crossPlants(parentAId, parentBId);
       if (!result.ok) {
         this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
@@ -514,13 +516,13 @@ export class GardenScene extends Phaser.Scene {
    */
   /**
    * S-POLISH: Hybrid-Reveal-Stinger.
-   * Camera-Zoom-Punch plus Tint-Flash bei erfolgreichem Crossing.
-   * Bei isMutation zusaetzlich rot-Tint plus Camera-Shake.
+   * Camera-Zoom-Punch plus Tint-Flash plus Pollen-Particle-Burst bei erfolgreichem Crossing.
+   * Bei isMutation zusaetzlich violet-Tint plus Camera-Shake.
    */
   private playHybridReveal(isMutation: boolean): void {
     const cam = this.cameras.main;
     const baseZoom = cam.zoom;
-    // Zoom-Punch 1.0 -> 1.15 -> 1.0
+    // Zoom-Punch
     this.tweens.add({
       targets: cam,
       zoom: baseZoom * 1.15,
@@ -528,7 +530,7 @@ export class GardenScene extends Phaser.Scene {
       ease: 'Cubic.Out',
       yoyo: true
     });
-    // Tint-Flash via fullscreen Overlay-Rect
+    // Tint-Flash
     const flashColor = isMutation ? 0xb86ee3 : 0xfff5cc;
     const flash = this.add.rectangle(
       cam.scrollX + cam.width / 2,
@@ -547,6 +549,38 @@ export class GardenScene extends Phaser.Scene {
     });
     if (isMutation) {
       cam.shake(300, 0.008);
+    }
+
+    // Pollen-Particle-Burst aus Bildmitte (50 partikel, lifespan 1500ms)
+    const cx = cam.scrollX + cam.width / 2;
+    const cy = cam.scrollY + cam.height / 2;
+    for (let i = 0; i < 50; i++) {
+      const angle = (Math.PI * 2 * i) / 50 + (Math.random() - 0.5) * 0.3;
+      const dist = 60 + Math.random() * 100;
+      const px = cx + Math.cos(angle) * 8;
+      const py = cy + Math.sin(angle) * 8;
+      const tx = cx + Math.cos(angle) * dist;
+      const ty = cy + Math.sin(angle) * dist;
+      const color = isMutation ? 0xff7eb8 : 0xfcd95c;
+      const particle = this.add.circle(px, py, 3 + Math.random() * 2, color, 0.95).setDepth(9998);
+      this.tweens.add({
+        targets: particle,
+        x: tx,
+        y: ty,
+        alpha: 0,
+        scale: { from: 1, to: 0.3 },
+        duration: 1200 + Math.random() * 400,
+        ease: 'Cubic.Out',
+        onComplete: () => particle.destroy()
+      });
+    }
+
+    // PostHog-Event fuer Telemetrie
+    const posthog = (window as Window & { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog;
+    if (posthog) {
+      posthog.capture(isMutation ? 'mutation_triggered' : 'breeding_succeeded', {
+        timestamp: new Date().toISOString()
+      });
     }
   }
 
