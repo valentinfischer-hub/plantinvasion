@@ -186,7 +186,10 @@ export class InventoryScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     });
     this.detailPanel.add([bg, title, kind, desc, price]);
+    // S-POLISH Run5: Detail-Panel fade-in statt instant
+    this.detailPanel.setAlpha(0);
     this.detailPanel.setVisible(true);
+    this.tweens.add({ targets: this.detailPanel, alpha: 1, duration: 180, ease: 'Cubic.Out' });
   }
 
   private selectItem(slug: string): void {

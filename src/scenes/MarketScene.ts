@@ -104,7 +104,11 @@ export class MarketScene extends Phaser.Scene {
         fontFamily: 'monospace', fontSize: '11px', color: isBuy ? '#9be36e' : '#fcd95c',
         backgroundColor: '#222222', padding: { x: 6, y: 4 }
       }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
-      buyBtn.on('pointerup', () => this.tryTransaction(item));
+      buyBtn.on('pointerup', () => {
+        // S-POLISH Run5: Buy-Button Scale-Bounce nach Kauf
+        this.tweens.add({ targets: buyBtn, scaleX: 1.25, scaleY: 1.25, duration: 80, yoyo: true, ease: 'Back.Out' });
+        this.tryTransaction(item);
+      });
       // S-POLISH-09b: Row Hover-Glow
       bg.setInteractive({ useHandCursor: false });
       bg.on('pointerover', () => { bg.setStrokeStyle(2, 0xc9a96a); });
