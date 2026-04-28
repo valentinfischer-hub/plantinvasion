@@ -35,6 +35,7 @@ import { AmbientParticles } from '../ui/AmbientParticles';
 import { debugLog } from '../utils/debugLog';
 import { showToast } from '../ui/Toast';
 import { now as gameTimeNow } from '../utils/gameTime';
+import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
 import { FONT_FAMILY } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
@@ -473,6 +474,29 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       const npcWalls: ReadonlySet<string> = new Set();
       const now = gameTimeNow();
       for (const npc of this.npcs) npc.step(now, npcWalls, dialogActive);
+    }
+
+    // S-09 V0.1: Story-Akt-1-Auto-Tracking. Autosetting der Quest-Flags + Akt-Advance.
+    // Pure-Function pro Tick, kein State ausser story.flags + currentAct.
+    {
+      const state = gameStore.get();
+      const flags = state.story?.flags ?? {};
+      const updatedFlags = autoSetAct1Flags(flags, state.plants);
+      // Side-Effect nur bei Aenderung
+      const flagsChanged = Object.keys(updatedFlags).some(k => updatedFlags[k] !== flags[k]);
+      if (flagsChanged) {
+        for (const [k, v] of Object.entries(updatedFlags)) {
+          if (v) gameStore.setStoryFlag(k, true);
+        }
+      }
+      // Akt-Abschluss-Check
+      const status = evaluateAct1Progress(updatedFlags, state.plants);
+      if (status === 'completed' && gameStore.getCurrentAct() < 1) {
+        gameStore.advanceAct(1);
+        if (gameStore.collectDiaryEntry(1)) {
+          showToast(this, 'Tagebuch: Mein erster Tag in Wurzelheim', 'reward', { yOffset: -100 });
+        }
+      }
     }
     if (this.dialog.open_) {
       // Choice-Mode: number keys 1-4
