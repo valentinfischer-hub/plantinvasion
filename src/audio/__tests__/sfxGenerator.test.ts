@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { setMasterVolume, getMasterVolume } from '../sfxGenerator';
+import { setMasterVolume, getMasterVolume, sfx } from '../sfxGenerator';
 
 /**
  * Tier-3 Audio-System: Volume-API Tests.
@@ -39,5 +39,19 @@ describe('sfxGenerator Volume-API', () => {
     // Reset auf default state.
     setMasterVolume(0.4);
     expect(getMasterVolume()).toBe(0.4);
+  });
+});
+
+describe('sfxGenerator API-Vollständigkeit', () => {
+  it('sfx.harvest ist eine Funktion', () => {
+    expect(typeof sfx.harvest).toBe('function');
+  });
+
+  it('sfx.battleHit ist eine Funktion', () => {
+    expect(typeof sfx.battleHit).toBe('function');
+  });
+
+  it('sfx.footstep ist eine Funktion', () => {
+    expect(typeof sfx.footstep).toBe('function');
   });
 });

@@ -76,6 +76,29 @@ export const sfx = {
   },
   click(): void {
     blip({ freq: 800, duration: 0.04, volume: 0.18, type: 'square' });
+  },
+  /** S-POLISH Run9: Harvest-Sound - layered rustling (noise via sawtooth) + ding */
+  harvest(): void {
+    // Rustling: low sawtooth sweep
+    blip({ freq: 120, freqEnd: 60, duration: 0.18, volume: 0.22, type: 'sawtooth' });
+    // Ding: bright ping nach 100ms
+    setTimeout(() => blip({ freq: 1320, freqEnd: 880, duration: 0.14, volume: 0.28, type: 'sine' }), 100);
+    // Echo-Ding
+    setTimeout(() => blip({ freq: 1100, freqEnd: 660, duration: 0.1, volume: 0.15, type: 'sine' }), 220);
+  },
+  /** S-POLISH Run9: Battle-Hit mit Pitch-Variation je Damage-Tier */
+  battleHit(dmg: number): void {
+    // Leicht: 80-120 DMG -> tiefer Punch
+    // Mittel: 121-250 -> mittlerer Krach
+    // Schwer: 251+ -> hoher Smash
+    if (dmg >= 251) {
+      blip({ freq: 160, freqEnd: 50, duration: 0.18, volume: 0.45, type: 'sawtooth' });
+      setTimeout(() => blip({ freq: 400, freqEnd: 200, duration: 0.1, volume: 0.3, type: 'square' }), 60);
+    } else if (dmg >= 121) {
+      blip({ freq: 110, freqEnd: 55, duration: 0.14, volume: 0.38, type: 'square' });
+    } else {
+      blip({ freq: 80, duration: 0.1, volume: 0.28, type: 'sawtooth' });
+    }
   }
 };
 
