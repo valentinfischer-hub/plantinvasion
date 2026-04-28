@@ -506,6 +506,29 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (this.weatherOverlay) this.weatherOverlay.ignoreInUICam(obj);
   }
 
+  /** S-POLISH-B2-R8: NPC-Hearts-Feedback-Animation */
+  private spawnNpcHeartsFeedback(x: number, y: number, color: number): void {
+    for (let i = 0; i < 3; i++) {
+      const heart = this.add.text(
+        x + (Math.random() - 0.5) * 20,
+        y,
+        '♥',
+        { fontFamily: 'monospace', fontSize: '14px', color: '#ff6b6b' }
+      ).setOrigin(0.5).setDepth(600).setAlpha(0.9);
+      this.tweens.add({
+        targets: heart,
+        y: y - 30 - i * 10,
+        alpha: 0,
+        scale: 0.5,
+        duration: 700,
+        delay: i * 120,
+        ease: 'Power2',
+        onComplete: () => heart.destroy()
+      });
+    }
+    void color; // param für zukünftige Farb-Variation
+  }
+
   /** S-POLISH-B2-R4: Foraging-Fund-Animation - Item-Pop Bounce */
   private spawnForagePop(x: number, y: number): void {
     const star = this.add.text(x, y, '✦', {
@@ -943,6 +966,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.tutorial?.markInteract('npc');
       const hasMetBefore = gameStore.hasMetNpc(npc.data.id);
       gameStore.meetNpc(npc.data.id);
+      // S-POLISH-B2-R8: Hearts-Feedback bei Erstkontakt
+      if (!hasMetBefore) {
+        this.spawnNpcHeartsFeedback(npc.sprite.x, npc.sprite.y - 24, 0xff6b6b);
+      }
       // S-POLISH Run12: Dialog-Rotation - bei bekannten NPCs Zeile shufflen
       let lines: string[];
       if (hasMetBefore && npc.data.dialog.length > 1) {

@@ -788,6 +788,35 @@ class GameStore {
     }
   }
 
+  // === NPC-RELATION-SYSTEM (Hearts) ===
+  getNpcHearts(npcId: string): number {
+    return (this.state.story?.flags?.[`npc_hearts_${npcId}`] as unknown as number) ?? 0;
+  }
+
+  addNpcHearts(npcId: string, amount: number): void {
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    const key = `npc_hearts_${npcId}`;
+    const current = (this.state.story.flags[key] as unknown as number) ?? 0;
+    this.state.story.flags[key] = Math.min(10, current + amount) as unknown as boolean;
+    this.notify();
+  }
+
+  /** Weekly-Gift-Cooldown: Hat der Spieler dieser NPC diese Woche schon ein Geschenk gegeben? */
+  hasGiftedNpcThisWeek(npcId: string): boolean {
+    const time = this.getTime();
+    const weekKey = `npc_gift_week_${npcId}_${time.year}_${Math.floor(time.day / 7)}`;
+    return this.state.story?.flags?.[weekKey] === true;
+  }
+
+  markNpcGiftedThisWeek(npcId: string): void {
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    const time = this.getTime();
+    const weekKey = `npc_gift_week_${npcId}_${time.year}_${Math.floor(time.day / 7)}`;
+    this.state.story.flags[weekKey] = true;
+    this.addNpcHearts(npcId, 1);
+    this.save();
+  }
+
   meetNpc(npcId: string): boolean {
     if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
     if (this.state.story.metNpcs.includes(npcId)) return false;
