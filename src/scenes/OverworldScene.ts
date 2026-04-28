@@ -175,6 +175,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private keyDiary!: Phaser.Input.Keyboard.Key;
   private debugText!: Phaser.GameObjects.Text;
   private _saveAccum?: number;
+  private _storyFlagAccum?: number;
+  private _lastPlayerTileX?: number;
+  private _lastPlayerTileY?: number;
   private interactHint!: Phaser.GameObjects.Text;
   private touch!: TouchKeysHandle;
   private prevTouchE = false;
@@ -557,9 +560,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       }
     }
 
+    // S-POLISH Run-4 Performance: Story-Flag-Check auf 500ms throttled (war: jeden Frame).
+    this._storyFlagAccum = (this._storyFlagAccum ?? 0) + delta;
+    const doStoryCheck = this._storyFlagAccum >= 500;
+    if (doStoryCheck) this._storyFlagAccum = 0;
+
     // S-09 V0.1: Story-Akt-1-Auto-Tracking. Autosetting der Quest-Flags + Akt-Advance.
     // Pure-Function pro Tick, kein State ausser story.flags + currentAct.
-    {
+    if (doStoryCheck) {
       const state = gameStore.get();
       const flags = state.story?.flags ?? {};
       const updatedFlags = autoSetAct1Flags(flags, state.plants);
@@ -581,8 +589,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
 
     // S-10 V0.1: Story-Akt-2-Auto-Tracking ("Verdanto erkundet").
-    // Läuft nur wenn currentAct >= 1 (Akt-1 abgeschlossen).
-    if (gameStore.getCurrentAct() >= 1) {
+    // Läuft nur wenn currentAct >= 1 (Akt-1 abgeschlossen) UND doStoryCheck.
+    if (doStoryCheck && gameStore.getCurrentAct() >= 1) {
       const state = gameStore.get();
       const flags = state.story?.flags ?? {};
       const visitedZones = gameStore.getAchievementCounters().visitedZones;
@@ -641,9 +649,16 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Tutorial Auto-Advance
     this.tutorial.checkAdvance({ tileX: this.player.tileX, tileY: this.player.tileY, facing: this.player.facing, isMoving: this.player.isMoving });
 
-    // Periodische NPC-Name-Tag-Refresh (jeden Tile-Step)
+    // S-POLISH Run-4 Performance: NPC-Name-Tag-Refresh nur bei Tile-Position-Wechsel
+    // Vorher: O(n) forEach jeden Frame. Jetzt: nur wenn tileX/tileY sich geaendert hat.
     if (!this.player.isMoving) {
-      this.refreshNpcNameTags();
+      const curX = this.player.tileX;
+      const curY = this.player.tileY;
+      if (curX !== this._lastPlayerTileX || curY !== this._lastPlayerTileY) {
+        this._lastPlayerTileX = curX;
+        this._lastPlayerTileY = curY;
+        this.refreshNpcNameTags();
+      }
     }
     // Periodische Position-Speicherung (alle ~2s wenn nicht moving)
     if (!this.player.isMoving) {
