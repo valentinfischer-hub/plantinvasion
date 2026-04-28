@@ -1,16 +1,8 @@
 import Phaser from 'phaser';
 import { loadGame } from '../state/storage';
 import { gameStore } from '../state/gameState';
-import {
-  startAmbientBGMFadeIn,
-  fadeOutBGM,
-  synthEntryStinger,
-  sfx,
-  getMasterVolume,
-  setMasterVolume,
-  getPersistedVolume
-} from '../audio/sfxGenerator';
-import { COLOR_INFO, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DEFAULT, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR, TILE_BORDER_COLOR } from '../ui/uiTheme';
+import { startAmbientBGM, sfx } from '../audio/sfxGenerator';
+import { t } from '../i18n/index';
 
 /**
  * Start-Screen mit Title und Continue/New-Game/Settings.
@@ -28,10 +20,10 @@ export class MenuScene extends Phaser.Scene {
     const cx = this.cameras.main.width / 2;
     const cy = this.cameras.main.height / 2;
     const splashTitle = this.add.text(cx, cy - 20, 'Plantinvasion', {
-      fontFamily: FONT_FAMILY, fontSize: '32px', color: COLOR_SUCCESS
+      fontFamily: 'monospace', fontSize: '32px', color: '#9be36e'
     }).setOrigin(0.5);
     const splashStatus = this.add.text(cx, cy + 14, 'lade Assets 0%', {
-      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_TEXT_DIM
+      fontFamily: 'monospace', fontSize: '11px', color: '#888888'
     }).setOrigin(0.5);
     this.load.on('progress', (v: number) => {
       splashStatus.setText(`lade Assets ${Math.round(v * 100)}%`);
@@ -133,7 +125,7 @@ export class MenuScene extends Phaser.Scene {
 
     // S-POLISH-START: Logo-Reveal-Animation
     const title = this.add.text(cx, plantY + 75, 'Plantinvasion', {
-      fontFamily: FONT_FAMILY, fontSize: '36px', color: COLOR_SUCCESS
+      fontFamily: 'monospace', fontSize: '36px', color: '#9be36e'
     }).setOrigin(0.5);
     title.setAlpha(0);
     title.setScale(0.7);
@@ -159,7 +151,7 @@ export class MenuScene extends Phaser.Scene {
     // S-POLISH-START: Subtitle-Rotation (3 Taglines im Loop, je 3.5s sichtbar plus 0.5s Cross-Fade)
     const taglines = ['Cozy Botanik-RPG', 'Pflanzen-Sammler-Hybrid', 'Stardew trifft Pokemon'];
     const subtitle = this.add.text(cx, plantY + 110, taglines[0], {
-      fontFamily: FONT_FAMILY, fontSize: '12px', color: '#8a6e4a'
+      fontFamily: 'monospace', fontSize: '12px', color: '#8a6e4a'
     }).setOrigin(0.5);
     subtitle.setAlpha(0);
     this.tweens.add({
@@ -191,23 +183,24 @@ export class MenuScene extends Phaser.Scene {
 
     let by = plantY + 170;
     if (save) {
-      void this.makeButton(cx, by, 'Weiterspielen', COLOR_SUCCESS, () => {
+      void this.makeButton(cx, by, t('menu.continue'), '#9be36e', () => {
         sfx.dialogAdvance();
+        startAmbientBGM();
         // Garten ist Herzstueck: Default auf GardenScene
         const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
-        this.transitionTo(target, true);
+        this.scene.start(target);
       });
       by += 60;
     }
-    const newGameBtn = this.makeButton(cx, by, save ? 'Neues Spiel' : 'Spiel starten', COLOR_REWARD, () => {
+    const newGameBtn = this.makeButton(cx, by, save ? t('menu.newGame') : t('menu.startGame'), '#fcd95c', () => {
       // V0.2 (Critic-Review-Fix): Bei Neues-Spiel direkt in OverworldScene
       // mit Tutorial-Step 0. Vorher startete man in GardenScene mit
       // einer einsamen Sunflower und kam sich verloren vor.
       gameStore.resetToNewGame();
       gameStore.advanceTutorial(0);
       sfx.dialogAdvance();
-      // S-POLISH-START-17: Charakter-Erstellung vor OverworldScene
-      this.transitionTo('CharacterCreationScene', true);
+      startAmbientBGM();
+      this.scene.start('OverworldScene');
     });
     // S-POLISH-START: Primary-CTA Pulse-Animation um neue Spieler zum Klick zu fuehren
     this.tweens.add({
@@ -220,38 +213,29 @@ export class MenuScene extends Phaser.Scene {
       delay: 1400
     });
     by += 60;
-    const _settingsBtn = this.makeButton(cx, by, 'Einstellungen', COLOR_INFO, () => {
+    const _settingsBtn = this.makeButton(cx, by, t('menu.settings'), '#8eaedd', () => {
       sfx.dialogAdvance();
-      this.transitionTo('SettingsScene', false);
+      this.scene.start('SettingsScene');
     });
     by += 60;
-    const _helpBtn = this.makeButton(cx, by, 'Hilfe & Hotkeys', COLOR_REWARD, () => {
+    const _helpBtn = this.makeButton(cx, by, t('menu.help'), '#fcd95c', () => {
       sfx.dialogAdvance();
-      this.transitionTo('HelpScene', false);
+      this.scene.start('HelpScene');
     });
+    by += 60;
 
     const _hint = this.add.text(cx, height - 24, 'v0.8 - Brave Browser empfohlen', {
-      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#553e2d'
+      fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
     // S-POLISH-START: First-Visit-Welcome-Modal fuer neue Spieler ohne Save
     if (!save) {
       this.time.delayedCall(1500, () => this.showWelcomeModal());
     }
 
-    // Volume-Persist: Gespeicherten Wert laden und anwenden
-    const persistedVol = getPersistedVolume();
-    setMasterVolume(persistedVol);
-
-    // S-POLISH-START-19: Entry-Stinger beim allerersten MenuScene-Boot (einmalig pro Page-Load)
-    this.time.delayedCall(300, () => {
-      try { synthEntryStinger(); } catch { /* kein AudioContext vor User-Gesture: silent */ }
-    });
-
-    // S-POLISH-START: Auto-Ambient-BGM nach 2s mit Fade-In (nur wenn Volume > 0)
+    // S-POLISH-START: Auto-Ambient-BGM nach 2s damit Hauptmenue Atmosphaere bekommt
+    // (mit Try-Catch fuer Browser-Autoplay-Block, dann erst beim ersten Button-Click)
     this.time.delayedCall(2000, () => {
-      if (getMasterVolume() > 0) {
-        try { startAmbientBGMFadeIn(500); } catch { /* Browser-Autoplay-Block */ }
-      }
+      try { startAmbientBGM(); } catch { /* Browser-Autoplay-Block, BGM startet bei erstem Click */ }
     });
 
     // S-POLISH-START: Atmospheric Plant-Growth-Loop hinten links
@@ -294,7 +278,7 @@ export class MenuScene extends Phaser.Scene {
     const panelW = 320;
     const panelH = 220;
     const panel = this.add.rectangle(0, 0, panelW, panelH, 0x1a2820, 0.98)
-      .setStrokeStyle(3, MODAL_BORDER_COLOR).setOrigin(0.5);
+      .setStrokeStyle(3, 0x9be36e).setOrigin(0.5);
     overlay.add(panel);
 
     const slides = [
@@ -314,17 +298,17 @@ export class MenuScene extends Phaser.Scene {
 
     let slideIdx = 0;
     const titleText = this.add.text(0, -panelH / 2 + 30, slides[0].title, {
-      fontFamily: FONT_FAMILY, fontSize: '16px', color: COLOR_REWARD
+      fontFamily: 'monospace', fontSize: '16px', color: '#fcd95c'
     }).setOrigin(0.5);
     overlay.add(titleText);
     const bodyText = this.add.text(0, -10, slides[0].body, {
-      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_TEXT_DEFAULT, align: 'center'
+      fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc', align: 'center'
     }).setOrigin(0.5);
     overlay.add(bodyText);
     const dotsContainer = this.add.container(0, panelH / 2 - 60);
     const dots: Phaser.GameObjects.Arc[] = [];
     for (let i = 0; i < slides.length; i++) {
-      const dot = this.add.circle((i - 1) * 14, 0, 4, i === 0 ? MODAL_BORDER_COLOR : TILE_BORDER_COLOR);
+      const dot = this.add.circle((i - 1) * 14, 0, 4, i === 0 ? 0x9be36e : 0x44603f);
       dotsContainer.add(dot);
       dots.push(dot);
     }
@@ -333,11 +317,11 @@ export class MenuScene extends Phaser.Scene {
     const updateSlide = () => {
       titleText.setText(slides[slideIdx].title);
       bodyText.setText(slides[slideIdx].body);
-      dots.forEach((d, i) => d.setFillStyle(i === slideIdx ? MODAL_BORDER_COLOR : TILE_BORDER_COLOR));
+      dots.forEach((d, i) => d.setFillStyle(i === slideIdx ? 0x9be36e : 0x44603f));
     };
 
     const nextBtn = this.add.text(panelW / 2 - 50, panelH / 2 - 25, 'Weiter ->', {
-      fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_SUCCESS,
+      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e',
       backgroundColor: '#000000', padding: { x: 10, y: 5 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     nextBtn.on('pointerdown', () => {
@@ -359,7 +343,7 @@ export class MenuScene extends Phaser.Scene {
     overlay.add(nextBtn);
 
     const skipBtn = this.add.text(-panelW / 2 + 35, panelH / 2 - 25, 'Skip', {
-      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_TEXT_DIM,
+      fontFamily: 'monospace', fontSize: '11px', color: '#888888',
       padding: { x: 6, y: 3 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     skipBtn.on('pointerdown', () => {
@@ -378,17 +362,6 @@ export class MenuScene extends Phaser.Scene {
     this.tweens.add({ targets: overlay, alpha: 1, duration: 400, ease: 'Cubic.Out' });
   }
 
-  /**
-   * Scene-Transition mit BGM-Cross-Fade:
-   * 500ms fade-out, optional 500ms fade-in der neuen BGM, dann scene.start.
-   */
-  private transitionTo(key: string, startBGM = false): void {
-    fadeOutBGM(500).then(() => {
-      if (startBGM) startAmbientBGMFadeIn(500);
-      this.scene.start(key);
-    });
-  }
-
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
     const w = 220;
@@ -399,7 +372,7 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     const txt = this.add.text(0, 0, label, {
-      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: accent
+      fontFamily: 'monospace', fontSize: '14px', color: accent
     }).setOrigin(0.5);
     // S-POLISH-09: Hover-State (Scale 1.05 plus Border-Glow auf 3px)
     bg.on('pointerover', () => {
