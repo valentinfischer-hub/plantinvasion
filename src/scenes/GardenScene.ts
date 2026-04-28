@@ -169,6 +169,9 @@ export class GardenScene extends Phaser.Scene {
 
     this.renderPlants();
 
+    // S-POLISH-START-18: Tutorial-Step-0 First-Plant-Slot-Highlight
+    this.setupTutorialHighlight();
+
     // Tick-Loop: alle 1s
     this.time.addEvent({
       delay: 1000,
@@ -639,6 +642,92 @@ export class GardenScene extends Phaser.Scene {
     });
     this.refreshHeader();
   }
+
+  /**
+   * S-POLISH-START-18: Bei tutorialStep === 0 (Neuer Spieler) ein Highlight
+   * auf den ersten leeren Plant-Slot setzen plus Hint-Text mit Pfeil.
+   */
+  private tutorialHighlight?: Phaser.GameObjects.Graphics;
+  private tutorialHint?: Phaser.GameObjects.Text;
+  private tutorialArrow?: Phaser.GameObjects.Text;
+  private tutorialPulseTween?: Phaser.Tweens.Tween;
+
+  private setupTutorialHighlight(): void {
+    const state = gameStore.get();
+    const tutorialStep = state.tutorial?.step ?? -1;
+    if (tutorialStep !== 0) return;
+
+    // Erster leerer Slot finden (kein plant.gridX/Y matched)
+    const occupied = new Set(state.plants.map((p) => `${p.gridX},${p.gridY}`));
+    let targetX = -1, targetY = -1;
+    for (let y = 0; y < GRID_ROWS && targetX === -1; y++) {
+      for (let x = 0; x < GRID_COLUMNS && targetX === -1; x++) {
+        if (!occupied.has(`${x},${y}`)) {
+          targetX = x;
+          targetY = y;
+        }
+      }
+    }
+    if (targetX === -1) return;
+
+    const sx = this.gridOriginX + targetX * (TILE + TILE_PAD);
+    const sy = this.gridOriginY + targetY * (TILE + TILE_PAD);
+
+    // Pulsing Outline
+    const highlight = this.add.graphics();
+    highlight.lineStyle(3, 0xfcd95c, 1);
+    highlight.strokeRoundedRect(sx, sy, TILE, TILE, 4);
+    highlight.setDepth(50);
+    this.tutorialHighlight = highlight;
+    this.tutorialPulseTween = this.tweens.add({
+      targets: highlight,
+      alpha: { from: 1, to: 0.4 },
+      duration: 1500,
+      ease: 'Sine.InOut',
+      yoyo: true,
+      repeat: -1
+    });
+
+    // Hint-Text oberhalb Garten-Grid
+    const hint = this.add.text(this.scale.width / 2, this.gridOriginY - 28,
+      'Klick hier um deine erste Pflanze zu setzen', {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#fcd95c',
+      backgroundColor: '#1a1f1a',
+      padding: { x: 8, y: 4 }
+    }).setOrigin(0.5).setDepth(51);
+    this.tutorialHint = hint;
+
+    // Pfeil von Hint runter zum Slot (Bouncy)
+    const arrow = this.add.text(sx + TILE / 2, sy - 16, 'v', {
+      fontFamily: 'monospace',
+      fontSize: '20px',
+      color: '#fcd95c'
+    }).setOrigin(0.5).setDepth(51);
+    this.tutorialArrow = arrow;
+    this.tweens.add({
+      targets: arrow,
+      y: sy - 10,
+      duration: 600,
+      ease: 'Sine.InOut',
+      yoyo: true,
+      repeat: -1
+    });
+
+    // Subscribe gameStore: wenn tutorial-step ueber 0 advanced wird, cleanup
+    const unsub = gameStore.subscribe(() => {
+      const t = gameStore.get().tutorial?.step ?? -1;
+      if (t > 0) {
+        this.tutorialPulseTween?.stop();
+        this.tutorialHighlight?.destroy();
+        this.tutorialHint?.destroy();
+        this.tutorialArrow?.destroy();
+        unsub();
+      }
+    });
+  }
+
 
   private gridToWorld(x: number, y: number): { x: number; y: number } {
     return {
