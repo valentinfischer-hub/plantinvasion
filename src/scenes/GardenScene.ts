@@ -193,6 +193,7 @@ export class GardenScene extends Phaser.Scene {
         if (!result.ok) {
           this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
         } else {
+          this.playHybridReveal(!!result.child?.isMutation);
           this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
         }
       });
@@ -335,7 +336,8 @@ export class GardenScene extends Phaser.Scene {
       if (!result.ok) {
         this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
       } else {
-        this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#b86ee3');
+        this.playHybridReveal(!!result.child?.isMutation);
+      this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#b86ee3');
       }
       c.destroy();
       this.detailPanel = undefined;
@@ -508,6 +510,44 @@ export class GardenScene extends Phaser.Scene {
    * Color-Mapping: legacy color-strings auf neue ToastType-Convention.
    * Background ist jetzt #1a1f1a (vorher #000000) damit konsistent zu Overworld-Toasts.
    */
+  /**
+   * S-POLISH: Hybrid-Reveal-Stinger.
+   * Camera-Zoom-Punch plus Tint-Flash bei erfolgreichem Crossing.
+   * Bei isMutation zusaetzlich rot-Tint plus Camera-Shake.
+   */
+  private playHybridReveal(isMutation: boolean): void {
+    const cam = this.cameras.main;
+    const baseZoom = cam.zoom;
+    // Zoom-Punch 1.0 -> 1.15 -> 1.0
+    this.tweens.add({
+      targets: cam,
+      zoom: baseZoom * 1.15,
+      duration: 200,
+      ease: 'Cubic.Out',
+      yoyo: true
+    });
+    // Tint-Flash via fullscreen Overlay-Rect
+    const flashColor = isMutation ? 0xb86ee3 : 0xfff5cc;
+    const flash = this.add.rectangle(
+      cam.scrollX + cam.width / 2,
+      cam.scrollY + cam.height / 2,
+      cam.width,
+      cam.height,
+      flashColor,
+      0.55
+    ).setDepth(9999);
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 600,
+      ease: 'Cubic.Out',
+      onComplete: () => flash.destroy()
+    });
+    if (isMutation) {
+      cam.shake(300, 0.008);
+    }
+  }
+
   private showFlash(message: string, color: string): void {
     const t: ToastType = mapLegacyColor(color);
     showToast(this, message, t);
