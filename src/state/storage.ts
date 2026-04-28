@@ -79,6 +79,9 @@ export interface GameState {
   };
   // V11: i18n Locale-Persistenz
   locale?: 'de' | 'en';
+  // S-POLISH-17: Charakter-Profil (Name + Avatar-ID)
+  playerName?: string;
+  avatarId?: number;
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
