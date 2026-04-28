@@ -369,6 +369,8 @@ if (this.bossDef && outcome.winner === this.player) {
       } else {
         this.time.delayedCall(2000, () => {
           if (outcome.winner === this.player) {
+            // S-POLISH Run2: Victory-Konfetti Particles
+            this.spawnVictoryConfetti();
             // Battle-Drop V0.2: 25% Seed, 10% Coins
             let dropMsg = '';
             if (this.capturedEnc?.slug) {
@@ -402,11 +404,14 @@ if (this.bossDef && outcome.winner === this.player) {
   }
 
   private updateBars(): void {
+    // S-POLISH Run2: smooth draindown via Tween statt instant width-Set
     const w = 200;
     const playerPct = this.player.stats.hp / this.player.stats.maxHp;
     const wildPct = this.wild.stats.hp / this.wild.stats.maxHp;
-    this.playerHpBar.width = Math.max(0, w * playerPct);
-    this.wildHpBar.width = Math.max(0, w * wildPct);
+    const targetPlayerW = Math.max(0, w * playerPct);
+    const targetWildW = Math.max(0, w * wildPct);
+    this.tweens.add({ targets: this.playerHpBar, width: targetPlayerW, duration: 300, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: this.wildHpBar, width: targetWildW, duration: 300, ease: 'Cubic.Out' });
     this.playerHpBar.fillColor = playerPct > 0.5 ? 0x6abf3a : (playerPct > 0.2 ? 0xfcd95c : 0xc94a4a);
     this.wildHpBar.fillColor = wildPct > 0.5 ? 0x6abf3a : (wildPct > 0.2 ? 0xfcd95c : 0xc94a4a);
     this.playerHpText.setText(`HP ${this.player.stats.hp} / ${this.player.stats.maxHp}`);
@@ -519,6 +524,31 @@ if (this.bossDef && outcome.winner === this.player) {
     } else {
       this.statusText.setText('Flucht misslungen!');
       sfx.bump();
+    }
+  }
+
+  /** S-POLISH Run2: Konfetti-Burst bei Sieg - kleine farbige Rechtecke fallen von oben */
+  private spawnVictoryConfetti(): void {
+    const { width, height } = this.scale;
+    const colors = [0xffd166, 0x9be36e, 0x6abf3a, 0xff5c5c, 0xb86ee3, 0x5b8de8];
+    for (let i = 0; i < 18; i++) {
+      const x = Phaser.Math.Between(50, width - 50);
+      const y = -10;
+      const color = colors[i % colors.length];
+      const rect = this.add.rectangle(x, y, Phaser.Math.Between(4, 9), Phaser.Math.Between(5, 12), color)
+        .setDepth(2000)
+        .setAlpha(0.9);
+      this.tweens.add({
+        targets: rect,
+        y: height + 20,
+        x: x + Phaser.Math.Between(-60, 60),
+        angle: Phaser.Math.Between(-360, 360),
+        alpha: 0,
+        duration: Phaser.Math.Between(1200, 2200),
+        delay: i * 60,
+        ease: 'Cubic.In',
+        onComplete: () => rect.destroy()
+      });
     }
   }
 
