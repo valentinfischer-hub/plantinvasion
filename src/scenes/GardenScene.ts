@@ -139,10 +139,22 @@ export class GardenScene extends Phaser.Scene {
         const sx = this.gridOriginX + x * (TILE + TILE_PAD);
         const sy = this.gridOriginY + y * (TILE + TILE_PAD);
         const slot = this.add.graphics();
-        slot.fillStyle(0x223520, 0.5);
+        // QW-14: Slot-Farbvariation per Position – leicht unterschiedliche Erdtoene
+        const hash = (x * 3 + y * 7) % 6;
+        const slotColors = [0x223520, 0x1e3018, 0x27391e, 0x1c2e16, 0x243822, 0x1a2c14];
+        const borderColors = [0x44603f, 0x3a5234, 0x4e6a47, 0x3c5838, 0x486244, 0x405a3a];
+        slot.fillStyle(slotColors[hash], 0.6);
         slot.fillRoundedRect(sx, sy, TILE, TILE, 4);
-        slot.lineStyle(1, 0x44603f, 0.5);
+        slot.lineStyle(1, borderColors[hash], 0.65);
         slot.strokeRoundedRect(sx, sy, TILE, TILE, 4);
+        // Subtile Innen-Punkte als Bodenstruktur
+        const dotCount = 2 + (hash % 3);
+        for (let d = 0; d < dotCount; d++) {
+          const dx = sx + 10 + ((x * 17 + y * 13 + d * 7) % (TILE - 20));
+          const dy = sy + 10 + ((x * 11 + y * 19 + d * 5) % (TILE - 20));
+          slot.fillStyle(borderColors[hash], 0.25);
+          slot.fillCircle(dx, dy, 3);
+        }
 
         // Slot-spezifischer Boden-Tile (Sprint 1 Atlas) als visuelle Variation.
         // 4 Erdtypen (erdig/steinig/moosig/aschig) rotiert per Slot-Index modulo 4.
