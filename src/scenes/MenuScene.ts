@@ -1,7 +1,15 @@
 import Phaser from 'phaser';
 import { loadGame } from '../state/storage';
 import { gameStore } from '../state/gameState';
-import { startAmbientBGM, sfx } from '../audio/sfxGenerator';
+import {
+  startAmbientBGMFadeIn,
+  fadeOutBGM,
+  synthEntryStinger,
+  sfx,
+  getMasterVolume,
+  setMasterVolume,
+  getPersistedVolume
+} from '../audio/sfxGenerator';
 import { COLOR_INFO, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DEFAULT, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR, TILE_BORDER_COLOR } from '../ui/uiTheme';
 
 /**
@@ -185,10 +193,9 @@ export class MenuScene extends Phaser.Scene {
     if (save) {
       void this.makeButton(cx, by, 'Weiterspielen', COLOR_SUCCESS, () => {
         sfx.dialogAdvance();
-        startAmbientBGM();
         // Garten ist Herzstueck: Default auf GardenScene
         const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
-        this.scene.start(target);
+        this.transitionTo(target, true);
       });
       by += 60;
     }
@@ -199,8 +206,7 @@ export class MenuScene extends Phaser.Scene {
       gameStore.resetToNewGame();
       gameStore.advanceTutorial(0);
       sfx.dialogAdvance();
-      startAmbientBGM();
-      this.scene.start('OverworldScene');
+      this.transitionTo('OverworldScene', true);
     });
     // S-POLISH-START: Primary-CTA Pulse-Animation um neue Spieler zum Klick zu fuehren
     this.tweens.add({
@@ -215,12 +221,12 @@ export class MenuScene extends Phaser.Scene {
     by += 60;
     const _settingsBtn = this.makeButton(cx, by, 'Einstellungen', COLOR_INFO, () => {
       sfx.dialogAdvance();
-      this.scene.start('SettingsScene');
+      this.transitionTo('SettingsScene', false);
     });
     by += 60;
     const _helpBtn = this.makeButton(cx, by, 'Hilfe & Hotkeys', COLOR_REWARD, () => {
       sfx.dialogAdvance();
-      this.scene.start('HelpScene');
+      this.transitionTo('HelpScene', false);
     });
     by += 60;
 
@@ -232,10 +238,20 @@ export class MenuScene extends Phaser.Scene {
       this.time.delayedCall(1500, () => this.showWelcomeModal());
     }
 
-    // S-POLISH-START: Auto-Ambient-BGM nach 2s damit Hauptmenue Atmosphaere bekommt
-    // (mit Try-Catch fuer Browser-Autoplay-Block, dann erst beim ersten Button-Click)
+    // Volume-Persist: Gespeicherten Wert laden und anwenden
+    const persistedVol = getPersistedVolume();
+    setMasterVolume(persistedVol);
+
+    // S-POLISH-START-19: Entry-Stinger beim allerersten MenuScene-Boot (einmalig pro Page-Load)
+    this.time.delayedCall(300, () => {
+      try { synthEntryStinger(); } catch { /* kein AudioContext vor User-Gesture: silent */ }
+    });
+
+    // S-POLISH-START: Auto-Ambient-BGM nach 2s mit Fade-In (nur wenn Volume > 0)
     this.time.delayedCall(2000, () => {
-      try { startAmbientBGM(); } catch { /* Browser-Autoplay-Block, BGM startet bei erstem Click */ }
+      if (getMasterVolume() > 0) {
+        try { startAmbientBGMFadeIn(500); } catch { /* Browser-Autoplay-Block */ }
+      }
     });
 
     // S-POLISH-START: Atmospheric Plant-Growth-Loop hinten links
@@ -360,6 +376,17 @@ export class MenuScene extends Phaser.Scene {
 
     overlay.setAlpha(0);
     this.tweens.add({ targets: overlay, alpha: 1, duration: 400, ease: 'Cubic.Out' });
+  }
+
+  /**
+   * Scene-Transition mit BGM-Cross-Fade:
+   * 500ms fade-out, optional 500ms fade-in der neuen BGM, dann scene.start.
+   */
+  private transitionTo(key: string, startBGM = false): void {
+    fadeOutBGM(500).then(() => {
+      if (startBGM) startAmbientBGMFadeIn(500);
+      this.scene.start(key);
+    });
   }
 
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {

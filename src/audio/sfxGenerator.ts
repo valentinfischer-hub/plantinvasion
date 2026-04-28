@@ -129,3 +129,97 @@ export function stopAmbientBGM(): void {
   }
   _bgmNodes = [];
 }
+
+// ============================================================
+// feat(s-polish-start-19): Volume-Persist + Entry-Stinger + BGM-Crossfade
+// ============================================================
+
+const VOLUME_STORAGE_KEY = 'pi_bgm_volume';
+
+/** Persistierten Volume-Wert aus localStorage lesen (Default: 0.7). */
+export function getPersistedVolume(): number {
+  try {
+    const raw = localStorage.getItem(VOLUME_STORAGE_KEY);
+    if (raw === null) return 0.7;
+    const parsed = parseFloat(raw);
+    return isNaN(parsed) ? 0.7 : Math.max(0, Math.min(1, parsed));
+  } catch {
+    return 0.7;
+  }
+}
+
+/** Aktuellen Volume-Wert in localStorage schreiben. */
+export function setPersistedVolume(v: number): void {
+  try {
+    localStorage.setItem(VOLUME_STORAGE_KEY, String(Math.max(0, Math.min(1, v))));
+  } catch {
+    // Private-Browsing oder Storage-Quota: silent fail
+  }
+}
+
+/** Flag damit Stinger nur beim ersten Page-Load gespielt wird. */
+let _stingerPlayed = false;
+
+/**
+ * Synthetischer Entry-Stinger: 4 Toene aufsteigend C4-E4-G4-C5 (je 200ms, sine-wave).
+ * Spielt nur einmal pro Page-Session (wird durch _stingerPlayed geblockt).
+ */
+export function synthEntryStinger(): void {
+  if (_stingerPlayed) return;
+  _stingerPlayed = true;
+  // C4=261.63Hz  E4=329.63Hz  G4=392.00Hz  C5=523.25Hz
+  const notes = [261.63, 329.63, 392.0, 523.25];
+  notes.forEach((freq, i) => {
+    setTimeout(() => {
+      blip({ freq, duration: 0.18, volume: 0.32, type: 'sine' });
+    }, i * 200);
+  });
+}
+
+/**
+ * BGM sanft ausfaden (Standard 500ms) und danach stoppen.
+ * Gibt ein Promise zurueck das nach dem Fade-out resolved.
+ */
+export function fadeOutBGM(durationMs = 500): Promise<void> {
+  return new Promise((resolve) => {
+    if (_bgmNodes.length === 0) {
+      resolve();
+      return;
+    }
+    try {
+      const c = ctx();
+      const endTime = c.currentTime + durationMs / 1000;
+      for (const n of _bgmNodes) {
+        n.gain.gain.cancelScheduledValues(c.currentTime);
+        n.gain.gain.setValueAtTime(Math.max(0.0001, n.gain.gain.value), c.currentTime);
+        n.gain.gain.linearRampToValueAtTime(0.0001, endTime);
+      }
+    } catch (e) {
+      console.warn('[bgm] fadeOut failed', e);
+    }
+    setTimeout(() => {
+      stopAmbientBGM();
+      resolve();
+    }, durationMs + 40);
+  });
+}
+
+/**
+ * BGM starten mit sanftem Einfaden (Standard 500ms).
+ * Startet nur wenn aktuell kein BGM laeuft.
+ */
+export function startAmbientBGMFadeIn(durationMs = 500): void {
+  if (_bgmNodes.length > 0) return;
+  startAmbientBGM();
+  try {
+    const c = ctx();
+    const endTime = c.currentTime + durationMs / 1000;
+    for (const n of _bgmNodes) {
+      const target = n.gain.gain.value;
+      n.gain.gain.setValueAtTime(0.0001, c.currentTime);
+      n.gain.gain.linearRampToValueAtTime(target, endTime);
+    }
+  } catch (e) {
+    console.warn('[bgm] fadeIn failed', e);
+  }
+}

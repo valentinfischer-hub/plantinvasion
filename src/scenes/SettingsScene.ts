@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
-import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM } from '../audio/sfxGenerator';
+import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM, setPersistedVolume, getPersistedVolume } from '../audio/sfxGenerator';
 import { getLocale, setLocale } from '../i18n/index';
 import { COLOR_ERROR, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
@@ -23,6 +23,8 @@ export class SettingsScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
+    // Volume-Persist: Gespeicherten Wert laden (Safety-Check falls Settings direkt gebootet)
+    setMasterVolume(getPersistedVolume());
     this.cameras.main.setBackgroundColor('#1a2820');
 
     this.add
@@ -126,6 +128,7 @@ export class SettingsScene extends Phaser.Scene {
 
   private setVolume(v: number): void {
     setMasterVolume(v);
+    setPersistedVolume(v);
     this.volumeBarFill.width = 300 * v;
     this.volumeText.setText(`${Math.round(v * 100)}%`);
     sfx.click();
