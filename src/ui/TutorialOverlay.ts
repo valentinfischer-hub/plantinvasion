@@ -50,6 +50,8 @@ export class TutorialOverlay {
   private titleText!: Phaser.GameObjects.Text;
   private bodyText!: Phaser.GameObjects.Text;
   private currentStep = -1;
+  private progressBar!: Phaser.GameObjects.Graphics;
+  private stepText!: Phaser.GameObjects.Text;
   private uiCam!: Phaser.Cameras.Scene2D.Camera;
   public lastInteract: string | undefined;
 
@@ -88,9 +90,13 @@ export class TutorialOverlay {
     });
 
     const nextBtn = this.makeButton(w / 2 - 60, h / 2 - 18, 'Weiter', '#9be36e', () => this.handleNext());
-    const skipBtn = this.makeButton(-w / 2 + 50, h / 2 - 18, 'Skip', '#ff7e7e', () => this.handleSkip());
-
-    this.container.add([bg, this.titleText, this.bodyText, nextBtn, skipBtn]);
+    const skipBtn = this.makeButton(-w / 2 + 50, h / 2 - 18, 'Überspringen', '#888888', () => this.handleSkip());
+    // S-POLISH-B2-R7: Progress-Bar und Schritt-Anzeige
+    this.progressBar = this.scene.add.graphics();
+    this.stepText = this.scene.add.text(w / 2 - 12, -h / 2 + 10, '', {
+      fontFamily: 'monospace', fontSize: '9px', color: '#888888'
+    }).setOrigin(1, 0);
+    this.container.add([bg, this.titleText, this.bodyText, this.progressBar, this.stepText, nextBtn, skipBtn]);
 
     // Camera-Routing: Main-Cam ignoriert Tutorial, UI-Cam ignoriert World
     cam.ignore(this.container);
@@ -166,11 +172,27 @@ export class TutorialOverlay {
       return;
     }
     this.container.setVisible(true);
-    this.titleText.setText(`(${t.step + 1}/${TUTORIAL_STEPS.length})  ${def.title}`);
+    this.titleText.setText(def.title);
     this.bodyText.setText(def.text);
+    // S-POLISH-B2-R7: Progress-Bar aktualisieren
+    this.stepText?.setText(`${t.step + 1}/${TUTORIAL_STEPS.length}`);
+    if (this.progressBar) {
+      this.progressBar.clear();
+      const barW = 200;
+      const barX = -barW / 2;
+      const barY = 52; // Unter dem Body-Text
+      this.progressBar.fillStyle(0x333333, 0.8);
+      this.progressBar.fillRoundedRect(barX, barY, barW, 4, 2);
+      const progress = (t.step + 1) / TUTORIAL_STEPS.length;
+      this.progressBar.fillStyle(0x9be36e, 1);
+      this.progressBar.fillRoundedRect(barX, barY, progress * barW, 4, 2);
+    }
     if (this.currentStep !== t.step) {
       sfx.dialogOpen();
       this.currentStep = t.step;
+      // S-POLISH-B2-R7: Slide-In Animation bei jedem Schritt-Wechsel
+      this.container.setAlpha(0.5);
+      this.scene.tweens.add({ targets: this.container, alpha: 1, duration: 200, ease: 'Cubic.Out' });
     }
   }
 

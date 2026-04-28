@@ -711,7 +711,14 @@ class GameStore {
 
   skipTutorial(): void {
     this.state.tutorial = { step: 5, done: true };
+    // S-POLISH-B2-R7: tutorial_skipped Flag für Analytics
+    if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
+    this.state.story.flags['tutorial_skipped'] = true;
     this.save();
+  }
+
+  isTutorialSkipped(): boolean {
+    return this.state.story?.flags?.['tutorial_skipped'] === true;
   }
 
 
