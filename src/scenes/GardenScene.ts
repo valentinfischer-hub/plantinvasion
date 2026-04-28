@@ -47,6 +47,8 @@ interface PlantCard {
   thirstIcon: Phaser.GameObjects.Text;
   bg: Phaser.GameObjects.Graphics;
   harvestPulse?: Phaser.Tweens.Tween;
+  mutationGlow?: Phaser.GameObjects.Graphics;
+  mutationGlowTween?: Phaser.Tweens.Tween;
   lastSeenStage: number;
 }
 
@@ -596,6 +598,7 @@ export class GardenScene extends Phaser.Scene {
 
     this.cards.forEach((card, id) => {
       if (!seenIds.has(id)) {
+        card.mutationGlowTween?.stop();
         card.container.destroy();
         this.cards.delete(id);
       }
@@ -629,6 +632,25 @@ export class GardenScene extends Phaser.Scene {
     const sprite = this.add.image(0, -8, key);
     sprite.setDisplaySize(TILE - 16, TILE - 28);
     container.add(sprite);
+
+    // S-POLISH Mutation-Glow: ambient pulsing halo um Pflanzen mit isMutation
+    let mutationGlow: Phaser.GameObjects.Graphics | undefined;
+    let mutationGlowTween: Phaser.Tweens.Tween | undefined;
+    if (plant.isMutation) {
+      mutationGlow = this.add.graphics();
+      mutationGlow.fillStyle(0xb86ee3, 0.4);
+      mutationGlow.fillCircle(0, -8, TILE / 2 - 4);
+      container.add(mutationGlow);
+      container.sendToBack(mutationGlow);
+      mutationGlowTween = this.tweens.add({
+        targets: mutationGlow,
+        alpha: { from: 0.18, to: 0.55 },
+        duration: 1100,
+        ease: 'Sine.InOut',
+        yoyo: true,
+        repeat: -1
+      });
+    }
 
     const levelText = this.add.text(0, TILE / 2 - 22, '', {
       fontFamily: 'monospace',
@@ -693,6 +715,8 @@ export class GardenScene extends Phaser.Scene {
       hydrationBar,
       thirstIcon,
       bg,
+      mutationGlow,
+      mutationGlowTween,
       lastSeenStage: stage
     };
     this.updateCard(card, plant);
