@@ -446,6 +446,47 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
 
+  /** S-POLISH-B2-R11: Quest-Abschluss-Banner (grüner Toast oben mittig) */
+  private showQuestCompleteToast(questTitle: string, rewardCoins: number): void {
+    const cam = this.cameras.main;
+    const z = cam.zoom || 1;
+    const W = 300, H = 62;
+    const container = this.add
+      .container(cam.width / 2 / z, 150 / z)
+      .setScrollFactor(0)
+      .setDepth(2200)
+      .setScale(1 / z);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x0d1f0d, 0.95);
+    bg.fillRoundedRect(-W / 2, -H / 2, W, H, 8);
+    bg.lineStyle(2, 0x4ab84a, 1);
+    bg.strokeRoundedRect(-W / 2, -H / 2, W, H, 8);
+    bg.lineStyle(1, 0x2d8a2d, 0.5);
+    bg.strokeRoundedRect(-W / 2 + 3, -H / 2 + 3, W - 6, H - 6, 5);
+    container.add(bg);
+    const icon = this.add.text(-W / 2 + 18, 0, '✓', {
+      fontFamily: FONT_FAMILY, fontSize: '20px', color: '#4ab84a'
+    }).setOrigin(0.5);
+    const header = this.add.text(12, -H / 2 + 10, 'Quest abgeschlossen!', {
+      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#4ab84a'
+    }).setOrigin(0.5, 0);
+    const title = this.add.text(12, -H / 2 + 26, questTitle.slice(0, 36) + (questTitle.length > 36 ? '…' : ''), {
+      fontFamily: FONT_FAMILY, fontSize: '13px', color: '#ffffff'
+    }).setOrigin(0.5, 0);
+    const reward = this.add.text(12, -H / 2 + 44, rewardCoins > 0 ? `+${rewardCoins} Gold` : '', {
+      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#fcd95c'
+    }).setOrigin(0.5, 0);
+    container.add([bg, icon, header, title, reward]);
+    this.registerInAllUiCams(container);
+    sfx.dialogAdvance();
+    container.setAlpha(0);
+    this.tweens.add({ targets: container, alpha: 1, duration: 300, ease: 'Cubic.Out' });
+    this.tweens.add({
+      targets: container, alpha: 0, delay: 3500, duration: 600, ease: 'Cubic.Out',
+      onComplete: () => container.destroy()
+    });
+  }
+
   private makeFarmButton(): void {
     const { width } = this.scale;
     const btnX = width - 60;
@@ -1016,6 +1057,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
             if (quest.diaryEntry) gameStore.collectDiaryEntry(quest.diaryEntry);
             lines.push('---', `Quest abgeschlossen: ${quest.title}!`, `Belohnung: ${rewardCoins} Gold`);
             if (quest.diaryEntry) lines.push('Neuer Tagebuch-Eintrag (T)!');
+            // S-POLISH-B2-R11: Quest-Abschluss-Toast
+            this.time.delayedCall(200, () => this.showQuestCompleteToast(quest.title, rewardCoins));
           } else {
             lines.push('---', `Aktive Quest: ${quest.title} (noch nicht erfuellt)`);
           }
