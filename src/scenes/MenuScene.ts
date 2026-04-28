@@ -250,7 +250,7 @@ export class MenuScene extends Phaser.Scene {
     });
     by += 60;
 
-    const _hint = this.add.text(cx, height - 24, 'v0.8 - Brave Browser empfohlen', {
+    const _hint = this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
     // S-POLISH-START: First-Visit-Welcome-Modal fuer neue Spieler ohne Save
@@ -402,7 +402,8 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
     // S-POLISH-09: Hover-State (Scale 1.05 plus Border-Glow auf 3px)
     bg.on('pointerover', () => {
-      this.tweens.add({ targets: c, scale: 1.05, duration: 120, ease: 'Cubic.Out' });
+      // S-POLISH Run4: Back.Out fuer bounciger Hover-Gefuehl
+      this.tweens.add({ targets: c, scale: 1.06, duration: 150, ease: 'Back.Out' });
       bg.setStrokeStyle(3, accentColor);
       sfx.dialogAdvance();
     });

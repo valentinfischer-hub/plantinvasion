@@ -71,6 +71,22 @@ export class SplashScene extends Phaser.Scene {
       delay: 1000
     });
 
+    // S-POLISH Run4: Loading-Progress-Bar (smooth fill animation)
+    const barW = 200;
+    const barH = 4;
+    const barX = cx - barW / 2;
+    const barY = cy + 145;
+    const barBg = this.add.rectangle(cx, barY, barW, barH, 0x333333, 0.7).setOrigin(0.5, 0.5);
+    void barBg;
+    const barFill = this.add.rectangle(barX, barY, 0, barH, 0x9be36e, 0.8).setOrigin(0, 0.5);
+    this.tweens.add({
+      targets: barFill,
+      width: barW,
+      duration: 3200,
+      ease: 'Cubic.Out',
+      delay: 200
+    });
+
     let switched = false;
     const goToMenu = () => {
       if (switched) return;
