@@ -95,7 +95,7 @@ export class GardenScene extends Phaser.Scene {
     // Boden-Tile-Background (Sprint 1 Atlas): full-screen 32x32 Tile-Pattern
     // mit ground_erdig-Variationen rotiert per Hash-Index. Subtle Alpha
     // damit Slot-Marker plus Pflanzen-Sprites darueber gut sichtbar bleiben.
-    if (this.textures.exists('ground_erdig_v1')) {
+    if (this.textures.exists('ground_sprint_1')) {
       const TS = 32;
       const sceneW = this.scale.width;
       const sceneH = this.scale.height;
@@ -104,7 +104,7 @@ export class GardenScene extends Phaser.Scene {
       for (let ty = 0; ty < rows; ty++) {
         for (let tx = 0; tx < cols; tx++) {
           const v = ((tx * 7 + ty * 13) % 4) + 1;
-          this.add.image(tx * TS, ty * TS, `ground_erdig_v${v}`)
+          this.add.image(tx * TS, ty * TS, 'ground_sprint_1', `ground_erdig_v${v}.webp`)
             .setOrigin(0, 0)
             .setAlpha(0.4)
             .setDepth(-100);
@@ -150,8 +150,8 @@ export class GardenScene extends Phaser.Scene {
         const groundType = groundTypes[(x + y) % groundTypes.length];
         const groundVariant = ((x * 3 + y * 5) % 4) + 1;
         const groundKey = `ground_${groundType}_v${groundVariant}`;
-        if (this.textures.exists(groundKey)) {
-          this.add.image(sx + TILE / 2, sy + TILE / 2, groundKey)
+        if (this.textures.exists('ground_sprint_1')) {
+          this.add.image(sx + TILE / 2, sy + TILE / 2, 'ground_sprint_1', `${groundKey}.webp`)
             .setOrigin(0.5)
             .setDisplaySize(TILE - 4, TILE - 4)
             .setAlpha(0.7)
