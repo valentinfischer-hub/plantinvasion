@@ -356,7 +356,7 @@ export function saveGame(state: GameState): void {
     console.error('[storage] saveGame failed', e);
     // S-POLISH Run14: Sentry-Context + User-Feedback hint
     try {
-      const S = (window as unknown as { __sentry?: { captureException: (e: unknown, ctx: unknown) => void } }).__sentry;
+      const S = window.__sentry;
       if (S?.captureException) {
         S.captureException(e, { contexts: { save: { playerId: state.playerId, plantCount: state.plants?.length } } });
       }
