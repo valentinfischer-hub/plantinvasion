@@ -229,7 +229,6 @@ export class MenuScene extends Phaser.Scene {
       sfx.dialogAdvance();
       this.transitionTo('HelpScene', false);
     });
-    by += 60;
 
     const _hint = this.add.text(cx, height - 24, 'v0.8 - Brave Browser empfohlen', {
       fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#553e2d'

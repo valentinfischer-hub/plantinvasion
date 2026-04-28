@@ -494,7 +494,7 @@ class GameStore {
     const counters = this.state.achievementCounters;
     for (const a of ACHIEVEMENTS) {
       if (this.state.achievements.includes(a.slug)) continue;
-      let meets = false;
+      let meets: boolean;
       switch (a.slug) {
         case 'first-bloom':
           meets = this.state.plants.some((p) => (p.highestStageReached ?? 0) >= 4);

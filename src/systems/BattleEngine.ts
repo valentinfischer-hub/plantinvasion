@@ -219,7 +219,7 @@ export function runMoveRound(
 
   const playerPriority = playerMove.priority;
   const wildPriority = wildMove.priority;
-  let playerFirst = false;
+  let playerFirst: boolean;
   if (playerPriority !== wildPriority) {
     playerFirst = playerPriority > wildPriority;
   } else {
