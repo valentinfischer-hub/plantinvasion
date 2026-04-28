@@ -195,13 +195,8 @@ export class GardenScene extends Phaser.Scene {
           return;
         }
         ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
-        const result = gameStore.crossPlants(state.plants[0].id, state.plants[1].id);
-        if (!result.ok) {
-          this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
-        } else {
-          this.playHybridReveal(!!result.child?.isMutation);
-          this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
-        }
+        // s-polish-02: Eltern-Anflug Pre-Animation, dann Crossing plus Hybrid-Reveal
+        void this.runCrossWithDrift(state.plants[0].id, state.plants[1].id, '#9be36e');
       });
       const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
       owKey.on('down', () => this.gotoOverworld());
@@ -339,19 +334,13 @@ export class GardenScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     okBtn.on('pointerdown', () => {
       ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
-      const result = gameStore.crossPlants(parentAId, parentBId);
-      if (!result.ok) {
-        this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
-      } else {
-        this.playHybridReveal(!!result.child?.isMutation);
-      this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#b86ee3');
-      }
+      // s-polish-02: Modal zuerst schliessen, dann Eltern-Anflug-Animation, dann Crossing
       c.destroy();
       this.detailPanel = undefined;
       this.crossMode = false;
       this.crossFirstPlantId = null;
       this.refreshCrossUI();
-      this.renderPlants();
+      void this.runCrossWithDrift(parentAId, parentBId, '#b86ee3');
     });
     c.add(okBtn);
     const cancelBtn = this.add.text(60, panelH / 2 - 30, 'Abbruch', {
@@ -517,6 +506,85 @@ export class GardenScene extends Phaser.Scene {
    * Color-Mapping: legacy color-strings auf neue ToastType-Convention.
    * Background ist jetzt #1a1f1a (vorher #000000) damit konsistent zu Overworld-Toasts.
    */
+  /**
+   * S-POLISH-02: Eltern-Anflug Pre-Animation.
+   * Tween beider Parent-Plant-Card-Container 1500ms Cubic.InOut auf Bildmitte (links/rechts versetzt).
+   * Resolved true wenn Animation lief, false wenn Cards nicht auffindbar (Fallback-Pfad).
+   */
+  private playParentDrift(parentAId: string, parentBId: string): Promise<boolean> {
+    const cardA = this.cards.get(parentAId);
+    const cardB = this.cards.get(parentBId);
+    if (!cardA || !cardB) {
+      return Promise.resolve(false);
+    }
+    const cam = this.cameras.main;
+    const cx = cam.scrollX + cam.width / 2;
+    const cy = cam.scrollY + cam.height / 2;
+    // Cards auf Top-Layer heben damit ueber anderen Karten gezeichnet
+    cardA.container.setDepth(2000);
+    cardB.container.setDepth(2000);
+    return new Promise<boolean>((resolve) => {
+      let pending = 2;
+      const done = () => {
+        pending -= 1;
+        if (pending === 0) resolve(true);
+      };
+      this.tweens.add({
+        targets: cardA.container,
+        x: cx - 36,
+        y: cy,
+        duration: 1500,
+        ease: 'Cubic.InOut',
+        onComplete: done
+      });
+      this.tweens.add({
+        targets: cardB.container,
+        x: cx + 36,
+        y: cy,
+        duration: 1500,
+        ease: 'Cubic.InOut',
+        onComplete: done
+      });
+    });
+  }
+
+  /**
+   * S-POLISH-02: Promise-Chain fuer Crossing-Trigger.
+   * Drift Eltern-Cards zur Bildmitte (1500ms), dann gameStore.crossPlants, dann playHybridReveal
+   * plus Scale-In der neuen Hybrid-Card. Fallback bei Card-Lookup-Fehler oder Store-Error:
+   * keine Pre-Animation, direkt zum Reveal.
+   */
+  private async runCrossWithDrift(parentAId: string, parentBId: string, successColor: string): Promise<void> {
+    const drifted = await this.playParentDrift(parentAId, parentBId);
+    const result = gameStore.crossPlants(parentAId, parentBId);
+    if (!result.ok) {
+      this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      return;
+    }
+    const isMutation = !!result.child?.isMutation;
+    this.playHybridReveal(isMutation);
+    this.showFlash(isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', successColor);
+    // Scale-In der neuen Hybrid-Card sobald renderPlants sie erstellt hat
+    if (result.child) {
+      const hybridId = result.child.id;
+      this.time.delayedCall(20, () => {
+        const newCard = this.cards.get(hybridId);
+        if (!newCard) return;
+        const targetScale = newCard.container.scale || 1;
+        newCard.container.setScale(0);
+        this.tweens.add({
+          targets: newCard.container,
+          scale: targetScale,
+          duration: 420,
+          ease: 'Back.Out'
+        });
+      });
+    }
+    // Drift-spezifisches Cleanup: nichts noetig, da Parent-Cards bei renderPlants
+    // automatisch destroyed werden (gameStore.crossPlants entfernt sie aus state).
+    void drifted;
+  }
+
   /**
    * S-POLISH: Hybrid-Reveal-Stinger.
    * Camera-Zoom-Punch plus Tint-Flash plus Pollen-Particle-Burst bei erfolgreichem Crossing.
