@@ -80,20 +80,26 @@ export class SplashScene extends Phaser.Scene {
     });
 
     let canSkip = false;
-    this.time.delayedCall(1000, () => { canSkip = true; });
+    let switched = false;
+    this.time.delayedCall(800, () => { canSkip = true; });
 
     const goToMenu = () => {
-      if (!canSkip) return;
-      canSkip = false;
+      if (!canSkip || switched) return;
+      switched = true;
+      // Fade-Out plus harter Timeout-Fallback falls FADE_OUT_COMPLETE nicht feuert
       this.cameras.main.fadeOut(400, 0, 0, 0);
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-        this.scene.start('MenuScene');
+      this.time.delayedCall(450, () => {
+        if (this.scene.isActive('SplashScene')) {
+          this.scene.start('MenuScene');
+        }
       });
     };
 
-    this.input.keyboard?.once('keydown', goToMenu);
-    this.input.once('pointerdown', goToMenu);
-    this.time.delayedCall(8000, goToMenu);
+    // input.on statt input.once damit fruehe Klicks (bevor canSkip true) nicht den Listener verbrauchen
+    this.input.keyboard?.on('keydown', goToMenu);
+    this.input.on('pointerdown', goToMenu);
+    // Auto-Skip nach 6s falls Spieler nichts macht
+    this.time.delayedCall(6000, goToMenu);
 
     void hero;
   }
