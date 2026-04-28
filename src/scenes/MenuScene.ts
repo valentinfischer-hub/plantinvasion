@@ -226,6 +226,39 @@ export class MenuScene extends Phaser.Scene {
     const _hint = this.add.text(cx, height - 24, 'v0.8 - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
+    // S-POLISH-START: Auto-Ambient-BGM nach 2s damit Hauptmenue Atmosphaere bekommt
+    // (mit Try-Catch fuer Browser-Autoplay-Block, dann erst beim ersten Button-Click)
+    this.time.delayedCall(2000, () => {
+      try { startAmbientBGM(); } catch { /* Browser-Autoplay-Block, BGM startet bei erstem Click */ }
+    });
+
+    // S-POLISH-START: Atmospheric Plant-Growth-Loop hinten links
+    // Mini-Pflanze die langsam waechst, Stage 0 -> 1 -> 2 -> 3 in 12s, dann reset
+    if (this.textures.exists('plants_sprint_0')) {
+      const plantX = 60;
+      const plantY = height - 80;
+      const stages = ['sonnenherz_stage_0_seed.webp', 'sonnenherz_stage_1_sprout.webp', 'sonnenherz_stage_2_juvenile.webp', 'sonnenherz_stage_3_adult.webp'];
+      const ambientPlant = this.add.image(plantX, plantY, 'plants_sprint_0', stages[0]).setOrigin(0.5, 1).setScale(0.6).setAlpha(0.7);
+      let stageIdx = 0;
+      this.time.addEvent({
+        delay: 3000,
+        loop: true,
+        callback: () => {
+          stageIdx = (stageIdx + 1) % stages.length;
+          this.tweens.add({
+            targets: ambientPlant,
+            alpha: 0.2,
+            duration: 300,
+            ease: 'Cubic.Out',
+            onComplete: () => {
+              ambientPlant.setFrame(stages[stageIdx]);
+              this.tweens.add({ targets: ambientPlant, alpha: 0.7, duration: 300, ease: 'Cubic.Out' });
+            }
+          });
+        }
+      });
+    }
+
     void _hint; void _settingsBtn; void _helpBtn; void newGameBtn; void title; void subtitle;
   }
 
