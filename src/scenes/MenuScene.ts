@@ -99,7 +99,33 @@ export class MenuScene extends Phaser.Scene {
       const leaf2 = this.add.ellipse(cx + 14, plantY + 24, 22, 12, 0x6abf3a).setRotation(0.3);
       const flower = this.add.circle(cx, plantY, 14, 0xff7eb8).setStrokeStyle(2, 0x000000);
       const flowerCenter = this.add.circle(cx, plantY, 5, 0xfcd95c);
-      void stem; void leaf1; void leaf2; void flower; void flowerCenter;
+      // QW-14: Idle-Bob-Tween fuer das Logo-Pflanz-Objekt
+    this.tweens.add({
+      targets: [stem, leaf1, leaf2, flower, flowerCenter],
+      y: '-=5',
+      duration: 1400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    // Leichtes Rotate-Wobble auf den Blaettern
+    this.tweens.add({
+      targets: leaf1,
+      angle: -3,
+      duration: 1800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    this.tweens.add({
+      targets: leaf2,
+      angle: 3,
+      duration: 2100,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    void stem; void leaf1; void leaf2; void flower; void flowerCenter;
     }
 
     // Spezies-Showcase: 6 Spezies als kleine Bloom-Sprites unten als Footer-Decoration
