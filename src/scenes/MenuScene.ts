@@ -226,6 +226,11 @@ export class MenuScene extends Phaser.Scene {
     const _hint = this.add.text(cx, height - 24, 'v0.8 - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
+    // S-POLISH-START: First-Visit-Welcome-Modal fuer neue Spieler ohne Save
+    if (!save) {
+      this.time.delayedCall(1500, () => this.showWelcomeModal());
+    }
+
     // S-POLISH-START: Auto-Ambient-BGM nach 2s damit Hauptmenue Atmosphaere bekommt
     // (mit Try-Catch fuer Browser-Autoplay-Block, dann erst beim ersten Button-Click)
     this.time.delayedCall(2000, () => {
@@ -260,6 +265,100 @@ export class MenuScene extends Phaser.Scene {
     }
 
     void _hint; void _settingsBtn; void _helpBtn; void newGameBtn; void title; void subtitle;
+  }
+
+  private showWelcomeModal(): void {
+    const { width, height } = this.scale;
+    const cx = width / 2;
+    const cy = height / 2;
+    const overlay = this.add.container(cx, cy).setDepth(10000);
+    const dim = this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0.5);
+    overlay.add(dim);
+    const panelW = 320;
+    const panelH = 220;
+    const panel = this.add.rectangle(0, 0, panelW, panelH, 0x1a2820, 0.98)
+      .setStrokeStyle(3, 0x9be36e).setOrigin(0.5);
+    overlay.add(panel);
+
+    const slides = [
+      {
+        title: 'Willkommen in Plantinvasion',
+        body: 'Sammle, zuechte plus kaempfe mit Pflanzen. Jede Spezies hat\nDNA die du kombinieren kannst um neue Hybriden zu schaffen.'
+      },
+      {
+        title: 'Cozy plus Strategisch',
+        body: 'Garten-Hub fuer Pflege plus Zuchten.\nWelt-Erkundung fuer Wild-Encounter plus Quests.\nKein Stress: dein Tempo bestimmt der Tag.'
+      },
+      {
+        title: 'Tipps zum Start',
+        body: 'X = Kreuzen plus G = Garten plus W = Welt\nKlick einen leeren Slot um zu pflanzen\nKlick eine Pflanze fuer Detail-Panel'
+      }
+    ];
+
+    let slideIdx = 0;
+    const titleText = this.add.text(0, -panelH / 2 + 30, slides[0].title, {
+      fontFamily: 'monospace', fontSize: '16px', color: '#fcd95c'
+    }).setOrigin(0.5);
+    overlay.add(titleText);
+    const bodyText = this.add.text(0, -10, slides[0].body, {
+      fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc', align: 'center'
+    }).setOrigin(0.5);
+    overlay.add(bodyText);
+    const dotsContainer = this.add.container(0, panelH / 2 - 60);
+    const dots: Phaser.GameObjects.Arc[] = [];
+    for (let i = 0; i < slides.length; i++) {
+      const dot = this.add.circle((i - 1) * 14, 0, 4, i === 0 ? 0x9be36e : 0x44603f);
+      dotsContainer.add(dot);
+      dots.push(dot);
+    }
+    overlay.add(dotsContainer);
+
+    const updateSlide = () => {
+      titleText.setText(slides[slideIdx].title);
+      bodyText.setText(slides[slideIdx].body);
+      dots.forEach((d, i) => d.setFillStyle(i === slideIdx ? 0x9be36e : 0x44603f));
+    };
+
+    const nextBtn = this.add.text(panelW / 2 - 50, panelH / 2 - 25, 'Weiter ->', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e',
+      backgroundColor: '#000000', padding: { x: 10, y: 5 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    nextBtn.on('pointerdown', () => {
+      sfx.dialogAdvance();
+      if (slideIdx < slides.length - 1) {
+        slideIdx++;
+        updateSlide();
+        if (slideIdx === slides.length - 1) nextBtn.setText('Los gehts!');
+      } else {
+        this.tweens.add({
+          targets: overlay,
+          alpha: 0,
+          duration: 300,
+          ease: 'Cubic.Out',
+          onComplete: () => overlay.destroy()
+        });
+      }
+    });
+    overlay.add(nextBtn);
+
+    const skipBtn = this.add.text(-panelW / 2 + 35, panelH / 2 - 25, 'Skip', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#888888',
+      padding: { x: 6, y: 3 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    skipBtn.on('pointerdown', () => {
+      sfx.dialogAdvance();
+      this.tweens.add({
+        targets: overlay,
+        alpha: 0,
+        duration: 200,
+        ease: 'Cubic.Out',
+        onComplete: () => overlay.destroy()
+      });
+    });
+    overlay.add(skipBtn);
+
+    overlay.setAlpha(0);
+    this.tweens.add({ targets: overlay, alpha: 1, duration: 400, ease: 'Cubic.Out' });
   }
 
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
