@@ -45,10 +45,10 @@ describe('getSpecies', () => {
 });
 
 describe('getPlantableSpecies', () => {
-  it('liefert nur isStarter=true', () => {
+  it('liefert STARTER_SPECIES (Plantable definiert wie alle eingefuehrten Spezies)', () => {
     const r = getPlantableSpecies();
     expect(r.length).toBeGreaterThan(0);
-    for (const s of r) expect(s.isStarter).toBe(true);
+    expect(r).toEqual(STARTER_SPECIES);
   });
 });
 
