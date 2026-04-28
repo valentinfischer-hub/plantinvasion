@@ -187,3 +187,29 @@ describe('hybridRecipes', () => {
     });
   });
 });
+
+describe('isHybridSlug Edge-Tests', () => {
+  it('liefert true fuer alle HYBRID_SPECIES.slug', async () => {
+    const { isHybridSlug, HYBRID_SPECIES } = await import('../hybridRecipes');
+    for (const s of HYBRID_SPECIES) {
+      expect(isHybridSlug(s.slug)).toBe(true);
+    }
+  });
+
+  it('liefert false fuer Base-Spezies', async () => {
+    const { isHybridSlug } = await import('../hybridRecipes');
+    expect(isHybridSlug('sunflower')).toBe(false);
+    expect(isHybridSlug('mint')).toBe(false);
+    expect(isHybridSlug('venus-flytrap')).toBe(false);
+  });
+
+  it('liefert false fuer leeren String', async () => {
+    const { isHybridSlug } = await import('../hybridRecipes');
+    expect(isHybridSlug('')).toBe(false);
+  });
+
+  it('liefert false fuer unbekannte Slugs', async () => {
+    const { isHybridSlug } = await import('../hybridRecipes');
+    expect(isHybridSlug('not-a-real-slug')).toBe(false);
+  });
+});
