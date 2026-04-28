@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM } from '../audio/sfxGenerator';
+import { getLocale, setLocale } from '../i18n/index';
 
 /**
- * Settings-Scene V0.1 (2026-04-25).
- * Volume-Slider, Save-Reset, Layout-Hint.
+ * Settings-Scene V0.2 (2026-04-28).
+ * Volume-Slider, BGM-Toggle, Locale-Toggle DE|EN, Save-Reset, Layout-Hint.
  * Aufruf via MenuScene-Button oder spaeter Esc-Pause-Menu.
  */
 export class SettingsScene extends Phaser.Scene {
@@ -12,6 +13,8 @@ export class SettingsScene extends Phaser.Scene {
   private volumeText!: Phaser.GameObjects.Text;
   private bgmEnabled = true;
   private bgmStatusText!: Phaser.GameObjects.Text;
+  private localeDeBtn!: Phaser.GameObjects.Container;
+  private localeEnBtn!: Phaser.GameObjects.Container;
 
   constructor() {
     super('SettingsScene');
@@ -74,6 +77,16 @@ export class SettingsScene extends Phaser.Scene {
     void bgmToggle;
 
     by += 80;
+    // Locale-Toggle DE | EN
+    this.add.text(width / 2 - 150, by, 'Sprache', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#fcd95c'
+    });
+    by += 8;
+    const locale = getLocale();
+    this.localeDeBtn = this.makeLocaleButton(width / 2 - 55, by + 20, 'DE', locale === 'de', () => this.switchLocale('de'));
+    this.localeEnBtn = this.makeLocaleButton(width / 2 + 55, by + 20, 'EN', locale === 'en', () => this.switchLocale('en'));
+    by += 50;
+
     // Layout-Info
     const layout = (globalThis as { __layout?: string }).__layout || 'unknown';
     this.add.text(width / 2, by, `Layout: ${layout}`, {
@@ -124,6 +137,41 @@ export class SettingsScene extends Phaser.Scene {
     this.bgmStatusText.setText(this.bgmEnabled ? 'AN' : 'AUS');
     this.bgmStatusText.setColor(this.bgmEnabled ? '#9be36e' : '#ff7e7e');
     sfx.click();
+  }
+
+  /** Wechselt Spielsprache und aktualisiert Button-Optik. */
+  private switchLocale(locale: 'de' | 'en'): void {
+    setLocale(locale);
+    sfx.click();
+    // Button-Highlighting aktualisieren
+    this.updateLocaleButtons();
+  }
+
+  private updateLocaleButtons(): void {
+    const locale = getLocale();
+    // Einfaches visuelles Feedback: aktive Locale = hellgruen, inaktiv = grau
+    // Container-Zugriff via getAt(0) = bg-Rectangle, getAt(1) = Text
+    const deBg = this.localeDeBtn.getAt(0) as Phaser.GameObjects.Rectangle;
+    const enBg = this.localeEnBtn.getAt(0) as Phaser.GameObjects.Rectangle;
+    deBg.setStrokeStyle(2, locale === 'de' ? 0x9be36e : 0x553e2d);
+    enBg.setStrokeStyle(2, locale === 'en' ? 0x9be36e : 0x553e2d);
+  }
+
+  private makeLocaleButton(x: number, y: number, label: string, active: boolean, onClick: () => void): Phaser.GameObjects.Container {
+    const c = this.add.container(x, y);
+    const w = 80;
+    const h = 32;
+    const accent = active ? 0x9be36e : 0x553e2d;
+    const bg = this.add.rectangle(0, 0, w, h, 0x000000, 0.7)
+      .setStrokeStyle(2, accent)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    const txt = this.add.text(0, 0, label, {
+      fontFamily: 'monospace', fontSize: '13px', color: active ? '#9be36e' : '#888888'
+    }).setOrigin(0.5);
+    bg.on('pointerup', () => { sfx.click(); onClick(); });
+    c.add([bg, txt]);
+    return c;
   }
 
   private confirmReset(): void {

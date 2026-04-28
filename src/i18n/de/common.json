@@ -1,0 +1,14 @@
+{
+  "loading": "lade Assets {{percent}}%",
+  "version": "v0.8 - Brave Browser empfohlen",
+  "back": "Zurück",
+  "close": "Schliessen",
+  "confirm": "Bestätigen",
+  "cancel": "Abbrechen",
+  "yes": "Ja",
+  "no": "Nein",
+  "error": "Fehler",
+  "save": "Speichern",
+  "delete": "Löschen",
+  "reset": "Zurücksetzen"
+}
