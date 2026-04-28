@@ -249,6 +249,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.cameras.main.setBounds(0, 0, worldW, worldH);
     this.cameras.main.setZoom(CAMERA_ZOOM);
     this.cameras.main.startFollow(this.player.sprite, true, CAMERA_LERP, CAMERA_LERP);
+    // S-POLISH Run3: FadeIn beim Scene-Start (Zone-Transition + erste Load)
+    this.cameras.main.fadeIn(280, 0, 0, 0);
 
     // Dialog
     this.dialog = new DialogBox(this);
@@ -1124,10 +1126,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
   private changeZone(newZone: string, spawnX: number, spawnY: number, facing: 'up' | 'down' | 'left' | 'right'): void {
     debugLog('[OverworldScene] zone change', this.currentZone, '->', newZone);
+    // S-POLISH Run3: Camera fadeOut vor Zone-Wechsel fuer smoother Transition
     sfx.dialogOpen();
     gameStore.setOverworldPos(spawnX, spawnY, facing, 'OverworldScene', newZone);
     gameStore.recordZoneVisit(newZone);
-    this.scene.restart();
+    this.cameras.main.fadeOut(220, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.restart();
+    });
   }
 
   // CollisionChecker
