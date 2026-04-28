@@ -340,3 +340,138 @@ export function pickWildMove(wild: BattleSide, rng: () => number = Math.random):
   }
   return moves[Math.floor(rng() * moves.length)].slug;
 }
+
+// ============================================================
+// Boss-Battle-Erweiterungen V0.2 (2026-04-28)
+// Multi-Phase-Support + Boss-spezifischer Move-Picker
+// ============================================================
+
+import type { BossPhase } from '../data/bossPhases';
+import { resolveNextPhase, cumulativePhaseBoosts, getAvailableMovesForPhase } from '../data/bossPhases';
+
+export interface BossBattleSide extends BattleSide {
+  /** Boss-ID fuer Phase-Lookup (undefined = normaler Wild-Gegner). */
+  bossId?: string;
+  /** Aktuell aktive Phase (0 = Start, hoher Wert = weiter Kampf). */
+  currentPhase: number;
+}
+
+export interface PhaseTransitionResult {
+  /** Neue Phase-Definition die aktiviert wurde. */
+  newPhase: BossPhase;
+  /** HP die als Heal gutgeschrieben wurden (0 wenn kein Heal). */
+  healedHp: number;
+  /** Neue verfuegbare Moves nach Phase-Transition. */
+  newMoveSlugs: string[];
+}
+
+/**
+ * Prueft nach jedem Zug ob der Boss eine neue Phase betritt.
+ * Mutiert boss.currentPhase und boss.moveSlugs im Erfolgsfall.
+ * Gibt PhaseTransitionResult oder null zurueck.
+ */
+export function checkBossPhaseTransition(
+  boss: BossBattleSide
+): PhaseTransitionResult | null {
+  if (!boss.bossId) return null;
+
+  const hpFraction = boss.stats.hp / boss.stats.maxHp;
+  const nextPhase = resolveNextPhase(boss.bossId, hpFraction, boss.currentPhase);
+  if (!nextPhase) return null;
+
+  // Phase-Transition aktivieren
+  boss.currentPhase = nextPhase.phase;
+
+  // Stat-Boosts kumulativ berechnen und auf Basis-Stats anwenden
+  const boosts = cumulativePhaseBoosts(boss.bossId, boss.currentPhase);
+  boss.stats.atk = Math.floor(boss.stats.atk + boosts.atkBoost);
+  boss.stats.def = Math.floor(boss.stats.def + boosts.defBoost);
+  boss.stats.spd = Math.floor(boss.stats.spd + boosts.spdBoost);
+
+  // HP-Heal wenn definiert
+  const healedHp = Math.floor(boss.stats.maxHp * nextPhase.healFraction);
+  if (healedHp > 0) {
+    boss.stats.hp = Math.min(boss.stats.maxHp, boss.stats.hp + healedHp);
+  }
+
+  // Neue Moves
+  const newMoveSlugs = getAvailableMovesForPhase(boss.moveSlugs, boss.bossId, boss.currentPhase);
+  boss.moveSlugs = newMoveSlugs;
+
+  return { newPhase: nextPhase, healedHp, newMoveSlugs };
+}
+
+/**
+ * Boss-spezifischer Move-Picker.
+ * In hoeherem Phase-Zustand bevorzugt der Boss staerkere / Status-Moves.
+ * Phase 0: wie pickWildMove.
+ * Phase 1+: 40% damage-best, 30% phase-spezifischer Move, 30% random.
+ */
+export function pickBossMove(
+  boss: BossBattleSide,
+  rng: () => number = Math.random
+): string {
+  const moves = boss.moveSlugs.map(getMove).filter(Boolean) as MoveDef[];
+  if (moves.length === 0) return 'tackle';
+
+  if (boss.currentPhase === 0) {
+    return pickWildMove(boss, rng);
+  }
+
+  const r = rng();
+  if (r < 0.4) {
+    // damage-best
+    const dmgMoves = moves.filter((m) => m.power > 0).sort((a, b) => b.power - a.power);
+    if (dmgMoves[0]) return dmgMoves[0].slug;
+  } else if (r < 0.7) {
+    // letzten Phase-Move bevorzugen (hoechste Phase-Nummer)
+    const phaseMoves = boss.moveSlugs.filter((s) => !defaultMovesForFamily(boss.family).includes(s));
+    if (phaseMoves.length > 0) {
+      return phaseMoves[Math.floor(rng() * phaseMoves.length)];
+    }
+  }
+
+  return moves[Math.floor(rng() * moves.length)].slug;
+}
+
+/**
+ * Erstellt eine BossBattleSide aus einem BossDef.
+ * Wrapper der makeBattleSide mit Boss-spezifischen Feldern erweitert.
+ */
+export function makeBossBattleSide(opts: {
+  bossId: string;
+  name: string;
+  family: PlantFamily;
+  level: number;
+  hpMultiplier?: number;
+  atkBias?: number;
+  defBias?: number;
+  spdBias?: number;
+  moveSlugs: string[];
+  spriteColor?: number;
+  spriteKey?: string;
+}): BossBattleSide {
+  const base = makeBattleSide({
+    name: opts.name,
+    family: opts.family,
+    level: opts.level,
+    isPlayer: false,
+    spriteColor: opts.spriteColor,
+    spriteKey: opts.spriteKey,
+    moveSlugs: opts.moveSlugs,
+    atkBias: opts.atkBias,
+    defBias: opts.defBias,
+    spdBias: opts.spdBias,
+  });
+
+  // HP-Multiplier fuer Bosses anwenden
+  const mult = opts.hpMultiplier ?? 1.0;
+  base.stats.maxHp = Math.floor(base.stats.maxHp * mult);
+  base.stats.hp = base.stats.maxHp;
+
+  return {
+    ...base,
+    bossId: opts.bossId,
+    currentPhase: 0,
+  };
+}
