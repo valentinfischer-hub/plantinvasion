@@ -39,8 +39,15 @@ export class PokedexScene extends Phaser.Scene {
   private scrollY = 0;
   private maxScrollY = 0;
   private rowHeight = 18;
-  private viewportTop = 110;
+  private viewportTop = 126;
   private viewportBottom = 0;
+  // S-POLISH-B2-R10: Completeness Bar + Sort/Filter
+  private completenessBar!: Phaser.GameObjects.Graphics;
+  private completenessText!: Phaser.GameObjects.Text;
+  private filterMode: 'all' | 'discovered' | 'captured' | 'missing' = 'all';
+  private sortMode: 'family' | 'rarity' | 'name' = 'family';
+  private filterBtn!: Phaser.GameObjects.Text;
+  private sortBtn!: Phaser.GameObjects.Text;
 
   constructor() {
     super('PokedexScene');
@@ -67,6 +74,39 @@ export class PokedexScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // S-POLISH-B2-R10: Completeness-Bar
+    const barW = width - 60;
+    const barX = 30;
+    this.completenessText = this.add.text(width / 2, 70, '', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
+    }).setOrigin(0.5);
+    this.completenessBar = this.add.graphics();
+    this.drawCompletenessBar(barX, 78, barW, 8, 0);
+
+    // S-POLISH-B2-R10: Filter + Sort Buttons
+    this.filterBtn = this.add.text(width / 2 - 80, 96, 'Filter: Alle', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#fcd95c',
+      backgroundColor: '#333', padding: { x: 4, y: 2 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.filterBtn.on('pointerup', () => {
+      const modes: Array<'all' | 'discovered' | 'captured' | 'missing'> = ['all', 'discovered', 'captured', 'missing'];
+      this.filterMode = modes[(modes.indexOf(this.filterMode) + 1) % modes.length];
+      this.filterBtn.setText('Filter: ' + { all: 'Alle', discovered: 'Gesehen', captured: 'Gefangen', missing: 'Fehlt' }[this.filterMode]);
+      this.scrollY = 0;
+      this.renderTab();
+    });
+    this.sortBtn = this.add.text(width / 2 + 60, 96, 'Sortierung: Familie', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#b0e0ff',
+      backgroundColor: '#333', padding: { x: 4, y: 2 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.sortBtn.on('pointerup', () => {
+      const modes: Array<'family' | 'rarity' | 'name'> = ['family', 'rarity', 'name'];
+      this.sortMode = modes[(modes.indexOf(this.sortMode) + 1) % modes.length];
+      this.sortBtn.setText('Sortierung: ' + { family: 'Familie', rarity: 'Seltenheit', name: 'Name' }[this.sortMode]);
+      this.scrollY = 0;
+      this.renderTab();
+    });
+
     // Tabs
     this.makeTab(width / 2 - 80, 84, 'species', 'Spezies');
     this.makeTab(width / 2 + 80, 84, 'achievements', 'Achievements');
@@ -75,14 +115,7 @@ export class PokedexScene extends Phaser.Scene {
     this.listContainer = this.add.container(0, this.viewportTop);
 
     this.entries = this.buildAllSpeciesEntries();
-    this.entries.sort((a, b) => {
-      const aStarter = a.family === 'Starter' ? 0 : 1;
-      const bStarter = b.family === 'Starter' ? 0 : 1;
-      if (aStarter !== bStarter) return aStarter - bStarter;
-      const fam = a.family.localeCompare(b.family);
-      if (fam !== 0) return fam;
-      return a.slug.localeCompare(b.slug);
-    });
+    // S-POLISH-B2-R10: Sortierung wird jetzt dynamisch in renderSpecies() gemacht
 
     this.renderTab();
 
@@ -220,28 +253,66 @@ export class PokedexScene extends Phaser.Scene {
 
   private renderSpecies(): void {
     this.listContainer.removeAll(true);
+    this.rowHeight = 18;
     const dex = gameStore.getPokedex();
     const { width } = this.scale;
-    this.headerCount.setText(
-      `${dex.discovered.length} entdeckt, ${dex.captured.length} gefangen, ${this.entries.length} bekannt`
+    const discovered = new Set(dex.discovered);
+    const captured = new Set(dex.captured);
+
+    // S-POLISH-B2-R10: Completeness-Bar aktualisieren
+    const pct = this.entries.length > 0 ? captured.size / this.entries.length : 0;
+    const barW = width - 60;
+    this.drawCompletenessBar(30, 78, barW, 8, pct);
+    this.completenessText.setText(
+      `Pokedex: ${captured.size}/${this.entries.length} gefangen  (${Math.round(pct * 100)}%)`
     );
 
+    this.headerCount.setText(
+      `${discovered.size} gesehen  ·  ${captured.size} gefangen  ·  ${this.entries.length} total`
+    );
+
+    // S-POLISH-B2-R10: Filter anwenden
+    let filtered = this.entries.filter((e) => {
+      if (this.filterMode === 'all') return true;
+      if (this.filterMode === 'discovered') return discovered.has(e.slug) && !captured.has(e.slug);
+      if (this.filterMode === 'captured') return captured.has(e.slug);
+      if (this.filterMode === 'missing') return !discovered.has(e.slug);
+      return true;
+    });
+
+    // S-POLISH-B2-R10: Sortierung anwenden
+    filtered = [...filtered].sort((a, b) => {
+      if (this.sortMode === 'rarity') return b.rarity - a.rarity;
+      if (this.sortMode === 'name') return a.name.localeCompare(b.name);
+      // family (default)
+      const aStarter = a.family === 'Starter' ? 0 : 1;
+      const bStarter = b.family === 'Starter' ? 0 : 1;
+      if (aStarter !== bStarter) return aStarter - bStarter;
+      const fam = a.family.localeCompare(b.family);
+      if (fam !== 0) return fam;
+      return a.slug.localeCompare(b.slug);
+    });
+
     let by = 0;
-    for (const entry of this.entries) {
-      const isDiscovered = dex.discovered.includes(entry.slug);
-      const isCaptured = dex.captured.includes(entry.slug);
-      const status = isCaptured ? '✓' : isDiscovered ? '?' : '·';
-      const color = isCaptured ? '#9be36e' : isDiscovered ? '#fcd95c' : '#553e2d';
-      const displayName = isDiscovered ? entry.name : '???';
-      const familyTag = entry.family === 'Hybrid' ? '★ Hybrid' : entry.family;
+    for (const entry of filtered) {
+      const isDiscovered = discovered.has(entry.slug);
+      const isCaptured = captured.has(entry.slug);
+      // S-POLISH-B2-R10: Silhouette fuer unentdeckte Eintraege
+      const status = isCaptured ? '✓' : isDiscovered ? '?' : '▓';
+      const color = isCaptured ? '#9be36e' : isDiscovered ? '#fcd95c' : '#3a3a3a';
+      const displayName = isDiscovered ? entry.name : '???·???';
+      const familyTag = isDiscovered
+        ? (entry.family === 'Hybrid' ? '★ Hybrid' : entry.family)
+        : '---';
+      const rarityDots = '★'.repeat(entry.rarity);
       const t = this.add
-        .text(width / 2, by, `${status}  ${displayName}  (${familyTag})`, {
+        .text(width / 2, by, `${status}  ${displayName}  (${familyTag}) ${rarityDots}`, {
           fontFamily: 'monospace',
           fontSize: '12px',
           color
         })
         .setOrigin(0.5, 0);
-      // S-POLISH Run6: glow-pulse fuer entdeckte (aber noch nicht gefangene) Entries
+      // Glow-Pulse fuer gesehen-aber-nicht-gefangen
       if (isDiscovered && !isCaptured) {
         this.tweens.add({
           targets: t, alpha: { from: 1, to: 0.55 }, duration: 900,
@@ -251,6 +322,32 @@ export class PokedexScene extends Phaser.Scene {
       this.listContainer.add(t);
       by += this.rowHeight;
     }
+
+    if (filtered.length === 0) {
+      this.listContainer.add(
+        this.add.text(width / 2, 0, 'Kein Eintrag mit diesem Filter.', {
+          fontFamily: 'monospace', fontSize: '12px', color: '#553e2d'
+        }).setOrigin(0.5, 0)
+      );
+    }
+  }
+
+  /** S-POLISH-B2-R10: Zeichnet Completeness-Bar mit Gradient-Feel. */
+  private drawCompletenessBar(x: number, y: number, w: number, h: number, pct: number): void {
+    this.completenessBar.clear();
+    // Hintergrund
+    this.completenessBar.fillStyle(0x222222, 0.8);
+    this.completenessBar.fillRect(x, y, w, h);
+    // Füllbalken (grün → gold bei > 80%)
+    const fillColor = pct >= 0.8 ? 0xfcd95c : 0x4ab84a;
+    const fillW = Math.round(w * Math.min(1, pct));
+    if (fillW > 0) {
+      this.completenessBar.fillStyle(fillColor, 1);
+      this.completenessBar.fillRect(x + 1, y + 1, fillW - 2, h - 2);
+    }
+    // Rahmen
+    this.completenessBar.lineStyle(1, 0x556655, 1);
+    this.completenessBar.strokeRect(x, y, w, h);
   }
 
   private renderAchievements(): void {
