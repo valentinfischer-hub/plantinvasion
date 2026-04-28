@@ -241,6 +241,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.npcs = this.map.npcs.map((n) => new NPC(this, n));
     // S-09 V0.1: NPC-Walking aktivieren. Alle NPCs bekommen Movement-State, Step-Tick im update().
     this.npcs.forEach((npc) => npc.initMovement());
+    // S-POLISH Run12: NPC warm tint wenn schon getroffen (subtile Freundschafts-Variation)
+    this.npcs.forEach((npc) => {
+      if (gameStore.hasMetNpc(npc.data.id)) {
+        npc.sprite.setTint(0xffe8d0);
+      }
+    });
     this.refreshQuestIndicators();
 
     // Camera
@@ -877,8 +883,16 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         return;
       }
       this.tutorial?.markInteract('npc');
-      const lines = [...npc.data.dialog];
+      const hasMetBefore = gameStore.hasMetNpc(npc.data.id);
       gameStore.meetNpc(npc.data.id);
+      // S-POLISH Run12: Dialog-Rotation - bei bekannten NPCs Zeile shufflen
+      let lines: string[];
+      if (hasMetBefore && npc.data.dialog.length > 1) {
+        const randomIdx = Math.floor(Math.random() * npc.data.dialog.length);
+        lines = [npc.data.dialog[randomIdx]];
+      } else {
+        lines = [...npc.data.dialog];
+      }
       // Quest-Logic: Pick beste Quest fuer diesen NPC
       // 1. active (priorisiert), 2. pending mit erfuelltem requiredFlag
       const candidates = QUESTS.filter((qq) => qq.giverId === npc.data.id);
