@@ -137,10 +137,21 @@ export class BattleScene extends Phaser.Scene {
       this.capturedEnc = { slug: enc.slug, rarity: 2, level: wildLevel };
     }
 
-    // Battle-Background-Bereich (heller fuer Gegner, dunkler fuer Spieler)
-    const bgTop = this.add.rectangle(width / 2, height / 4, width, height / 2, 0x4a8228, 0.4).setOrigin(0.5);
-    const bgBot = this.add.rectangle(width / 2, height * 3 / 4, width, height / 2, 0x2d4a1f, 0.5).setOrigin(0.5);
-    void bgTop; void bgBot;
+    // Battle-Background: TileSprite-Textur statt flacher Farbe (QW-14)
+    const bgTileKey = this.getBgTileKey();
+    if (this.textures.exists(bgTileKey)) {
+      const bgTop = this.add.tileSprite(0, 0, width, height / 2, bgTileKey)
+        .setOrigin(0, 0).setAlpha(0.72).setTint(0x6aaa44);
+      const bgBot = this.add.tileSprite(0, height / 2, width, height / 2, bgTileKey)
+        .setOrigin(0, 0).setAlpha(0.55).setTint(0x2e5c1e);
+      void bgTop; void bgBot;
+    } else {
+      const bgTop = this.add.rectangle(width / 2, height / 4, width, height / 2, 0x4a8228, 0.4).setOrigin(0.5);
+      const bgBot = this.add.rectangle(width / 2, height * 3 / 4, width, height / 2, 0x2d4a1f, 0.5).setOrigin(0.5);
+      void bgTop; void bgBot;
+    }
+    // Trennlinie Gegner/Spieler-Zone
+    this.add.rectangle(width / 2, height / 2, width, 3, 0x1a2a10, 0.9).setOrigin(0.5);
 
     // Wild oben
     this.add.text(width / 2, 24, `${this.wild.name} (Lv${this.wild.level})`, {
@@ -152,6 +163,7 @@ export class BattleScene extends Phaser.Scene {
     const wildSpriteKey = this.bossDef?.spriteKey ?? this.pickWildSpriteKey(this.capturedEnc?.slug ?? 'common-daisy');
     this.wildSprite = this.add.sprite(width / 2, 110, wildSpriteKey);
     this.wildSprite.setDisplaySize(72, 72);
+    this.wildSprite.setFlipX(true); // QW-14: Wild-Sprite gespiegelt fuer optische Differenzierung
     this.wildHpBar = this.add.rectangle(width / 2, 162, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
     this.wildHpText = this.add.text(width / 2, 180, '', {
@@ -207,6 +219,20 @@ export class BattleScene extends Phaser.Scene {
     void this.uiCam;
 
     (globalThis as { __battle?: BattleScene }).__battle = this;
+  }
+
+  private getBgTileKey(): string {
+    // QW-14: Biom-basierter Hintergrund
+    const map: Record<string, string> = {
+      'verdanto-tallgrass': 'tile_tropical',
+      'verdanto-bromelien': 'tile_bromeliad',
+      'kaktoria-tallgrass': 'tile_cactus',
+      'frostkamm-tallgrass': 'tile_grass',
+      'salzbucht-tallgrass': 'tile_flowerbed',
+      'wurzelheim-tallgrass': 'tile_grass',
+    };
+    const key = map[this.poolKey] ?? 'tile_grass';
+    return this.textures.exists(key) ? key : 'tile_grass';
   }
 
   private pickWildSpriteKey(slug: string): string {
