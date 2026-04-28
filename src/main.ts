@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import * as Sentry from '@sentry/browser';
 import posthog from 'posthog-js';
-import { SplashScene } from './scenes/SplashScene';
 import { MenuScene } from './scenes/MenuScene';
 import { OverworldScene } from './scenes/OverworldScene';
 import { GardenScene } from './scenes/GardenScene';
