@@ -998,6 +998,16 @@ export class GardenScene extends Phaser.Scene {
     const stageName = GROWTH_STAGE_NAMES[stage];
     card.levelText.setText(`L${plant.level} · ${stageName}`);
 
+    // S-POLISH Run13: Droop-Visual fuer dehydrierte Pflanzen (< 20% hydration)
+    if (plant.hydration < 20) {
+      // Gelblicher Tint und leichter y-Offset (welk)
+      card.sprite.setTint(0xc8b860);
+      if (card.sprite.y === 0) card.sprite.setY(2);
+    } else {
+      card.sprite.clearTint();
+      if (card.sprite.y !== 0) card.sprite.setY(0);
+    }
+
     // XP-Bar
     const ratio = plant.level >= 100 ? 1 : plant.xp / xpToNextLevel(plant.level);
     card.xpBar.clear();
