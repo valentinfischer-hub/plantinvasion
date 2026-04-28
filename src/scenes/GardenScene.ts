@@ -95,7 +95,7 @@ export class GardenScene extends Phaser.Scene {
     // Boden-Tile-Background (Sprint 1 Atlas): full-screen 32x32 Tile-Pattern
     // mit ground_erdig-Variationen rotiert per Hash-Index. Subtle Alpha
     // damit Slot-Marker plus Pflanzen-Sprites darueber gut sichtbar bleiben.
-    if (this.textures.exists('ground_erdig_v1')) {
+    if (this.textures.exists('ground_sprint_1')) {
       const TS = 32;
       const sceneW = this.scale.width;
       const sceneH = this.scale.height;
@@ -104,7 +104,7 @@ export class GardenScene extends Phaser.Scene {
       for (let ty = 0; ty < rows; ty++) {
         for (let tx = 0; tx < cols; tx++) {
           const v = ((tx * 7 + ty * 13) % 4) + 1;
-          this.add.image(tx * TS, ty * TS, `ground_erdig_v${v}`)
+          this.add.image(tx * TS, ty * TS, 'ground_sprint_1', `ground_erdig_v${v}.webp`)
             .setOrigin(0, 0)
             .setAlpha(0.4)
             .setDepth(-100);
@@ -150,8 +150,8 @@ export class GardenScene extends Phaser.Scene {
         const groundType = groundTypes[(x + y) % groundTypes.length];
         const groundVariant = ((x * 3 + y * 5) % 4) + 1;
         const groundKey = `ground_${groundType}_v${groundVariant}`;
-        if (this.textures.exists(groundKey)) {
-          this.add.image(sx + TILE / 2, sy + TILE / 2, groundKey)
+        if (this.textures.exists('ground_sprint_1')) {
+          this.add.image(sx + TILE / 2, sy + TILE / 2, 'ground_sprint_1', `${groundKey}.webp`)
             .setOrigin(0.5)
             .setDisplaySize(TILE - 4, TILE - 4)
             .setAlpha(0.7)
@@ -163,6 +163,9 @@ export class GardenScene extends Phaser.Scene {
           .setInteractive({ useHandCursor: true })
           .setDepth(-1);
         hotspot.on('pointerdown', () => this.onSlotClick(x, y));
+        // S-POLISH-09b: Slot Hover-Glow
+        hotspot.on('pointerover', () => { hotspot.setStrokeStyle(3, 0x9be36e, 0.85); });
+        hotspot.on('pointerout', () => { hotspot.setStrokeStyle(0); });
         this.slotHotspots.push({ gridX: x, gridY: y, hotspot });
       }
     }
@@ -195,13 +198,8 @@ export class GardenScene extends Phaser.Scene {
           return;
         }
         ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
-        const result = gameStore.crossPlants(state.plants[0].id, state.plants[1].id);
-        if (!result.ok) {
-          this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
-        } else {
-          this.playHybridReveal(!!result.child?.isMutation);
-          this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#9be36e');
-        }
+        // s-polish-02: Eltern-Anflug Pre-Animation, dann Crossing plus Hybrid-Reveal
+        void this.runCrossWithDrift(state.plants[0].id, state.plants[1].id, '#9be36e');
       });
       const owKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O);
       owKey.on('down', () => this.gotoOverworld());
@@ -339,19 +337,13 @@ export class GardenScene extends Phaser.Scene {
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     okBtn.on('pointerdown', () => {
       ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
-      const result = gameStore.crossPlants(parentAId, parentBId);
-      if (!result.ok) {
-        this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
-      } else {
-        this.playHybridReveal(!!result.child?.isMutation);
-      this.showFlash(result.child?.isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', '#b86ee3');
-      }
+      // s-polish-02: Modal zuerst schliessen, dann Eltern-Anflug-Animation, dann Crossing
       c.destroy();
       this.detailPanel = undefined;
       this.crossMode = false;
       this.crossFirstPlantId = null;
       this.refreshCrossUI();
-      this.renderPlants();
+      void this.runCrossWithDrift(parentAId, parentBId, '#b86ee3');
     });
     c.add(okBtn);
     const cancelBtn = this.add.text(60, panelH / 2 - 30, 'Abbruch', {
@@ -518,6 +510,87 @@ export class GardenScene extends Phaser.Scene {
    * Background ist jetzt #1a1f1a (vorher #000000) damit konsistent zu Overworld-Toasts.
    */
   /**
+   * S-POLISH-02: Eltern-Anflug Pre-Animation.
+   * Tween beider Parent-Plant-Card-Container 1500ms Cubic.InOut auf Bildmitte (links/rechts versetzt).
+   * Resolved true wenn Animation lief, false wenn Cards nicht auffindbar (Fallback-Pfad).
+   */
+  private playParentDrift(parentAId: string, parentBId: string): Promise<boolean> {
+    const cardA = this.cards.get(parentAId);
+    const cardB = this.cards.get(parentBId);
+    if (!cardA || !cardB) {
+      return Promise.resolve(false);
+    }
+    const cam = this.cameras.main;
+    const cx = cam.scrollX + cam.width / 2;
+    const cy = cam.scrollY + cam.height / 2;
+    // Cards auf Top-Layer heben damit ueber anderen Karten gezeichnet
+    cardA.container.setDepth(2000);
+    cardB.container.setDepth(2000);
+    return new Promise<boolean>((resolve) => {
+      let pending = 2;
+      const done = () => {
+        pending -= 1;
+        if (pending === 0) resolve(true);
+      };
+      this.tweens.add({
+        targets: cardA.container,
+        x: cx - 36,
+        y: cy,
+        duration: 1500,
+        ease: 'Cubic.InOut',
+        onUpdate: () => { cardA.container.x = Math.round(cardA.container.x); cardA.container.y = Math.round(cardA.container.y); },
+        onComplete: done
+      });
+      this.tweens.add({
+        targets: cardB.container,
+        x: cx + 36,
+        y: cy,
+        duration: 1500,
+        ease: 'Cubic.InOut',
+        onUpdate: () => { cardB.container.x = Math.round(cardB.container.x); cardB.container.y = Math.round(cardB.container.y); },
+        onComplete: done
+      });
+    });
+  }
+
+  /**
+   * S-POLISH-02: Promise-Chain fuer Crossing-Trigger.
+   * Drift Eltern-Cards zur Bildmitte (1500ms), dann gameStore.crossPlants, dann playHybridReveal
+   * plus Scale-In der neuen Hybrid-Card. Fallback bei Card-Lookup-Fehler oder Store-Error:
+   * keine Pre-Animation, direkt zum Reveal.
+   */
+  private async runCrossWithDrift(parentAId: string, parentBId: string, successColor: string): Promise<void> {
+    const drifted = await this.playParentDrift(parentAId, parentBId);
+    const result = gameStore.crossPlants(parentAId, parentBId);
+    if (!result.ok) {
+      this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      return;
+    }
+    const isMutation = !!result.child?.isMutation;
+    this.playHybridReveal(isMutation);
+    this.showFlash(isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', successColor);
+    // Scale-In der neuen Hybrid-Card sobald renderPlants sie erstellt hat
+    if (result.child) {
+      const hybridId = result.child.id;
+      this.time.delayedCall(20, () => {
+        const newCard = this.cards.get(hybridId);
+        if (!newCard) return;
+        const targetScale = newCard.container.scale || 1;
+        newCard.container.setScale(0);
+        this.tweens.add({
+          targets: newCard.container,
+          scale: targetScale,
+          duration: 420,
+          ease: 'Back.Out'
+        });
+      });
+    }
+    // Drift-spezifisches Cleanup: nichts noetig, da Parent-Cards bei renderPlants
+    // automatisch destroyed werden (gameStore.crossPlants entfernt sie aus state).
+    void drifted;
+  }
+
+  /**
    * S-POLISH: Hybrid-Reveal-Stinger.
    * Camera-Zoom-Punch plus Tint-Flash plus Pollen-Particle-Burst bei erfolgreichem Crossing.
    * Bei isMutation zusaetzlich violet-Tint plus Camera-Shake.
@@ -574,6 +647,7 @@ export class GardenScene extends Phaser.Scene {
         scale: { from: 1, to: 0.3 },
         duration: 1200 + Math.random() * 400,
         ease: 'Cubic.Out',
+        onUpdate: () => { particle.x = Math.round(particle.x); particle.y = Math.round(particle.y); },
         onComplete: () => particle.destroy()
       });
     }
@@ -606,6 +680,7 @@ export class GardenScene extends Phaser.Scene {
         scale: 0.2,
         duration: 700,
         ease: 'Quad.easeOut',
+        onUpdate: () => { dot.x = Math.round(dot.x); dot.y = Math.round(dot.y); },
         onComplete: () => dot.destroy()
       });
     }
@@ -859,6 +934,13 @@ export class GardenScene extends Phaser.Scene {
         }
       }
     });
+    // S-POLISH-09b: Plant-Card Hover-Scale
+    container.on('pointerover', () => {
+      this.tweens.add({ targets: container, scale: 1.04, duration: 120, ease: 'Cubic.Out' });
+    });
+    container.on('pointerout', () => {
+      this.tweens.add({ targets: container, scale: 1.0, duration: 120, ease: 'Cubic.Out' });
+    });
 
     const card: PlantCard = {
       plant,
@@ -1011,7 +1093,7 @@ export class GardenScene extends Phaser.Scene {
     const species = getSpecies(plant.speciesSlug);
     const { width, height } = this.scale;
     const panelW = 320;
-    const panelH = 520;
+    const panelH = 320;
 
     const container = this.add.container(width / 2, height / 2);
     const bg = this.add.graphics();
@@ -1169,90 +1251,6 @@ export class GardenScene extends Phaser.Scene {
       }
     });
     container.add(bonsaiBtn);
-
-    // Genome-Section
-    if (plant.genome) {
-      const g = plant.genome;
-      const genomeStartY = bonsaiY + 22;
-      const lx = -panelW / 2 + 14;
-      const rowH = 12;
-      const sqX = lx + 52;
-
-      // Trennlinie
-      const genDiv = this.add.graphics();
-      genDiv.lineStyle(1, 0x333333);
-      genDiv.lineBetween(lx, genomeStartY - 5, panelW / 2 - 14, genomeStartY - 5);
-      container.add(genDiv);
-
-      const genHeader = this.add.text(0, genomeStartY, '\u2500 Genome \u2500', {
-        fontFamily: 'monospace', fontSize: '9px', color: '#D4A12A'
-      }).setOrigin(0.5, 0);
-      container.add(genHeader);
-
-      const ALLELE_STATS: Array<[string, [number, number]]> = [
-        ['HP  ', g.alleleHp],
-        ['ATK ', g.alleleAtk],
-        ['DEF ', g.alleleDef],
-        ['SPD ', g.alleleSpd],
-        ['VIT ', g.alleleVit],
-        ['ROOT', g.alleleRoot],
-      ];
-
-      ALLELE_STATS.forEach(([label, allele], idx) => {
-        const ry = genomeStartY + 13 + idx * rowH;
-        const iv = Math.max(allele[0], allele[1]);
-        const lbl = this.add.text(lx, ry, `${label} ${iv.toString().padStart(2, ' ')}`, {
-          fontFamily: 'monospace', fontSize: '9px', color: '#999999'
-        });
-        container.add(lbl);
-        // Allele-Square: dominant = golden (#D4A12A), rezessiv = grau (#444)
-        const isDom0 = allele[0] >= allele[1];
-        const sq0 = this.add.graphics();
-        sq0.fillStyle(isDom0 ? 0xD4A12A : 0x444444);
-        sq0.fillRect(sqX, ry, 8, 8);
-        container.add(sq0);
-        const sq1 = this.add.graphics();
-        sq1.fillStyle(!isDom0 ? 0xD4A12A : 0x444444);
-        sq1.fillRect(sqX + 11, ry, 8, 8);
-        container.add(sq1);
-      });
-
-      // Trait-Chips als Pills
-      const TRAIT_HEX: Record<string, number> = {
-        'glowing': 0xf9e784, 'oversized': 0xb86ee3, 'fast-growth': 0x9be36e,
-        'resilient': 0x5b8de8, 'aromatic': 0xff9de8, 'photosynthetic': 0x6effb4,
-        'thorny': 0xff7e7e, 'phosphorescent': 0xa0e0ff, 'symbiotic': 0xffd166,
-        'mythic-bloom': 0xff4db8
-      };
-      const traitY = genomeStartY + 13 + 6 * rowH + 4;
-      if (g.traits && g.traits.length > 0) {
-        let chipX = lx;
-        g.traits.slice(0, 4).forEach((t) => {
-          const hex = TRAIT_HEX[t] ?? 0xaaaaaa;
-          const col = '#' + hex.toString(16).padStart(6, '0');
-          const chip = this.add.text(chipX, traitY, ` ${t} `, {
-            fontFamily: 'monospace', fontSize: '8px', color: col,
-            backgroundColor: '#1e2a1e',
-            padding: { x: 2, y: 1 }
-          });
-          container.add(chip);
-          chipX += chip.width + 3;
-        });
-      } else {
-        container.add(this.add.text(lx, traitY, 'keine Traits', {
-          fontFamily: 'monospace', fontSize: '9px', color: '#555555'
-        }));
-      }
-
-      // Egg-Moves (max 3, compact)
-      if (g.eggMoves && g.eggMoves.length > 0) {
-        const emY = traitY + 14;
-        container.add(this.add.text(lx, emY,
-          `Egg: ${g.eggMoves.slice(0, 3).join(', ')}`, {
-          fontFamily: 'monospace', fontSize: '9px', color: '#8eaedd'
-        }));
-      }
-    }
 
     // Wasser-Button
     const ready = canBeWatered(plant);

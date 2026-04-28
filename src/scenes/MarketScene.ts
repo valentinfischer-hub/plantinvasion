@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { ITEMS, type ItemDef } from '../data/items';
 import { sfx } from '../audio/sfxGenerator';
-import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL } from '../ui/uiTheme';
 
 /**
  * Markt-UI mit Buy/Sell-Liste.
@@ -29,16 +28,16 @@ export class MarketScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#1a2820');
 
     this.add.text(width / 2, 30, 'Anyas Markt', {
-      fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_REWARD
+      fontFamily: 'monospace', fontSize: '20px', color: '#fcd95c'
     }).setOrigin(0.5);
 
     this.coinsText = this.add.text(width / 2, 56, '', {
-      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
+      fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
     }).setOrigin(0.5);
     this.updateCoinsText();
 
     // Mode-Toggle
-    this.modeButton = this.makeButton(width / 2, 88, this.modeLabel(), COLOR_SUCCESS, () => {
+    this.modeButton = this.makeButton(width / 2, 88, this.modeLabel(), '#9be36e', () => {
       this.mode = this.mode === 'roster' ? 'buy' : (this.mode === 'buy' ? 'sell' : 'roster');
       this.refreshList();
     });
@@ -48,7 +47,7 @@ export class MarketScene extends Phaser.Scene {
 
     // Back-Button
     const backY = height - 30;
-    this.makeButton(width / 2, backY, 'Zurueck (B)', COLOR_REWARD, () => this.scene.start('OverworldScene'));
+    this.makeButton(width / 2, backY, 'Zurueck (B)', '#fcd95c', () => this.scene.start('OverworldScene'));
     if (this.input.keyboard) {
       const backKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
       backKey.on('down', () => this.scene.start('OverworldScene'));
@@ -96,16 +95,22 @@ export class MarketScene extends Phaser.Scene {
       const bg = this.add.rectangle(0, 0, width - 40, 36, 0x000000, 0.5)
         .setStrokeStyle(1, 0x8a6e4a);
       const nameTxt = this.add.text(-(width - 40) / 2 + 10, -8, item.name, {
-        fontFamily: FONT_FAMILY, fontSize: '12px', color: '#ffffff'
+        fontFamily: 'monospace', fontSize: '12px', color: '#ffffff'
       });
       const detailTxt = this.add.text(-(width - 40) / 2 + 10, 6, `Bestand: ${have}  Preis: ${price}`, {
-        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#8a6e4a'
+        fontFamily: 'monospace', fontSize: '10px', color: '#8a6e4a'
       });
       const buyBtn = this.add.text((width - 40) / 2 - 70, 0, action, {
-        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: isBuy ? COLOR_SUCCESS : COLOR_REWARD,
+        fontFamily: 'monospace', fontSize: '11px', color: isBuy ? '#9be36e' : '#fcd95c',
         backgroundColor: '#222222', padding: { x: 6, y: 4 }
       }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
       buyBtn.on('pointerup', () => this.tryTransaction(item));
+      // S-POLISH-09b: Row Hover-Glow
+      bg.setInteractive({ useHandCursor: false });
+      bg.on('pointerover', () => { bg.setStrokeStyle(2, 0xc9a96a); });
+      bg.on('pointerout', () => { bg.setStrokeStyle(1, 0x8a6e4a); });
+      buyBtn.on('pointerover', () => { buyBtn.setAlpha(0.75); });
+      buyBtn.on('pointerout', () => { buyBtn.setAlpha(1.0); });
       row.add([bg, nameTxt, detailTxt, buyBtn]);
       this.listContainer.add(row);
       by += 42;
@@ -114,7 +119,7 @@ export class MarketScene extends Phaser.Scene {
     if (listToShow.length === 0) {
       this.listContainer.add(
         this.add.text(width / 2, by, 'Keine Items verfuegbar.', {
-          fontFamily: FONT_FAMILY, fontSize: '12px', color: '#8a6e4a'
+          fontFamily: 'monospace', fontSize: '12px', color: '#8a6e4a'
         }).setOrigin(0.5)
       );
     }
@@ -148,8 +153,18 @@ export class MarketScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     const txt = this.add.text(0, 0, label, {
-      fontFamily: FONT_FAMILY, fontSize: '12px', color
+      fontFamily: 'monospace', fontSize: '12px', color
     }).setOrigin(0.5);
+    // S-POLISH-09b: Button Hover-State
+    const colorVal = Phaser.Display.Color.HexStringToColor(color).color;
+    bg.on('pointerover', () => {
+      this.tweens.add({ targets: c, scale: 1.04, duration: 100, ease: 'Cubic.Out' });
+      bg.setStrokeStyle(2, colorVal);
+    });
+    bg.on('pointerout', () => {
+      this.tweens.add({ targets: c, scale: 1.0, duration: 100, ease: 'Cubic.Out' });
+      bg.setStrokeStyle(1, colorVal);
+    });
     bg.on('pointerup', onClick);
     c.add([bg, txt]);
     return c;

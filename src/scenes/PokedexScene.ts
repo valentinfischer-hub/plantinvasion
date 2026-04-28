@@ -14,7 +14,6 @@ import {
 import { STARTER_SPECIES } from '../data/species';
 import { HYBRID_SPECIES } from '../data/hybridRecipes';
 import { ACHIEVEMENTS } from '../data/achievements';
-import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 interface PokedexEntry {
   slug: string;
@@ -54,16 +53,16 @@ export class PokedexScene extends Phaser.Scene {
 
     this.add
       .text(width / 2, 28, 'Pokedex', {
-        fontFamily: FONT_FAMILY,
+        fontFamily: 'monospace',
         fontSize: '22px',
-        color: COLOR_SUCCESS
+        color: '#9be36e'
       })
       .setOrigin(0.5);
 
     this.headerCount = this.add
       .text(width / 2, 54, '', {
-        fontFamily: FONT_FAMILY,
-        fontSize: FONT_SIZE_BODY,
+        fontFamily: 'monospace',
+        fontSize: '11px',
         color: '#ffffff'
       })
       .setOrigin(0.5);
@@ -104,8 +103,8 @@ export class PokedexScene extends Phaser.Scene {
     // Hint
     this.add
       .text(width / 2, this.viewportBottom + 4, 'Tab wechseln   ↑↓ scrollen   B/Esc zurueck', {
-        fontFamily: FONT_FAMILY,
-        fontSize: FONT_SIZE_SMALL,
+        fontFamily: 'monospace',
+        fontSize: '10px',
         color: '#553e2d'
       })
       .setOrigin(0.5, 0);
@@ -114,16 +113,19 @@ export class PokedexScene extends Phaser.Scene {
     const backY = height - 24;
     const backBg = this.add
       .rectangle(width / 2, backY, 160, 28, 0x000000, 0.7)
-      .setStrokeStyle(1, MODAL_BORDER_COLOR)
+      .setStrokeStyle(1, 0x9be36e)
       .setInteractive({ useHandCursor: true });
     this.add
       .text(width / 2, backY, 'Zurueck (B)', {
-        fontFamily: FONT_FAMILY,
+        fontFamily: 'monospace',
         fontSize: '12px',
-        color: COLOR_SUCCESS
+        color: '#9be36e'
       })
       .setOrigin(0.5);
 
+    // S-POLISH-09b: Back-Button Hover-Glow
+    backBg.on('pointerover', () => { backBg.setStrokeStyle(2, 0x9be36e); backBg.setFillStyle(0x000000, 0.9); });
+    backBg.on('pointerout', () => { backBg.setStrokeStyle(1, 0x9be36e); backBg.setFillStyle(0x000000, 0.7); });
     const back = () => this.scene.start('OverworldScene');
     backBg.on('pointerup', back);
     if (this.input.keyboard) {
@@ -142,11 +144,17 @@ export class PokedexScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     const txt = this.add
       .text(x, y, label, {
-        fontFamily: FONT_FAMILY,
+        fontFamily: 'monospace',
         fontSize: '12px',
-        color: COLOR_SUCCESS
+        color: '#9be36e'
       })
       .setOrigin(0.5);
+    // S-POLISH-09b: Tab-Button Hover
+    bg.on('pointerover', () => { bg.setStrokeStyle(2, 0x9be36e); });
+    bg.on('pointerout', () => {
+      const active = this.currentTab === tab;
+      bg.setStrokeStyle(2, active ? 0x9be36e : 0x553e2d);
+    });
     bg.on('pointerup', () => this.switchTab(tab));
     this.tabButtons.push({ tab, bg, txt });
   }
@@ -161,8 +169,8 @@ export class PokedexScene extends Phaser.Scene {
     // Update Tab-Buttons (Active-Highlight)
     for (const t of this.tabButtons) {
       const active = t.tab === this.currentTab;
-      t.bg.setStrokeStyle(2, active ? MODAL_BORDER_COLOR : 0x553e2d);
-      t.txt.setColor(active ? COLOR_SUCCESS : '#aaaaaa');
+      t.bg.setStrokeStyle(2, active ? 0x9be36e : 0x553e2d);
+      t.txt.setColor(active ? '#9be36e' : '#aaaaaa');
     }
     if (this.currentTab === 'species') {
       this.renderSpecies();
@@ -223,12 +231,12 @@ export class PokedexScene extends Phaser.Scene {
       const isDiscovered = dex.discovered.includes(entry.slug);
       const isCaptured = dex.captured.includes(entry.slug);
       const status = isCaptured ? '✓' : isDiscovered ? '?' : '·';
-      const color = isCaptured ? COLOR_SUCCESS : isDiscovered ? COLOR_REWARD : '#553e2d';
+      const color = isCaptured ? '#9be36e' : isDiscovered ? '#fcd95c' : '#553e2d';
       const displayName = isDiscovered ? entry.name : '???';
       const familyTag = entry.family === 'Hybrid' ? '★ Hybrid' : entry.family;
       const t = this.add
         .text(width / 2, by, `${status}  ${displayName}  (${familyTag})`, {
-          fontFamily: FONT_FAMILY,
+          fontFamily: 'monospace',
           fontSize: '12px',
           color
         })
@@ -250,7 +258,7 @@ export class PokedexScene extends Phaser.Scene {
     for (const a of ACHIEVEMENTS) {
       const isUnlocked = unlocked.has(a.slug);
       const status = isUnlocked ? '★' : '·';
-      const color = isUnlocked ? COLOR_REWARD : '#553e2d';
+      const color = isUnlocked ? '#fcd95c' : '#553e2d';
       const reward = a.rewardCoins
         ? ` (+${a.rewardCoins}c)`
         : a.rewardItem
@@ -260,7 +268,7 @@ export class PokedexScene extends Phaser.Scene {
       const desc = `   ${a.description}`;
       const t = this.add
         .text(width / 2, by, line, {
-          fontFamily: FONT_FAMILY,
+          fontFamily: 'monospace',
           fontSize: '12px',
           color
         })
@@ -269,8 +277,8 @@ export class PokedexScene extends Phaser.Scene {
       by += 14;
       const d = this.add
         .text(width / 2, by, desc, {
-          fontFamily: FONT_FAMILY,
-          fontSize: FONT_SIZE_SMALL,
+          fontFamily: 'monospace',
+          fontSize: '10px',
           color: '#7d6a4a'
         })
         .setOrigin(0.5, 0);
