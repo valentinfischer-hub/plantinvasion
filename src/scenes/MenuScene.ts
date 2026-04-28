@@ -175,13 +175,27 @@ export class MenuScene extends Phaser.Scene {
     const c = this.add.container(x, y);
     const w = 220;
     const h = 44;
-    const bg = this.add.rectangle(0, 0, w, h, 0x000000, 0.65).setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(accent).color).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const accentColor = Phaser.Display.Color.HexStringToColor(accent).color;
+    const bg = this.add.rectangle(0, 0, w, h, 0x000000, 0.65)
+      .setStrokeStyle(2, accentColor)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
     const txt = this.add.text(0, 0, label, {
       fontFamily: 'monospace', fontSize: '14px', color: accent
     }).setOrigin(0.5);
-    bg.on('pointerdown', () => { bg.setFillStyle(Phaser.Display.Color.HexStringToColor(accent).color, 0.4); });
+    // S-POLISH-09: Hover-State (Scale 1.05 plus Border-Glow auf 3px)
+    bg.on('pointerover', () => {
+      this.tweens.add({ targets: c, scale: 1.05, duration: 120, ease: 'Cubic.Out' });
+      bg.setStrokeStyle(3, accentColor);
+      sfx.dialogAdvance();
+    });
+    bg.on('pointerout', () => {
+      this.tweens.add({ targets: c, scale: 1.0, duration: 120, ease: 'Cubic.Out' });
+      bg.setStrokeStyle(2, accentColor);
+      bg.setFillStyle(0x000000, 0.65);
+    });
+    bg.on('pointerdown', () => { bg.setFillStyle(accentColor, 0.4); });
     bg.on('pointerup', () => { bg.setFillStyle(0x000000, 0.65); onClick(); });
-    bg.on('pointerout', () => { bg.setFillStyle(0x000000, 0.65); });
     c.add([bg, txt]);
     return c;
   }
