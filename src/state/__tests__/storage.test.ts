@@ -449,3 +449,23 @@ describe('V11 Locale-Persistenz', () => {
     expect(loaded!.locale).toBe('en');
   });
 });
+
+describe('S-POLISH Run10: loadGame corrupt-detection + size-warning', () => {
+  it('liefert null bei corruptem JSON (kein Crash)', () => {
+    localStorage.setItem('plantinvasion_save_v1', 'KEIN_VALID_JSON!!!');
+    expect(loadGame()).toBeNull();
+  });
+
+  it('gibt console.error aus bei corrupt JSON', () => {
+    localStorage.setItem('plantinvasion_save_v1', '{broken json');
+    loadGame();
+    expect(console.error).toHaveBeenCalled();
+  });
+
+  it('migriert v11 korrekt auf SAVE_SCHEMA_VERSION', () => {
+    rawSave(11, { locale: 'de', soilTiers: {}, diaryEntries: [], storyFlags: {}, achievements: [] });
+    const state = loadGame();
+    expect(state).not.toBeNull();
+    expect(state?.version).toBe(SAVE_SCHEMA_VERSION);
+  });
+});

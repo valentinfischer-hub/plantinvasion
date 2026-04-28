@@ -309,13 +309,24 @@ function migrate(parsedRaw: unknown): GameState | null {
 }
 
 export function loadGame(): GameState | null {
+  // S-POLISH Run10: corrupt-save detection + size-warning
+  let raw: string | null = null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
+  } catch (e) {
+    console.error('[storage] localStorage.getItem failed', e);
+    return null;
+  }
+  // Größen-Warnung (kein Crash)
+  if (raw.length > 1_000_000) {
+    console.warn('[storage] Save-Datei > 1MB (' + Math.round(raw.length / 1024) + 'KB) - Performance-Impact moeglich');
+  }
+  try {
     const parsed = JSON.parse(raw);
     return migrate(parsed);
   } catch (e) {
-    console.error('Failed to load game state', e);
+    console.error('[storage] corrupt save detected, discarding (JSON.parse failed)', e);
     return null;
   }
 }
@@ -334,7 +345,12 @@ export function saveGame(state: GameState): void {
     if (!Array.isArray(state.collectedHiddenSpots)) state.collectedHiddenSpots = [];
     if (typeof state.lastBerryMasterAt !== 'number') state.lastBerryMasterAt = 0;
     state.version = SAVE_SCHEMA_VERSION;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const json = JSON.stringify(state);
+    // S-POLISH Run10: Größen-Warnung
+    if (json.length > 1_000_000) {
+      console.warn('[storage] Save > 1MB (' + Math.round(json.length / 1024) + 'KB) - consider pruning');
+    }
+    localStorage.setItem(STORAGE_KEY, json);
   } catch (e) {
     console.error('Failed to save game state', e);
   }
