@@ -719,6 +719,43 @@ export class GardenScene extends Phaser.Scene {
     }
   }
 
+  /** Booster-Partikel-Burst in Booster-spezifischer Farbe */
+  private spawnBoosterBurst(x: number, y: number, color: number): void {
+    for (let i = 0; i < 12; i++) {
+      const dot = this.add.circle(x, y, 4, color, 1).setDepth(1500);
+      const angle = (i / 12) * Math.PI * 2;
+      const dist = 20 + Math.random() * 30;
+      this.tweens.add({
+        targets: dot,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist,
+        alpha: 0,
+        scale: 0.1,
+        duration: 600,
+        ease: 'Power2',
+        onComplete: () => dot.destroy()
+      });
+    }
+    // Zentral-Glow
+    const glow = this.add.circle(x, y, 12, color, 0.7).setDepth(1499);
+    this.tweens.add({ targets: glow, alpha: 0, scale: 2.5, duration: 400, onComplete: () => glow.destroy() });
+  }
+
+  /** Soil-Upgrade-Effekt: kurzes Pulsieren in lila */
+  private spawnSoilUpgradeEffect(x: number, y: number): void {
+    const ring = this.add.circle(x, y, 16, 0xb86ee3, 0.8).setDepth(1500);
+    this.tweens.add({ targets: ring, alpha: 0, scale: 3, duration: 500, ease: 'Power2', onComplete: () => ring.destroy() });
+    // Drei goldene Funken
+    for (let i = 0; i < 6; i++) {
+      const spark = this.add.circle(x, y, 3, 0xffd166, 1).setDepth(1501);
+      const angle = (i / 6) * Math.PI * 2;
+      this.tweens.add({
+        targets: spark, x: x + Math.cos(angle) * 24, y: y + Math.sin(angle) * 24,
+        alpha: 0, scale: 0.3, duration: 450, ease: 'Back.Out', onComplete: () => spark.destroy()
+      });
+    }
+  }
+
   private refreshHeader(): void {
     const state = gameStore.get();
     this.headerText.setText(
@@ -1010,12 +1047,22 @@ export class GardenScene extends Phaser.Scene {
     card.levelText.setText(`L${plant.level} · ${stageName}`);
 
     // S-POLISH Run13: Droop-Visual fuer dehydrierte Pflanzen (< 20% hydration)
+    // S-POLISH-B2-R2: Booster-Cooldown-Tint (überschreibt Droop nur wenn kein Droop)
     if (plant.hydration < 20) {
-      // Gelblicher Tint und leichter y-Offset (welk)
       card.sprite.setTint(0xc8b860);
       if (card.sprite.y === 0) card.sprite.setY(2);
     } else {
-      card.sprite.clearTint();
+      // Booster-Tint: subtiler Grün-Schimmer wenn ein Booster aktiv ist
+      const activeBoosters = plant.activeBoosters.filter(b => Date.now() - b.startedAt < b.durationMs);
+      if (activeBoosters.length > 0) {
+        // Subtiler Booster-Tint: leicht grün für wachstumsbooster, gold für pristine, lila für hybrid
+        const hasHybrid = activeBoosters.some(b => b.type === 'hybrid');
+        const hasPristine = activeBoosters.some(b => b.type === 'xp');
+        const tintColor = hasHybrid ? 0xd0a0ff : hasPristine ? 0xffeeaa : 0xaaffaa;
+        card.sprite.setTint(tintColor);
+      } else {
+        card.sprite.clearTint();
+      }
       if (card.sprite.y !== 0) card.sprite.setY(0);
     }
 
@@ -1374,6 +1421,9 @@ export class GardenScene extends Phaser.Scene {
       const result = gameStore.upgradeSoil(plant.gridX, plant.gridY);
       if (result.ok) {
         this.showFlash(`Soil aufgeruestet zu ${result.newTier}`, '#b86ee3');
+        // S-POLISH-B2-R2: Soil-Upgrade-Animation
+        const card = this.cards.get(plant.id);
+        if (card) this.spawnSoilUpgradeEffect(card.container.x, card.container.y);
         this.openDetailPanel(plant.id);
       } else {
         this.showFlash(result.reason ?? 'Soil-Upgrade fehlgeschlagen', '#ff7e7e');
@@ -1438,6 +1488,16 @@ export class GardenScene extends Phaser.Scene {
         const r = gameStore.applyItemToPlant(plantId, slug);
         if (r.ok) {
           this.showFlash(r.message ?? 'Angewendet', '#ffd166');
+          // S-POLISH-B2-R2: Booster-Partikel-Burst in Booster-Farbe
+          const boosterColors: Record<string, number> = {
+            'compost-tea': 0x4caf50, 'compost-bag': 0x4caf50,
+            'volcano-ash': 0x4caf50, 'swamp-pollen': 0x4caf50,
+            'pristine-pollen': 0xffd700, 'growth-hormone': 0xffd700,
+            'hybrid-booster': 0x9c27b0, 'sun-lamp': 0xffa726, 'sprinkler': 0x2196f3
+          };
+          const burstColor = boosterColors[slug] ?? 0xffd166;
+          const plantCard = this.cards.get(plantId);
+          if (plantCard) this.spawnBoosterBurst(plantCard.container.x, plantCard.container.y, burstColor);
           container.destroy();
           this.detailPanel = undefined;
           this.openDetailPanel(plantId);
