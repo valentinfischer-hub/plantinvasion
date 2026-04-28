@@ -14,7 +14,7 @@
 - [x] NPC.step() + initMovement() Hooks
 - [x] OverworldScene-Integration in update() live
 - [ ] Browser-Smoke (Chrome MCP, 20:00-QA-Run)
-- [ ] V0.2 Pathfinding (Folge-Sprint S-10)
+- [x] V0.2 Pathfinding: pathfinding.ts + npcMovement V0.2 Integration (S-10 Item-1 DONE)
 
 ### Story-Akt-1 ✓ V0.1 LIVE
 - [x] Spec geschrieben: brain/sprints/S-09/story-akt-1.md
@@ -37,9 +37,11 @@
 - Bundle: ~1.7 MB total, im Budget
 
 ## Naechste Tech-Run-Prios
-1. Browser-Smoke via Chrome MCP (Pflicht im 20:00-QA-Run)
-2. Sprint-S-10 Vorplanung (PixelLab-Walking-Sprites, Pathfinding-V0.2)
-3. Save-V11-Bump bei NPC-Walking-State-Persistence (Plan: brain/tech/save_v11_plan.md)
+1. **NPC-Wander-Ziele in OverworldScene** (targetTile per NPC setzen, z.B. Random-Wander-Punkt aus spawnArea)
+2. **GardenScene Atlas-Frames** statt fillStyle fuer Slots (kosmetisch, Tier-2-Plus)
+3. **PixelLab Walking-Sprites** (S-10 Item-2, braucht PIXELLAB_API_KEY)
+4. **Story-Akt-2 V0.1** (S-10 Item-3)
+5. **Save-V11-Bump** wenn NPC-State persistiert werden soll
 
 ## Sprint-Closure-Bedingung
 - [ ] Browser-Smoke ALLE 4 Tier-Tests PASS
