@@ -756,6 +756,37 @@ export class GardenScene extends Phaser.Scene {
     sprite.setDisplaySize(TILE - 16, TILE - 28);
     container.add(sprite);
 
+    // S-POLISH-START-04: Spawn-Animation fuer neue Plants (besonders Hybrid-Reveal)
+    // Container scaled von 0 auf 1 in 800ms Back-Out plus Alpha 0->1
+    container.setScale(0);
+    container.setAlpha(0);
+    this.tweens.add({
+      targets: container,
+      scale: 1,
+      alpha: 1,
+      duration: 800,
+      ease: 'Back.Out'
+    });
+
+    // S-POLISH-START-04: Stat-Diff-Floating-Text fuer Hybrids (Mutation oder neuer Cross)
+    // Erscheint kurz ueber der Pflanze und faded weg
+    if (plant.isMutation) {
+      const mutBadge = this.add.text(0, -TILE / 2 + 4, 'MUTATION', {
+        fontFamily: 'monospace', fontSize: '8px', color: '#ffffff',
+        backgroundColor: '#b86ee3', padding: { x: 4, y: 1 }
+      }).setOrigin(0.5);
+      container.add(mutBadge);
+      this.tweens.add({
+        targets: mutBadge,
+        y: mutBadge.y - 14,
+        alpha: 0,
+        duration: 1800,
+        delay: 800,
+        ease: 'Cubic.Out',
+        onComplete: () => mutBadge.destroy()
+      });
+    }
+
     // S-POLISH Mutation-Glow: ambient pulsing halo um Pflanzen mit isMutation
     let mutationGlow: Phaser.GameObjects.Graphics | undefined;
     let mutationGlowTween: Phaser.Tweens.Tween | undefined;
