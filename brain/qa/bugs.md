@@ -40,3 +40,26 @@
 - Der referenzierte QA-Critic-Report `brain/agents/qa-critic/critical_2026-04-26_12.md` existierte zum Zeitpunkt des Fix nicht im Repo. Tech-Code hat das Problem im Self-Audit der `GardenScene.openSeedPlantModal`-Sequenz identifiziert. QA-Critic-Doku waere ein Folge-Item.
 
 **Commit:** `2fa24f8` (2026-04-27 09:00, gepusht auf origin/main).
+
+### B-013 RESOLVED 2026-04-28
+**Title:** NPC-Quest-Indicator crasht mit "Cannot read properties of null (reading 'drawImage')" nach Scene-Teardown.
+
+**Symptom:**
+- 3+ Console-Errors pro Tick wenn Player in OverworldScene mit aktiven NPCs.
+- Stack: NPC.setQuestIndicator -> Phaser-Text.setColor -> updateUVs -> drawImage.
+
+**Root-Cause:**
+- `this.questIndicator` Reference bleibt nach Scene-Teardown (Garden-zu-Overworld-Wechsel) gueltig im JS-Heap aber das zugrundeliegende Phaser-Text-GameObject ist destroyed.
+- setText/setColor crashen weil internal canvas-Context null ist.
+
+**Fix:**
+- Safety-Check `this.questIndicator.active && this.questIndicator.scene` vor jedem setText/setColor-Aufruf.
+- Bei stale-Reference: Cleanup + Re-Create im naechsten Pfad.
+
+**Discovery:**
+- Browser-Smoke via Chrome MCP (Tech-Code Run-XX, V3 SKILL Auto-Approval-Pfad).
+- Tier-2-Garten visuell PASS, aber Console-Errors gefunden bei NPC-Walking-Tick.
+
+**Commit:** `a9cd655` (2026-04-28, gepusht auf origin/main).
+
+**Tests:** Vitest hat dies nicht catched weil Phaser-Text-Lifecycle nur in Browser ausgewertet wird. Browser-Smoke ist Pflicht-Verifikation.
