@@ -946,9 +946,9 @@ export class GardenScene extends Phaser.Scene {
         }
       }
     });
-    // S-POLISH-09b: Plant-Card Hover-Scale
+    // S-POLISH Run-3: Plant-Card Hover-Scale - Back.Out fuer bouncier Gefuehl
     container.on('pointerover', () => {
-      this.tweens.add({ targets: container, scale: 1.04, duration: 120, ease: 'Cubic.Out' });
+      this.tweens.add({ targets: container, scale: 1.07, duration: 140, ease: 'Back.Out' });
     });
     container.on('pointerout', () => {
       this.tweens.add({ targets: container, scale: 1.0, duration: 120, ease: 'Cubic.Out' });

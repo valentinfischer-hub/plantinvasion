@@ -73,6 +73,9 @@ export class QuestLogScene extends Phaser.Scene {
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');
     bg.on('pointerup', back);
+    // S-POLISH Run-3: Hover-State fuer Back-Button
+    bg.on('pointerover', () => { bg.setStrokeStyle(2, 0x9be36e); bg.setFillStyle(0x000000, 0.9); });
+    bg.on('pointerout', () => { bg.setStrokeStyle(1, 0x9be36e); bg.setFillStyle(0x000000, 0.7); });
     if (this.input.keyboard) {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B).on('down', back);
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', back);

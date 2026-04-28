@@ -78,6 +78,7 @@ export function showToast(
     ? opts.yAbsolute / z
     : ((height / 2) + (opts.yOffset ?? 0)) / z;
 
+  const baseScale = 1 / z;
   const toast = scene.add.text(x, y, message, {
     fontFamily: 'monospace',
     fontSize: opts.fontSize ?? '14px',
@@ -88,13 +89,24 @@ export function showToast(
     .setOrigin(0.5)
     .setDepth(opts.depth ?? 2000)
     .setScrollFactor(0)
-    .setScale(1 / z);
+    .setAlpha(0)
+    .setScale(baseScale * 0.88)
+    .setResolution(2);  // S-POLISH Run-3: Pixel-Snap fuer scharfe Kanten auf Retina
 
+  // S-POLISH Run-3: Entrance-Animation (Scale + Alpha-In), dann Fade-Out
+  scene.tweens.add({
+    targets: toast,
+    alpha: 1,
+    scale: baseScale,
+    duration: 200,
+    ease: 'Back.Out'
+  });
   scene.tweens.add({
     targets: toast,
     alpha: 0,
     duration: opts.duration ?? 1800,
-    delay: opts.delay ?? 0,
+    delay: (opts.delay ?? 0) + 200,
+    ease: 'Cubic.Out',
     onComplete: () => {
       toast.destroy();
       if (activeToast === toast) activeToast = undefined;

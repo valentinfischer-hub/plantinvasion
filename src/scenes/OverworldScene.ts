@@ -432,6 +432,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     c.add([bg, txt, hint]);
     bg.setInteractive(new Phaser.Geom.Rectangle(-44, -16, 88, 32), Phaser.Geom.Rectangle.Contains);
     bg.on('pointerdown', () => this.gotoFarm());
+    // S-POLISH Run-3: Hover-State fuer Farm-Button (Scale-Tween)
+    bg.on('pointerover', () => {
+      this.tweens.add({ targets: c, scale: 1.06, duration: 100, ease: 'Back.Out' });
+    });
+    bg.on('pointerout', () => {
+      this.tweens.add({ targets: c, scale: 1.0, duration: 100, ease: 'Cubic.Out' });
+    });
     if (this.miniMap) this.miniMap.ignoreInUICam(c);
   }
 

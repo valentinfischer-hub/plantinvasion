@@ -14,6 +14,8 @@ interface MockText {
   setDepth: () => MockText;
   setScrollFactor: () => MockText;
   setScale: () => MockText;
+  setAlpha: () => MockText;
+  setResolution: () => MockText;
   destroy: () => void;
 }
 
@@ -30,13 +32,15 @@ function makeScene(): MockScene {
           setDepth: () => text,
           setScrollFactor: () => text,
           setScale: () => text,
+          setAlpha: () => text,
+          setResolution: () => text,
           destroy: () => { text.active = false; }
         };
         return text;
       })
     },
     tweens: {
-      add: vi.fn((cfg) => { cfg.onComplete(); })
+      add: vi.fn((cfg) => { cfg.onComplete?.(); })
     }
   };
   return scene;
@@ -109,12 +113,14 @@ describe('showToast Cache + Optionen', () => {
   it('custom duration', () => {
     const scene = makeScene();
     showToast(scene as unknown as Parameters<typeof showToast>[0], 'x', 'info', { duration: 5000 });
-    expect((scene.tweens.add as ReturnType<typeof vi.fn>).mock.calls[0][0].duration).toBe(5000);
+    // calls[0] = Entrance-Tween (200ms), calls[1] = Fade-Out-Tween (custom duration)
+    expect((scene.tweens.add as ReturnType<typeof vi.fn>).mock.calls[1][0].duration).toBe(5000);
   });
   it('custom delay', () => {
     const scene = makeScene();
     showToast(scene as unknown as Parameters<typeof showToast>[0], 'x', 'info', { delay: 1500 });
-    expect((scene.tweens.add as ReturnType<typeof vi.fn>).mock.calls[0][0].delay).toBe(1500);
+    // calls[0] = Entrance-Tween, calls[1] = Fade-Out-Tween (delay = opts.delay + 200)
+    expect((scene.tweens.add as ReturnType<typeof vi.fn>).mock.calls[1][0].delay).toBe(1700);
   });
 });
 
