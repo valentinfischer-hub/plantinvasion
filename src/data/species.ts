@@ -239,7 +239,40 @@ const BASE_SPECIES: PlantSpecies[] = [
     rarity: 2, isStarter: false, atkBias: 5, defBias: 5, spdBias: 20,
     description: 'Thymian, kleines Speed-Kraut.', spriteSeedPrefix: 'thyme',
     preferredBiomes: ['wurzelheim', 'kaktoria'], wrongBiomes: ['mordwald'] }
-];
+,
+
+  // ============ S-POLISH (2026-04-29) Atlas Sprint 1 (6) ============
+  // Aus Art-UI Atlas plants_sprint_1, frame-Refs siehe public/assets/atlases/plants_sprint_1.json
+  { slug: 'mondlilie', scientificName: 'Lilium nocturnis', commonName: 'Mondlilie',
+    rarity: 4, isStarter: false, atkBias: 5, defBias: 5, spdBias: 30,
+    description: 'Naechtlich bluehende Lilie mit silbrig-blauem Schimmer. Speed-Glass-Cannon.',
+    spriteSeedPrefix: 'mondlilie',
+    preferredBiomes: ['mordwald', 'frostkamm'], wrongBiomes: ['kaktoria', 'magmabluete'] },
+  { slug: 'wurzelmaul', scientificName: 'Radix carnivora', commonName: 'Wurzelmaul',
+    rarity: 5, isStarter: false, atkBias: 30, defBias: 10, spdBias: -15,
+    description: 'Karnivore Wurzel die unter der Erde Beute schnappt. Heavy-Hitter.',
+    spriteSeedPrefix: 'wurzelmaul',
+    preferredBiomes: ['mordwald'], wrongBiomes: ['kaktoria', 'salzbucht'] },
+  { slug: 'wuestenkrone', scientificName: 'Coronia deserti', commonName: 'Wuestenkrone',
+    rarity: 4, isStarter: false, atkBias: 0, defBias: 25, spdBias: 5,
+    description: 'Kronfoermige Wuestenpflanze mit dichtem Stachelkranz. Tank.',
+    spriteSeedPrefix: 'wuestenkrone',
+    preferredBiomes: ['kaktoria', 'magmabluete'], wrongBiomes: ['frostkamm', 'mordwald'] },
+  { slug: 'knochenpilz', scientificName: 'Mycelium ossifera', commonName: 'Knochenpilz',
+    rarity: 5, isStarter: false, atkBias: 20, defBias: 20, spdBias: 0,
+    description: 'Knochenartiger Pilz mit toxischen Sporen. Balanced Mycelium.',
+    spriteSeedPrefix: 'knochenpilz',
+    preferredBiomes: ['mordwald'], wrongBiomes: ['kaktoria', 'salzbucht'] },
+  { slug: 'nesselzunge', scientificName: 'Urtica linguata', commonName: 'Nesselzunge',
+    rarity: 3, isStarter: false, atkBias: 25, defBias: -5, spdBias: 10,
+    description: 'Brennnessel mit zungenfoermigen Blaettern. Schneller Damage-Dealer.',
+    spriteSeedPrefix: 'nesselzunge',
+    preferredBiomes: ['wurzelheim', 'verdanto'], wrongBiomes: ['frostkamm'] },
+  { slug: 'quarzkugel', scientificName: 'Cristallum sphaera', commonName: 'Quarzkugel',
+    rarity: 6, isStarter: false, atkBias: 10, defBias: 35, spdBias: -10,
+    description: 'Mineralisch wachsende Kristallpflanze. Mythic-Tier Tank.',
+    spriteSeedPrefix: 'quarzkugel',
+    preferredBiomes: ['kaktoria', 'frostkamm'], wrongBiomes: ['mordwald'] }];
 
 /** Vereinte Spezies-Liste (Basis + 10 Hybrid-Recipes). */
 export const STARTER_SPECIES: PlantSpecies[] = [...BASE_SPECIES, ...HYBRID_SPECIES];
