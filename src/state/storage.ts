@@ -238,8 +238,6 @@ function migrate(parsedRaw: unknown): GameState | null {
     if (typeof parsed.marketBoughtTodayDay !== 'number') parsed.marketBoughtTodayDay = -1;
     if (typeof parsed.loginStreak !== 'number') parsed.loginStreak = 0;
     if (typeof parsed.loginDaysTotal !== 'number') parsed.loginDaysTotal = 0;
-    if (typeof parsed.loginStreak !== 'number') parsed.loginStreak = 0;
-    if (typeof parsed.loginDaysTotal !== 'number') parsed.loginDaysTotal = 0;
     debugLog('[storage] migrated save v10 -> v11 (i18n locale field)');
   }
   if (parsed.version === 5) {
@@ -295,6 +293,8 @@ function migrate(parsedRaw: unknown): GameState | null {
     if (typeof parsed.energy !== 'number') parsed.energy = 100; // S-POLISH-B2-R1: Energy default
     if (!parsed.marketBoughtToday) parsed.marketBoughtToday = {};
     if (typeof parsed.marketBoughtTodayDay !== 'number') parsed.marketBoughtTodayDay = -1;
+    if (typeof parsed.loginStreak !== 'number') parsed.loginStreak = 0;
+    if (typeof parsed.loginDaysTotal !== 'number') parsed.loginDaysTotal = 0;
     return parsed as GameState;
   }
   if (parsed.version === 2) {

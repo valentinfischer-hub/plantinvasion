@@ -36,7 +36,7 @@ export function setMusicVolume(v: number): void {
   _musicVolume = Math.max(0, Math.min(1, v));
   // Aktuell laufende BGM-Nodes live anpassen
   for (const n of _bgmNodes) {
-    n.gain.gain.value = (n as { _baseVol?: number })._baseVol! * _masterVolume * _musicVolume;
+    n.gain.gain.value = n._baseVol * _masterVolume * _musicVolume;
   }
 }
 export function getMusicVolume(): number {
@@ -142,7 +142,7 @@ export const sfx = {
  * Simpler Ambient-Drone als Background-Music-Stand-In.
  * Loopt unendlich, kann gestoppt werden.
  */
-let _bgmNodes: { osc: OscillatorNode; gain: GainNode; lfo: OscillatorNode; lfoGain: GainNode }[] = [];
+let _bgmNodes: { osc: OscillatorNode; gain: GainNode; lfo: OscillatorNode; lfoGain: GainNode; _baseVol: number }[] = [];
 export function startAmbientBGM(): void {
   if (_bgmNodes.length > 0) return;
   try {
@@ -172,8 +172,7 @@ export function startAmbientBGM(): void {
       lfoGain.connect(osc.frequency);
       osc.start();
       lfo.start();
-      const node = { osc, gain, lfo, lfoGain, _baseVol: t.vol };
-      _bgmNodes.push(node as typeof node & { osc: OscillatorNode; gain: GainNode; lfo: OscillatorNode; lfoGain: GainNode });
+      _bgmNodes.push({ osc, gain, lfo, lfoGain, _baseVol: t.vol });
     }
   } catch (e) {
     console.warn('[bgm] failed', e);

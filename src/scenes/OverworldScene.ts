@@ -22,7 +22,7 @@ import { DialogBox } from '../ui/DialogBox';
 import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
 import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
-import { sfx, startAmbientBGM, setBiomeAmbience, stopBiomeAmbience } from '../audio/sfxGenerator';
+import { sfx, startAmbientBGM, setBiomeAmbience } from '../audio/sfxGenerator';
 import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
 import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
@@ -293,13 +293,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // S-POLISH-B2-R15: Swipe-Gesten + Pinch-to-Zoom fuer Mobile
     if (isTouchDevice()) {
       buildSwipeHandler(this, (dir) => {
-        // Swipe simuliert eine kurze Keyboard-Aktion für eine Kachel
-        const mapping = { up: this.player.keys?.up, down: this.player.keys?.down, left: this.player.keys?.left, right: this.player.keys?.right };
-        const key = mapping[dir];
-        if (key) {
-          this.touch[dir].pressed = true;
-          this.time.delayedCall(120, () => { this.touch[dir].pressed = false; });
-        }
+        // Swipe simuliert eine kurze Touch-Eingabe (120ms)
+        this.touch[dir].pressed = true;
+        this.time.delayedCall(120, () => { this.touch[dir].pressed = false; });
       });
       buildPinchZoom(this, 0.8, 2.0);
     }
