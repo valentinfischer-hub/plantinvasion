@@ -414,17 +414,23 @@ if (this.bossDef && outcome.winner === this.player) {
   }
 
   private shakeSprites(target: 'wild' | 'player' = 'wild'): void {
-    // Beider Sprites kleines Bouncen
-    this.tweens.add({ targets: this.playerSprite, x: '+=4', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
-    this.tweens.add({ targets: this.wildSprite, x: '-=4', duration: 60, yoyo: true, ease: 'Sine.easeInOut' });
-    // Camera-Shake bei Treffer
-    this.cameras.main.shake(180, 0.005);
-    this.cameras.main.flash(80, 100, 100, 100);
-    // Hit-Sprite-Tint-Flash (rot fuer ~150ms)
-    const t = target === 'wild' ? this.wildSprite : this.playerSprite;
-    if (t && 'setTint' in t) {
-      (t as Phaser.GameObjects.Image).setTint(0xff5c5c);
-      this.time.delayedCall(150, () => { try { (t as Phaser.GameObjects.Image).clearTint?.(); } catch (e) { void e; } });
+    // S-POLISH Run-2: mehr Punch - staerkeres Sprite-Shake + Scale-Dip + laengerer Camera-Shake
+    // Beide Sprites: x-Swing +=6, 80ms, Back.Out fuer snappy Return-Gefuehl
+    this.tweens.add({ targets: this.playerSprite, x: '+=6', duration: 80, yoyo: true, ease: 'Back.Out' });
+    this.tweens.add({ targets: this.wildSprite, x: '-=6', duration: 80, yoyo: true, ease: 'Back.Out' });
+    // Scale-Dip beim getroffenen Sprite (kurzes Zusammenzucken 1.0 -> 0.92 -> 1.0)
+    const hit = target === 'wild' ? this.wildSprite : this.playerSprite;
+    if (hit) {
+      this.tweens.add({ targets: hit, scaleX: 0.92, duration: 70, yoyo: true, ease: 'Sine.easeInOut' });
+    }
+    // Camera-Shake staerker: 220ms, 0.008 Intensitaet
+    this.cameras.main.shake(220, 0.008);
+    // Flash: leicht roetlich bei Hit (war neutral grau)
+    this.cameras.main.flash(100, 120, 60, 60);
+    // Hit-Sprite-Tint-Flash (rot fuer ~200ms, dann clear)
+    if (hit && 'setTint' in hit) {
+      (hit as Phaser.GameObjects.Image).setTint(0xff3c3c);
+      this.time.delayedCall(200, () => { try { (hit as Phaser.GameObjects.Image).clearTint?.(); } catch (e) { void e; } });
     }
   }
 

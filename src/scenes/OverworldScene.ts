@@ -392,11 +392,22 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     container.add([title, name]);
     this.registerInAllUiCams(container);
     sfx.dialogOpen();
+    // S-POLISH Run-2: Entrance-Animation (Scale + Alpha-In) dann Fade-Out
+    container.setScale(0.85);
+    container.setAlpha(0);
     this.tweens.add({
       targets: container,
-      alpha: { from: 1, to: 0 },
-      delay: 3000,
-      duration: 1500,
+      scale: 1,
+      alpha: 1,
+      duration: 280,
+      ease: 'Back.Out'
+    });
+    this.tweens.add({
+      targets: container,
+      alpha: 0,
+      delay: 3200,
+      duration: 600,
+      ease: 'Cubic.Out',
       onComplete: () => container.destroy()
     });
   }
@@ -505,7 +516,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private flashSaveIcon(): void {
     if (!this.saveIcon) return;
     this.saveIcon.setAlpha(1);
-    this.tweens.add({ targets: this.saveIcon, alpha: 0, duration: 1200, delay: 600 });
+    this.tweens.add({ targets: this.saveIcon, alpha: 0, duration: 900, delay: 500, ease: 'Cubic.Out' });
   }
 
   public update(time: number, delta: number): void {

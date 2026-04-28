@@ -49,8 +49,8 @@ export class SplashScene extends Phaser.Scene {
         targets: particle,
         y: -20,
         alpha: { from: 0.6, to: 0 },
-        duration: 5000 + Math.random() * 2000,
-        ease: 'Linear',
+        duration: 5500 + Math.random() * 2500,
+        ease: 'Sine.easeInOut',
         repeat: -1,
         delay: Math.random() * 1500
       });

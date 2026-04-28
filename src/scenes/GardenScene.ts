@@ -689,9 +689,9 @@ export class GardenScene extends Phaser.Scene {
         x: x + Math.cos(angle) * dist,
         y: y + Math.sin(angle) * dist,
         alpha: 0,
-        scale: 0.2,
-        duration: 700,
-        ease: 'Quad.easeOut',
+        scale: 0.15,
+        duration: 750,
+        ease: 'Back.Out',
         onUpdate: () => { dot.x = Math.round(dot.x); dot.y = Math.round(dot.y); },
         onComplete: () => dot.destroy()
       });
@@ -1039,10 +1039,11 @@ export class GardenScene extends Phaser.Scene {
       if (!card.harvestPulse) {
         card.harvestPulse = this.tweens.add({
           targets: card.bg,
-          alpha: { from: 0.5, to: 1.0 },
-          duration: 700,
+          alpha: { from: 0.45, to: 1.0 },
+          duration: 800,
           yoyo: true,
-          repeat: -1
+          repeat: -1,
+          ease: 'Sine.easeInOut'
         });
       }
     } else {
