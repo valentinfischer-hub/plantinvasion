@@ -16,7 +16,8 @@ import {
 } from '../utils/constants';
 import { PlayerController, type CollisionChecker } from '../entities/PlayerController';
 import { NPC } from '../entities/NPC';
-import { buildWallsSet } from '../entities/npcMovement';
+import { buildWallsSet, setNpcTarget } from '../entities/npcMovement';
+import { mulberry32 } from '../data/genetics';
 import { DialogBox } from '../ui/DialogBox';
 import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
 import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
@@ -117,6 +118,43 @@ function checkQuestComplete(quest: QuestDef): boolean {
   if (goal.type === 'have-plant') return gameStore.get().plants.some((p) => p.speciesSlug === goal.speciesSlug);
   if (goal.type === 'have-item') return (gameStore.getInventory()[goal.itemSlug] ?? 0) >= goal.count;
   return false;
+}
+
+
+/** Alle 30s ein neues Wander-Ziel (6 Movement-Ticks a 5s). */
+const WANDER_INTERVAL_MS = 30_000;
+
+/**
+ * Waehlt ein zufaelliges Walk-Ziel-Tile fuer den NPC innerhalb seiner spawnArea.
+ * Seed: NPC-ID-Hash XOR aktueller Wander-Tick (deterministisch, wechselt alle 30s).
+ * Gibt null zurueck wenn kein freies Tile in 20 Versuchen gefunden wird.
+ */
+function pickWanderTarget(
+  npcId: string,
+  spawnTileX: number,
+  spawnTileY: number,
+  spawnRadius: number,
+  walls: ReadonlySet<string>,
+  now: number
+): { x: number; y: number } | null {
+  const idHash = Array.from(npcId).reduce((h, c) => {
+    const hh = (h << 5) - h + c.charCodeAt(0);
+    return hh | 0;
+  }, 0);
+  const wanderTick = Math.floor(now / WANDER_INTERVAL_MS);
+  const seed = Math.abs(idHash) ^ (wanderTick * 1_099_511_629);
+  const rng = mulberry32(seed >>> 0);
+  const diameter = spawnRadius * 2 + 1;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const offX = Math.floor(rng() * diameter) - spawnRadius;
+    const offY = Math.floor(rng() * diameter) - spawnRadius;
+    const tx = spawnTileX + offX;
+    const ty = spawnTileY + offY;
+    if (!walls.has(`${tx},${ty}`)) {
+      return { x: tx, y: ty };
+    }
+  }
+  return null;
 }
 
 export class OverworldScene extends Phaser.Scene implements CollisionChecker {
@@ -476,7 +514,28 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       const dialogActive = this.dialog?.open_ ?? false;
       const npcWalls = this.npcWalls;
       const now = gameTimeNow();
-      for (const npc of this.npcs) npc.step(now, npcWalls, dialogActive);
+      for (const npc of this.npcs) {
+        // S-10 Item-1: Wander-Ziel-Logik. Alle 30s neues Ziel setzen via pickWanderTarget.
+        if (npc.movementState) {
+          const ms = npc.movementState;
+          const atTarget = ms.targetTile
+            ? (ms.tileX === ms.targetTile.x && ms.tileY === ms.targetTile.y)
+            : false;
+          const needsTarget = !ms.targetTile || atTarget;
+          if (needsTarget) {
+            const target = pickWanderTarget(
+              ms.id,
+              ms.spawnTileX,
+              ms.spawnTileY,
+              ms.spawnRadius,
+              npcWalls,
+              now
+            );
+            npc.movementState = setNpcTarget(ms, target);
+          }
+        }
+        npc.step(now, npcWalls, dialogActive);
+      }
     }
 
     // S-09 V0.1: Story-Akt-1-Auto-Tracking. Autosetting der Quest-Flags + Akt-Advance.
