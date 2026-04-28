@@ -77,3 +77,18 @@ export function drawModalBox(g: Phaser.GameObjects.Graphics, opts: ModalBoxOptio
   g.lineStyle(MODAL_BORDER_WIDTH, border, opts.borderAlpha ?? MODAL_BORDER_ALPHA);
   g.strokeRoundedRect(-width / 2, -height / 2, width, height, MODAL_CORNER_RADIUS);
 }
+
+// Z-Order Depth-Konstanten (zentral fuer konsistente Layer-Reihenfolge)
+// Hoehere Werte = weiter vorne
+export const DEPTH_GROUND = 0;
+export const DEPTH_PLAYER = 100;
+export const DEPTH_NPC = 100;
+export const DEPTH_ITEMS = 150;
+export const DEPTH_EFFECTS = 200;
+export const DEPTH_UI = 500;
+export const DEPTH_HUD = 800;
+export const DEPTH_PARTICLES = 950;
+export const DEPTH_OVERLAY = 1000;
+export const DEPTH_MODAL = 1500;
+export const DEPTH_TOAST = 2000;
+export const DEPTH_DEBUG = 9999;

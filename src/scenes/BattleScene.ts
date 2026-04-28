@@ -159,7 +159,7 @@ export class BattleScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '14px', color: '#ffffff'
     }).setOrigin(0.5);
     this.add.text(width / 2, 42, this.wild.family, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
+      fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
     }).setOrigin(0.5);
     const wildSpriteKey = this.bossDef?.spriteKey ?? this.pickWildSpriteKey(this.capturedEnc?.slug ?? 'common-daisy');
     this.wildSprite = this.add.sprite(width / 2, 110, wildSpriteKey);
@@ -168,7 +168,7 @@ export class BattleScene extends Phaser.Scene {
     this.wildHpBar = this.add.rectangle(width / 2, 162, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
     this.wildHpText = this.add.text(width / 2, 180, '', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#ffffff'
+      fontFamily: 'monospace', fontSize: '12px', color: '#ffffff'
     }).setOrigin(0.5);
     this.statusTextWild = this.add.text(width / 2, 196, '', {
       fontFamily: 'monospace', fontSize: '9px', color: '#fcd95c'
@@ -179,14 +179,14 @@ export class BattleScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '14px', color: '#9be36e'
     }).setOrigin(0.5);
     this.add.text(width / 2, height - 230, this.player.family, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#82d44e'
+      fontFamily: 'monospace', fontSize: '12px', color: '#82d44e'
     }).setOrigin(0.5);
     this.playerSprite = this.add.sprite(width / 2, height - 170, 'tile_flowerbed');
     this.playerSprite.setDisplaySize(80, 80);
     this.playerHpBar = this.add.rectangle(width / 2, height - 118, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
     this.playerHpText = this.add.text(width / 2, height - 100, '', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#ffffff'
+      fontFamily: 'monospace', fontSize: '12px', color: '#ffffff'
     }).setOrigin(0.5);
     this.statusTextPlayer = this.add.text(width / 2, height - 84, '', {
       fontFamily: 'monospace', fontSize: '9px', color: '#fcd95c'
@@ -256,7 +256,8 @@ export class BattleScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const moves = this.player.moveSlugs.map(getMove).filter(Boolean) as MoveDef[];
     const slotW = (width - 40) / 2;
-    const slotH = 36;
+    // S-POLISH Run18: Move-Buttons auf 44px Touch-Target-Mindesthoehe
+    const slotH = 44;
     for (let i = 0; i < 4; i++) {
       const m = moves[i];
       const col = i % 2;
@@ -302,13 +303,14 @@ export class BattleScene extends Phaser.Scene {
   private makeSmallButton(x: number, y: number, label: string, color: string, onClick: () => void): void {
     const c = this.add.container(x, y);
     const w = 88;
-    const h = 22;
+    // S-POLISH Run18: 44px Touch-Target Mindesthoehe (WCAG-mobil)
+    const h = 44;
     const bg = this.add.rectangle(0, 0, w, h, 0x000000, 0.85)
       .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(color).color)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     const txt = this.add.text(0, 0, label, {
-      fontFamily: 'monospace', fontSize: '10px', color
+      fontFamily: 'monospace', fontSize: '12px', color
     }).setOrigin(0.5);
     // S-POLISH-09b: Hover-State kleine Buttons (Fluechten/Fangen)
     bg.on('pointerover', () => {
@@ -449,7 +451,7 @@ if (this.bossDef && outcome.winner === this.player) {
     this.tweens.add({ targets: text, y: target.y - 60, alpha: 0, duration: 1100, ease: 'Quad.easeOut', onUpdate: () => { text.y = Math.round(text.y); }, onComplete: () => text.destroy() });
     if (effLabel) {
       const eff = this.add.text(target.x, target.y, effLabel, {
-        fontFamily: 'monospace', fontSize: '10px', color: '#fcd95c', stroke: '#000', strokeThickness: 2
+        fontFamily: 'monospace', fontSize: '12px', color: '#fcd95c', stroke: '#000', strokeThickness: 2
       }).setOrigin(0.5).setDepth(1499);
       this.tweens.add({ targets: eff, y: target.y - 40, alpha: 0, duration: 1500, onUpdate: () => { eff.y = Math.round(eff.y); }, onComplete: () => eff.destroy() });
     }

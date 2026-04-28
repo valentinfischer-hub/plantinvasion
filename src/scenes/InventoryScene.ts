@@ -69,7 +69,8 @@ export class InventoryScene extends Phaser.Scene {
     // Back-Button
     const backY = height - 24;
     const backBg = this.add
-      .rectangle(width / 2, backY, 160, 28, 0x000000, 0.7)
+      // S-POLISH Run18: 44px Touch-Target Back-Button
+      .rectangle(width / 2, backY, 160, 44, 0x000000, 0.7)
       .setStrokeStyle(1, 0x9be36e)
       .setInteractive({ useHandCursor: true });
     this.add

@@ -92,7 +92,8 @@ export class MarketScene extends Phaser.Scene {
       const action = isBuy ? 'Kaufen' : 'Verkaufen';
 
       const row = this.add.container(width / 2, by);
-      const bg = this.add.rectangle(0, 0, width - 40, 36, 0x000000, 0.5)
+      // S-POLISH Run18: 44px Touch-Target
+      const bg = this.add.rectangle(0, 0, width - 40, 44, 0x000000, 0.5)
         .setStrokeStyle(1, 0x8a6e4a);
       const nameTxt = this.add.text(-(width - 40) / 2 + 10, -8, item.name, {
         fontFamily: 'monospace', fontSize: '12px', color: '#ffffff'
@@ -151,7 +152,8 @@ export class MarketScene extends Phaser.Scene {
   private makeButton(x: number, y: number, label: string, color: string, onClick: () => void): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
     const w = 220;
-    const h = 32;
+    // S-POLISH Run18: Touch-Target 44px
+    const h = 44;
     const bg = this.add.rectangle(0, 0, w, h, 0x000000, 0.6)
       .setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(color).color)
       .setOrigin(0.5)
