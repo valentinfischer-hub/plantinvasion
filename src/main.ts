@@ -75,7 +75,7 @@ const config: Phaser.Types.Core.GameConfig = {
     target: 60,
     forceSetTimeOut: true
   },
-  scene: [SplashScene, MenuScene, OverworldScene, GardenScene, BattleScene, PokedexScene, MarketScene, QuestLogScene, DiaryScene, InventoryScene, SettingsScene, HelpScene]
+  scene: [MenuScene, OverworldScene, GardenScene, BattleScene, PokedexScene, MarketScene, QuestLogScene, DiaryScene, InventoryScene, SettingsScene, HelpScene]
 };
 
 const game = new Phaser.Game(config);
