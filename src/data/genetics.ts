@@ -92,3 +92,25 @@ export function crossStats(
     spd: clampStat(spd)
   };
 }
+
+/**
+ * S-POLISH Run11: Punnett-Square-Visualisierung als pure function.
+ * Gibt eine 2D-Matrix der Gen-Kombinationen zurück.
+ * parent1Genome: Array<[alleleA, alleleB]>, parent2Genome: Array<[alleleA, alleleB]>
+ * Returns: string[][] (Zeilen x Spalten)
+ */
+export function formatPunnettSquare(
+  parent1Alleles: [string, string],
+  parent2Alleles: [string, string]
+): string[][] {
+  const [p1a, p1b] = parent1Alleles;
+  const [p2a, p2b] = parent2Alleles;
+  // Header: Spaltenbezeichner = parent2 Allele
+  // Header: Zeilenbezeichner = parent1 Allele
+  return [
+    ['',     p2a,         p2b        ],
+    [p1a,   `${p1a}${p2a}`, `${p1a}${p2b}`],
+    [p1b,   `${p1b}${p2a}`, `${p1b}${p2b}`]
+  ];
+}
+

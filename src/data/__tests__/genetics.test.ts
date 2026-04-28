@@ -5,6 +5,7 @@ import {
   rollStarterStats,
   rollMutation,
   crossStats,
+  formatPunnettSquare,
   STAT_MIN,
   STAT_MAX,
   STARTER_STAT_BASE_MIN,
@@ -175,5 +176,32 @@ describe('crossStats', () => {
     expect(boosted.spd).toBeGreaterThan(baseline.spd);
     expect(boosted.atk).toBe(baseline.atk);
     expect(boosted.def).toBe(baseline.def);
+  });
+});
+
+describe('S-POLISH Run11: formatPunnettSquare', () => {
+  it('gibt 3x3 Matrix zurück', () => {
+    const result = formatPunnettSquare(['A', 'a'], ['B', 'b']);
+    expect(result.length).toBe(3);
+    expect(result[0].length).toBe(3);
+  });
+
+  it('Header-Zeile korrekt (erste Zeile enthält parent2 Allele)', () => {
+    const result = formatPunnettSquare(['A', 'a'], ['B', 'b']);
+    expect(result[0][1]).toBe('B');
+    expect(result[0][2]).toBe('b');
+  });
+
+  it('Kreuzungs-Zellen korrekt', () => {
+    const result = formatPunnettSquare(['A', 'a'], ['B', 'b']);
+    expect(result[1][1]).toBe('AB');
+    expect(result[1][2]).toBe('Ab');
+    expect(result[2][1]).toBe('aB');
+    expect(result[2][2]).toBe('ab');
+  });
+
+  it('MUTATION_CHANCE_BASE dokumentiert (GDD: 5%, aktuell 8%)', () => {
+    // GDD-Ziel ist 5%, aktuell 8% für grosszügigeres Erlebnis
+    expect(MUTATION_CHANCE_BASE).toBe(0.08);
   });
 });
