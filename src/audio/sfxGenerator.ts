@@ -130,6 +130,11 @@ export const sfx = {
     });
     // Finaler Glocken-Ton
     setTimeout(() => blip({ freq: 1568, freqEnd: 1568, duration: 0.4, volume: 0.25, type: 'sine' }), 480);
+  },
+  /** S-POLISH-B2-R18: Harvest-SFX — fröhlicher aufsteigender Zwei-Ton */
+  harvest(): void {
+    blip({ freq: 523, freqEnd: 659, duration: 0.12, volume: 0.4, type: 'sine' });
+    setTimeout(() => blip({ freq: 784, freqEnd: 1046, duration: 0.15, volume: 0.35, type: 'sine' }), 100);
   }
 };
 

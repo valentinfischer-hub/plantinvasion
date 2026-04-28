@@ -32,6 +32,7 @@ import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
 import { showToast, type ToastType } from '../ui/Toast';
 import { drawModalBox } from '../ui/uiTheme';
+import { sfx } from '../audio/sfxGenerator';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -1442,6 +1443,10 @@ export class GardenScene extends Phaser.Scene {
           if (result.seedSlug) parts.push(`+1 ${result.seedSlug} Samen`);
           if (result.pollen) parts.push(`+1 Pristine-Pollen`);
           this.showFlash(`Ernte: ${parts.join(', ')}`, '#ffd166');
+          // S-POLISH-B2-R18: Harvest-SFX + Gold-Partikel-Burst
+          sfx.harvest();
+          const card = this.cards.get(plant.id);
+          if (card) this.spawnHarvestBurst(card.container.x, card.container.y);
           this.openDetailPanel(plant.id);
         } else {
           this.showFlash(result.reason ?? 'Ernte fehlgeschlagen', '#ff8c42');
