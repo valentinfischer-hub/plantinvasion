@@ -29,6 +29,10 @@ export class DialogBox {
   private choices: DialogChoice[] = [];
   private onCloseCb: (() => void) | null = null;
   private scene: Phaser.Scene;
+  // S-POLISH Run8: Typewriter-State
+  private typewriterTimer?: Phaser.Time.TimerEvent;
+  private typewriterFull = '';
+  private typewriterIdx = 0;
   private boxW: number;
   private boxH: number;
 
@@ -72,11 +76,20 @@ export class DialogBox {
     this.onCloseCb = onClose ?? null;
     this.isChoiceMode = false;
     this.clearChoices();
-    this.text.setText(lines[0] ?? '');
     this.hint.setText('[E] weiter');
     this.hint.setVisible(true);
     this.container.setVisible(true);
     this.isOpen = true;
+    // S-POLISH Run8: Bounce beim Öffnen
+    this.container.setScale((1 / (this.scene.cameras.main.zoom || 1)) * 0.88);
+    this.scene.tweens.add({
+      targets: this.container,
+      scaleX: 1 / (this.scene.cameras.main.zoom || 1),
+      scaleY: 1 / (this.scene.cameras.main.zoom || 1),
+      duration: 160, ease: 'Back.Out'
+    });
+    // Typewriter starten
+    this.startTypewriter(lines[0] ?? '');
   }
 
   public openWithChoices(prompt: string, choices: DialogChoice[], onClose?: () => void): void {
@@ -98,15 +111,39 @@ export class DialogBox {
     this.isOpen = true;
   }
 
+  /** S-POLISH Run8: Typewriter mit Pause bei . und , */
+  private startTypewriter(fullText: string): void {
+    if (this.typewriterTimer) { this.typewriterTimer.destroy(); this.typewriterTimer = undefined; }
+    this.typewriterFull = fullText;
+    this.typewriterIdx = 0;
+    this.text.setText('');
+    const advance = () => {
+      if (this.typewriterIdx >= fullText.length) return;
+      this.typewriterIdx++;
+      this.text.setText(fullText.slice(0, this.typewriterIdx));
+      const ch = fullText[this.typewriterIdx - 1] ?? '';
+      const delay = ch === '.' || ch === '!' || ch === '?' ? 280 : ch === ',' ? 120 : 28;
+      this.typewriterTimer = this.scene.time.delayedCall(delay, advance);
+    };
+    advance();
+  }
+
   public next(): void {
     if (!this.isOpen) return;
     if (this.isChoiceMode) return; // ignorieren in Choice-Mode
+    // S-POLISH Run8: Falls typewriter noch läuft, Text sofort zeigen
+    if (this.typewriterTimer && this.typewriterIdx < this.typewriterFull.length) {
+      this.typewriterTimer.destroy(); this.typewriterTimer = undefined;
+      this.text.setText(this.typewriterFull);
+      this.typewriterIdx = this.typewriterFull.length;
+      return;
+    }
     this.idx++;
     sfx.dialogAdvance();
     if (this.idx >= this.lines.length) {
       this.close();
     } else {
-      this.text.setText(this.lines[this.idx] ?? '');
+      this.startTypewriter(this.lines[this.idx] ?? '');
     }
   }
 
