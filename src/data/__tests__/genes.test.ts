@@ -152,4 +152,4 @@ describe('geneStatBonus', () => {
   });
 });
 
-void GeneSlot;
+
