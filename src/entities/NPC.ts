@@ -17,17 +17,24 @@ export interface NPCData {
 }
 
 /**
- * NPC mit subtiler Idle-Bounce-Animation (S-09 D.o.D. #2 V0.1-Stand-In).
- * Echte 4-Frame-Walking-Sprites kommen mit PixelLab-Generation in S-10.
+ * NPC mit verbesserter Idle-Bounce-Animation und Walking-Bob (S-POLISH Run-1).
+ * Idle: Breathing-Scale-Pulse + Vertical-Bounce mit Sine.easeInOut.
+ * Walk: Bob-Effect (y +/- 1px) synchron zum Step-Takt.
+ * Echte 4-Frame-Walking-Sprites via PixelLab kommen spaeter.
  */
 export class NPC {
   public sprite: Phaser.GameObjects.Sprite;
   public data: NPCData;
   private bounceTween?: Phaser.Tweens.Tween;
+  private breathTween?: Phaser.Tweens.Tween;
   private baseY: number;
   private questIndicator?: Phaser.GameObjects.Text;
   private questIndicatorTween?: Phaser.Tweens.Tween;
   private nameTag?: Phaser.GameObjects.Text;
+  /** Zaehlt Walk-Steps um den Bob-Effekt zu togglen. */
+  private walkStepCount = 0;
+  /** Ob NPC gerade im Walk-Modus ist (Tweens pausiert). */
+  private _isWalking = false;
 
   constructor(scene: Phaser.Scene, data: NPCData) {
     this.data = data;
@@ -38,6 +45,7 @@ export class NPC {
     this.sprite.setDisplaySize(TILE_SIZE, TILE_SIZE);
     this.sprite.setDepth(9);
     this.baseY = py;
+
     // Name-Tag, klein ueber dem NPC, default UNSICHTBAR - wird via
     // setNameTagVisible() ein/aus geschaltet wenn Spieler nah ist (siehe
     // OverworldScene.refreshNpcNameTags). Truncate auf 12 chars damit nichts
@@ -48,17 +56,52 @@ export class NPC {
       backgroundColor: '#1a1f1a', padding: { x: 2, y: 1 }
     }).setOrigin(0.5, 1).setDepth(10).setAlpha(0.9).setVisible(false);
     this.nameTag = nameTag;
-    // Subtiles Bounce-Idle - jeder NPC mit eigener Phase damit sie nicht synchron huepfen
+
+    // Phasen-Versatz: jeder NPC hat eigene Tween-Phase damit sie nicht synchron animieren.
     const phaseDelay = (Math.abs(data.tileX * 31 + data.tileY * 17) % 11) * 90;
+    // Bounce-Idle: vertikaler Bounce 1.5px mit Sine.easeInOut
     this.bounceTween = scene.tweens.add({
       targets: this.sprite,
-      y: this.baseY - 1.2,
-      duration: 600,
+      y: this.baseY - 1.5,
+      duration: 700,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
       delay: phaseDelay
     });
+
+    // Breathing-Scale-Pulse: subtiler Scale 1.0 -> 1.02 -> 1.0, langsamere Rate
+    this.breathTween = scene.tweens.add({
+      targets: this.sprite,
+      scaleX: (TILE_SIZE / (this.sprite.width || TILE_SIZE)) * 1.02,
+      scaleY: (TILE_SIZE / (this.sprite.height || TILE_SIZE)) * 1.02,
+      duration: 1800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+      delay: phaseDelay + 300
+    });
+  }
+
+  /**
+   * Pausiert Idle-Tweens waehrend NPC laeuft, startet sie wieder wenn er stehen bleibt.
+   * Wird von step() intern aufgerufen.
+   */
+  private setWalkingMode(scene: Phaser.Scene, walking: boolean): void {
+    if (walking === this._isWalking) return;
+    this._isWalking = walking;
+    if (walking) {
+      this.bounceTween?.pause();
+      this.breathTween?.pause();
+      // Scale auf Normal zuruecksetzen damit kein Artefakt bleibt
+      const baseScale = TILE_SIZE / (this.sprite.width || TILE_SIZE);
+      this.sprite.setScale(baseScale);
+    } else {
+      // Beim Stehenbleiben: Tweens mit Resume statt Neustart (Position bleibt korrekt)
+      this.bounceTween?.resume();
+      this.breathTween?.resume();
+    }
+    void scene; // scene-Param fuer kuenftige Nutzung reserviert
   }
 
   /**
@@ -100,8 +143,8 @@ export class NPC {
     }).setOrigin(0.5, 1).setDepth(11);
     this.questIndicatorTween = scene.tweens.add({
       targets: this.questIndicator,
-      y: py - 3,
-      duration: 600,
+      y: py - 4,
+      duration: 700,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
@@ -114,6 +157,7 @@ export class NPC {
 
   public destroy(): void {
     if (this.bounceTween) this.bounceTween.stop();
+    if (this.breathTween) this.breathTween.stop();
     if (this.questIndicatorTween) this.questIndicatorTween.stop();
     this.questIndicator?.destroy();
     this.nameTag?.destroy();
@@ -130,22 +174,50 @@ export class NPC {
   /**
    * Tick-Hook fuer Auto-Walking. Wenn movementState gesetzt ist, wird ein
    * Movement-Schritt versucht. Visual-Sprite folgt der Tile-Position.
+   * Walking-Bob: bei jedem Step-Wechsel y um 1px alternierend (+/-) damit
+   * ein subtiles Wippen entsteht auch ohne echte Frame-Animations.
    * @param now Game-Time in ms.
    * @param walls Set von "x,y" Tile-Strings die als Walls gelten.
    * @param dialogActive Wenn true, NPC pausiert.
    */
   public step(now: number, walls: ReadonlySet<string>, dialogActive = false): void {
     if (!this.movementState) return;
-    const next = npcMovementTick(this.movementState, now, walls, dialogActive);
-    if (next === this.movementState) return;
-    if (next.tileX !== this.movementState.tileX || next.tileY !== this.movementState.tileY) {
+    const prev = this.movementState;
+    const next = npcMovementTick(prev, now, walls, dialogActive);
+    if (next === prev) {
+      // NPC steht - Idle-Tweens aktivieren
+      this.setWalkingMode({ tweens: null } as unknown as Phaser.Scene, false);
+      return;
+    }
+    const moved = next.tileX !== prev.tileX || next.tileY !== prev.tileY;
+    if (moved) {
       this.data.tileX = next.tileX;
       this.data.tileY = next.tileY;
       const px = next.tileX * 16 + 16 / 2;
       const py = next.tileY * 16 + 16 / 2;
-      this.sprite.x = px;
-      this.sprite.y = py;
       this.baseY = py;
+
+      // Walking-Bob: alterniert pro Step um +/-1 Pixel
+      this.walkStepCount++;
+      const bob = (this.walkStepCount % 2 === 0) ? -1 : 1;
+      this.sprite.x = px;
+      this.sprite.y = py + bob;
+
+      // Idle-Tweens pausieren waehrend NPC laeuft
+      if (!this._isWalking) {
+        this._isWalking = true;
+        this.bounceTween?.pause();
+        this.breathTween?.pause();
+        const baseScale = TILE_SIZE / (this.sprite.width || TILE_SIZE);
+        this.sprite.setScale(baseScale);
+      }
+    } else {
+      // State-Wechsel ohne Tile-Wechsel (z.B. Richtungsaenderung): Idle wieder aktiv
+      if (this._isWalking) {
+        this._isWalking = false;
+        this.bounceTween?.resume();
+        this.breathTween?.resume();
+      }
     }
     this.data.facing = next.facing;
     this.movementState = next;
