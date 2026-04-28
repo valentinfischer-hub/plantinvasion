@@ -30,9 +30,17 @@ export class QuestLogScene extends Phaser.Scene {
       const status = gameStore.getQuestState(q.id);
       if (status === 'pending') continue;
       const color = status === 'completed' ? COLOR_SUCCESS : COLOR_REWARD;
-      this.add.text(width / 2, by, `[${status}] ${q.title}`, {
+      const statusLabel = status === 'completed' ? '✓' : '●';
+      const questText = this.add.text(width / 2, by, `${statusLabel} ${q.title}`, {
         fontFamily: FONT_FAMILY, fontSize: '13px', color
       }).setOrigin(0.5);
+      // S-POLISH Run7: glow-pulse bei abgeschlossenen Quests
+      if (status === 'completed') {
+        this.tweens.add({
+          targets: questText, alpha: { from: 1, to: 0.6 }, duration: 1100,
+          ease: 'Sine.InOut', yoyo: true, repeat: -1, delay: Math.random() * 500
+        });
+      }
       by += 18;
       this.add.text(width / 2, by, q.description, {
         fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: '#ffffff',

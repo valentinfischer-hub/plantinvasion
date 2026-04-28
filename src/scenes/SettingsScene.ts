@@ -145,6 +145,9 @@ export class SettingsScene extends Phaser.Scene {
 
   /** Wechselt Spielsprache und aktualisiert Button-Optik. */
   private switchLocale(locale: 'de' | 'en'): void {
+    // S-POLISH Run7: Locale-Switch Feedback-Animation
+    const btn = locale === 'de' ? this.localeDeBtn : this.localeEnBtn;
+    this.tweens.add({ targets: btn, scaleX: 1.15, scaleY: 1.15, duration: 90, yoyo: true, ease: 'Back.Out' });
     setLocale(locale);
     sfx.click();
     // Button-Highlighting aktualisieren
