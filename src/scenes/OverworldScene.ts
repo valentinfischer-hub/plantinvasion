@@ -26,7 +26,7 @@ import { sfx, startAmbientBGM, setBiomeAmbience, stopBiomeAmbience } from '../au
 import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
 import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
-import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
+import { buildTouchControls, buildSwipeHandler, buildPinchZoom, isTouchDevice, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { MiniMap } from '../ui/MiniMap';
 import { PauseOverlay } from '../ui/PauseOverlay';
@@ -290,6 +290,19 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Touch-Controls (D-Pad) - nur auf Touch-Geraeten sichtbar
     this.touch = buildTouchControls(this);
     this.player.touch = this.touch;
+    // S-POLISH-B2-R15: Swipe-Gesten + Pinch-to-Zoom fuer Mobile
+    if (isTouchDevice()) {
+      buildSwipeHandler(this, (dir) => {
+        // Swipe simuliert eine kurze Keyboard-Aktion für eine Kachel
+        const mapping = { up: this.player.keys?.up, down: this.player.keys?.down, left: this.player.keys?.left, right: this.player.keys?.right };
+        const key = mapping[dir];
+        if (key) {
+          this.touch[dir].pressed = true;
+          this.time.delayedCall(120, () => { this.touch[dir].pressed = false; });
+        }
+      });
+      buildPinchZoom(this, 0.8, 2.0);
+    }
 
     // Tutorial-Overlay
     this.tutorial = new TutorialOverlay(this);
