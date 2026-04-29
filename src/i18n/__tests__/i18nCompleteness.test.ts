@@ -1,4 +1,4 @@
-import { describe, test, expect, it } from 'vitest';
+import { describe, test, expect } from 'vitest';
 /**
  * i18n VollstÃ¤ndigkeits-Tests [b4-run13/15]
  * PrÃ¼ft dass DE und EN dieselben Keys haben und keine leeren Werte
