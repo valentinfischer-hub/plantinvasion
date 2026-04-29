@@ -120,8 +120,7 @@ export class SettingsScene extends Phaser.Scene {
     this.bgmStatusText = this.add.text(width / 2, by, this.bgmEnabled ? 'AN' : 'AUS', {
       fontFamily: FONT_FAMILY, fontSize: '13px', color: this.bgmEnabled ? COLOR_SUCCESS : COLOR_ERROR
     }).setOrigin(0.5, 0);
-    const bgmToggle = this.makeButton(width / 2, by + 30, 'BGM umschalten', COLOR_REWARD, () => this.toggleBGM());
-    void bgmToggle;
+    this.makeButton(width / 2, by + 30, 'BGM umschalten', COLOR_REWARD, () => this.toggleBGM());
 
     by += 80;
     // Locale-Toggle DE | EN
@@ -169,11 +168,9 @@ export class SettingsScene extends Phaser.Scene {
     by += 42;
 
     // Save-Reset (mit Bestaetigung)
-    const _resetBtn = this.makeButton(width / 2 - 100, by, 'Spielstand loeschen', COLOR_ERROR, () => this.confirmReset());
-    void _resetBtn;
+    this.makeButton(width / 2 - 100, by, 'Spielstand loeschen', COLOR_ERROR, () => this.confirmReset());
     // B4-R4: Credits-Button
-    const _creditsBtn = this.makeButton(width / 2 + 100, by, 'Credits', COLOR_REWARD, () => this.showCredits());
-    void _creditsBtn;
+    this.makeButton(width / 2 + 100, by, 'Credits', COLOR_REWARD, () => this.showCredits());
 
     by += 60;
     // S-POLISH-B2-R17: Export + Import Spielstand
@@ -195,7 +192,7 @@ export class SettingsScene extends Phaser.Scene {
       } catch {}
       sfx.click();
     });
-    const importBtn = this.makeButton(width / 2 + 90, by, 'JSON importieren', COLOR_INFO, () => {
+    this.makeButton(width / 2 + 90, by, 'JSON importieren', COLOR_INFO, () => {
       const json = prompt('Spielstand-JSON einfügen:');
       if (!json) return;
       const r = gameStore.importSaveJSON(json);
@@ -206,7 +203,6 @@ export class SettingsScene extends Phaser.Scene {
       }
       sfx.click();
     });
-    void importBtn;
     by += 52;
 
     // Save-Info
@@ -217,8 +213,7 @@ export class SettingsScene extends Phaser.Scene {
 
     // Back
     const backY = height - 30;
-    const _backBtn = this.makeButton(width / 2, backY, 'Zurück (Esc)', COLOR_SUCCESS, () => this.back());
-    void _backBtn;
+    this.makeButton(width / 2, backY, 'Zurück (Esc)', COLOR_SUCCESS, () => this.back());
     if (this.input.keyboard) {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => this.back());
     }
@@ -388,7 +383,6 @@ export class SettingsScene extends Phaser.Scene {
       };
       this.input.keyboard.on('keydown', onKey);
     }
-    void overlay2; void hint;
   }
 
   /**
@@ -427,7 +421,6 @@ export class SettingsScene extends Phaser.Scene {
       this.children.getAll().filter((c) => (c as Phaser.GameObjects.GameObject & { depth?: number }).depth === DEPTH + 1).forEach((c) => c.destroy());
     });
     closeBtn.setDepth(DEPTH + 1);
-    void overlay;
   }
 
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
