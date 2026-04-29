@@ -648,7 +648,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       if (status === 'completed' && gameStore.getCurrentAct() < 1) {
         gameStore.advanceAct(1);
         if (gameStore.collectDiaryEntry(1)) {
-          showToast(this, t('diary.firstDay') || 'Tagebuch: Mein erster Tag in Wurzelheim', 'reward', { yOffset: -100 });
+          showToast(this, t('diary.firstDay'), 'reward', { yOffset: -100 });
         }
       }
     }
