@@ -1,10 +1,10 @@
 /**
  * Tests: Market-Economy Balance (S-POLISH-B2-R9)
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { ITEMS, getItem, isSeedItem, speciesSlugFromSeed, STARTER_INVENTORY } from '../items';
 
-describe('Market Pricing — Sell-Ratio', () => {
+describe('Market Pricing â Sell-Ratio', () => {
   it('alle kaufbaren Items haben sellPrice > 0 wenn buyPrice > 0', () => {
     const purchasable = ITEMS.filter((i) => i.buyPrice > 0);
     for (const item of purchasable) {
@@ -12,7 +12,7 @@ describe('Market Pricing — Sell-Ratio', () => {
     }
   });
 
-  it('sellPrice ist nie höher als buyPrice', () => {
+  it('sellPrice ist nie hÃ¶her als buyPrice', () => {
     const purchasable = ITEMS.filter((i) => i.buyPrice > 0);
     for (const item of purchasable) {
       expect(item.sellPrice).toBeLessThanOrEqual(item.buyPrice);
@@ -29,11 +29,11 @@ describe('Market Pricing — Sell-Ratio', () => {
   });
 });
 
-describe('Market Pricing — Rarity-Tiers', () => {
+describe('Market Pricing â Rarity-Tiers', () => {
   const rarityPrices = [30, 60, 120, 250, 600];
 
   it('Seed-Preise entsprechen dem Rarity-Tier', () => {
-    // Wir prüfen dass alle seed-buyPrices in der erlaubten Menge sind
+    // Wir prÃ¼fen dass alle seed-buyPrices in der erlaubten Menge sind
     const seeds = ITEMS.filter((i) => isSeedItem(i.slug));
     expect(seeds.length).toBeGreaterThan(0);
     for (const seed of seeds) {
@@ -48,16 +48,16 @@ describe('Market Pricing — Rarity-Tiers', () => {
   });
 });
 
-describe('Market Pricing — Booster-Items', () => {
-  it('Kompost-Tee ist günstigster Booster (Einsteiger)', () => {
+describe('Market Pricing â Booster-Items', () => {
+  it('Kompost-Tee ist gÃ¼nstigster Booster (Einsteiger)', () => {
     const tea = getItem('compost-tea');
     expect(tea).toBeDefined();
     expect(tea!.buyPrice).toBeLessThanOrEqual(50);
   });
 
-  it('Hybrid-Verstärker ist teuerster Booster (nicht Boden-Upgrade)', () => {
+  it('Hybrid-VerstÃ¤rker ist teuerster Booster (nicht Boden-Upgrade)', () => {
     const hybrid = getItem('hybrid-booster');
-    // Boden-Upgrades (soil-*) sind permanent und dürfen teurer sein
+    // Boden-Upgrades (soil-*) sind permanent und dÃ¼rfen teurer sein
     const boosterPrices = ITEMS
       .filter((i) => i.buyPrice > 0 && !isSeedItem(i.slug) && i.kind !== 'soil-upgrade')
       .map((i) => i.buyPrice);
@@ -80,7 +80,7 @@ describe('Market Pricing — Booster-Items', () => {
   });
 });
 
-describe('Market Pricing — Boden-Upgrades', () => {
+describe('Market Pricing â Boden-Upgrades', () => {
   it('Boden-Upgrades Bronze < Silber < Gold', () => {
     const bronze = getItem('soil-bronze');
     const silver = getItem('soil-silver');
@@ -98,12 +98,12 @@ describe('Market Pricing — Boden-Upgrades', () => {
   });
 });
 
-describe('Market — getItem Hilfsfunktion', () => {
-  it('gibt undefined für unbekannten Slug zurück', () => {
+describe('Market â getItem Hilfsfunktion', () => {
+  it('gibt undefined fÃ¼r unbekannten Slug zurÃ¼ck', () => {
     expect(getItem('nicht-existent-xyz')).toBeUndefined();
   });
 
-  it('gibt korrekte ItemDef für bekannten Slug', () => {
+  it('gibt korrekte ItemDef fÃ¼r bekannten Slug', () => {
     const item = getItem('basic-lure');
     expect(item).toBeDefined();
     expect(item!.slug).toBe('basic-lure');
@@ -111,7 +111,7 @@ describe('Market — getItem Hilfsfunktion', () => {
   });
 });
 
-describe('Market — Seed-Hilfsfunktionen', () => {
+describe('Market â Seed-Hilfsfunktionen', () => {
   it('isSeedItem erkennt Seed-Slugs korrekt', () => {
     expect(isSeedItem('seed-fern')).toBe(true);
     expect(isSeedItem('compost-tea')).toBe(false);
@@ -124,7 +124,7 @@ describe('Market — Seed-Hilfsfunktionen', () => {
   });
 });
 
-describe('Market — STARTER_INVENTORY', () => {
+describe('Market â STARTER_INVENTORY', () => {
   it('Starter-Items sind alle in ITEMS vorhanden', () => {
     for (const slug of Object.keys(STARTER_INVENTORY)) {
       expect(getItem(slug)).toBeDefined();
