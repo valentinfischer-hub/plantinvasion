@@ -1,3 +1,4 @@
+import { describe, test, it, expect, beforeEach, vi } from 'vitest';
 /**
  * GardenScene Soil + Growth Deep-Polish Tests [b4-run9/15]
  * Tests fuer Soil-Tint, Stage-Up-Morph, Booster-Glow-Farben
@@ -10,7 +11,7 @@ function getSoilColor(lastWateredAt: number, hydrationStatus: string): { color: 
   const hMin = msSinceWater / 60000;
 
   if (hydrationStatus === 'saftig') {
-    return { color: 0x5b9bd6, alpha: 0.45 }; // Überwässert: bläulich
+    return { color: 0x5b9bd6, alpha: 0.45 }; // ÃberwÃ¤ssert: blÃ¤ulich
   } else if (hMin < 60) {
     return { color: 0x5c3d1e, alpha: 0.55 }; // Feucht < 1h: dunkelbraun
   } else if (hMin < 240) {
@@ -23,58 +24,58 @@ function getSoilColor(lastWateredAt: number, hydrationStatus: string): { color: 
 // Booster-Glow-Farben
 function getBoosterGlowColor(boosterType: string, isMutation: boolean): number {
   if (isMutation) return 0xb86ee3; // Hybrid = lila
-  if (boosterType === 'xp') return 0x4caf50;       // Grow = grün
+  if (boosterType === 'xp') return 0x4caf50;       // Grow = grÃ¼n
   if (boosterType === 'sun-lamp') return 0xffd700;  // Pristine = gold
   if (boosterType === 'sprinkler') return 0x00bcd4; // Speed = cyan
   return 0x4caf50;
 }
 
 describe('GardenScene Soil-Tint', () => {
-  test('überwässerter Status = bläulich', () => {
+  test('Ã¼berwÃ¤sserter Status = blÃ¤ulich', () => {
     const result = getSoilColor(Date.now(), 'saftig');
     expect(result.color).toBe(0x5b9bd6);
     expect(result.alpha).toBe(0.45);
   });
 
-  test('gerade gewässert (< 1min) = dunkelbraun feucht', () => {
+  test('gerade gewÃ¤ssert (< 1min) = dunkelbraun feucht', () => {
     const result = getSoilColor(Date.now() - 30_000, 'gut');
     expect(result.color).toBe(0x5c3d1e);
     expect(result.alpha).toBe(0.55);
   });
 
-  test('vor 30min gewässert = dunkelbraun feucht', () => {
+  test('vor 30min gewÃ¤ssert = dunkelbraun feucht', () => {
     const result = getSoilColor(Date.now() - 30 * 60_000, 'gut');
     expect(result.color).toBe(0x5c3d1e);
     expect(result.alpha).toBe(0.55);
   });
 
-  test('vor 2h gewässert = mittelbraun', () => {
+  test('vor 2h gewÃ¤ssert = mittelbraun', () => {
     const result = getSoilColor(Date.now() - 2 * 60 * 60_000, 'durstig');
     expect(result.color).toBe(0x7a5230);
     expect(result.alpha).toBe(0.45);
   });
 
-  test('vor 5h gewässert = hellbraun trocken', () => {
+  test('vor 5h gewÃ¤ssert = hellbraun trocken', () => {
     const result = getSoilColor(Date.now() - 5 * 60 * 60_000, 'vertrocknet');
     expect(result.color).toBe(0xad8c6a);
     expect(result.alpha).toBe(0.4);
   });
 
   test('Grenze exakt 60min = noch feucht (dunkelbraun)', () => {
-    // 59min 59s → feucht
+    // 59min 59s â feucht
     const result = getSoilColor(Date.now() - 59 * 60_000 - 59_000, 'gut');
     expect(result.color).toBe(0x5c3d1e);
   });
 
   test('Grenze exakt 240min = mittelbraun', () => {
-    // 239min → mittelbraun
+    // 239min â mittelbraun
     const result = getSoilColor(Date.now() - 239 * 60_000, 'durstig');
     expect(result.color).toBe(0x7a5230);
   });
 });
 
 describe('GardenScene Booster-Glow-Farben', () => {
-  test('XP-Booster = grün', () => {
+  test('XP-Booster = grÃ¼n', () => {
     expect(getBoosterGlowColor('xp', false)).toBe(0x4caf50);
   });
 
@@ -91,7 +92,7 @@ describe('GardenScene Booster-Glow-Farben', () => {
     expect(getBoosterGlowColor('sun-lamp', true)).toBe(0xb86ee3);
   });
 
-  test('unbekannter Booster-Typ = grün (fallback)', () => {
+  test('unbekannter Booster-Typ = grÃ¼n (fallback)', () => {
     expect(getBoosterGlowColor('unknown', false)).toBe(0x4caf50);
   });
 });
