@@ -1,4 +1,4 @@
-import { describe, test, it, expect, beforeEach, vi } from 'vitest';
+import { describe, test, expect } from 'vitest';
 /**
  * Micro-Interactions Tests [b4-run14/15]
  */
@@ -151,7 +151,6 @@ describe('Micro-Interactions: popNotification', () => {
     const text = createMockText();
     // @ts-expect-error Mock
     popNotification(scene, text, 200, 400);
-    expect(scene._tweens[0].y).toBe(200); // Wait, it's set as number not object
     // Actually the tween sets y: targetY
     const tween = scene._tweens[0] as { y?: number };
     expect(tween.y).toBe(200);
