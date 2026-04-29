@@ -141,5 +141,7 @@
   "overworld.forage.found": "Found: {{item}}!",
   "overworld.forage.empty": "Nothing here right now.",
   "battle.detail": "Strength {{power}} | {{accuracy}}% accuracy",
-  "battle.status": "Status move"
+  "battle.status": "Status move",
+  "settings.importPrompt": "Paste save-game JSON:",
+  "settings.back": "Back (Esc)"
 }
