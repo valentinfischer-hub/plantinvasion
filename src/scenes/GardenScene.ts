@@ -658,7 +658,7 @@ export class GardenScene extends Phaser.Scene {
    * keine Pre-Animation, direkt zum Reveal.
    */
   private async runCrossWithDrift(parentAId: string, parentBId: string, successColor: string): Promise<void> {
-    const drifted = await this.playParentDrift(parentAId, parentBId);
+    await this.playParentDrift(parentAId, parentBId);
     const result = gameStore.crossPlants(parentAId, parentBId);
     if (!result.ok) {
       this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
@@ -707,7 +707,6 @@ export class GardenScene extends Phaser.Scene {
     }
     // Drift-spezifisches Cleanup: nichts noetig, da Parent-Cards bei renderPlants
     // automatisch destroyed werden (gameStore.crossPlants entfernt sie aus state).
-    void drifted;
   }
 
   /**
