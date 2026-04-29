@@ -338,8 +338,8 @@ export class GardenScene extends Phaser.Scene {
     if (this.crossModeHint) {
       if (this.crossMode) {
         const txt = this.crossFirstPlantId
-          ? 'Waehle zweite Pflanze (Kreuzen-Btn fuer Abbruch)'
-          : 'Cross-Mode: klicke erste Pflanze zum Auswaehlen';
+          ? 'Wähle zweite Pflanze (Kreuzen-Btn für Abbruch)'
+          : 'Cross-Mode: klicke erste Pflanze zum Auswählen';
         this.crossModeHint.setText(txt);
         this.crossModeHint.setVisible(true);
       } else {
@@ -356,7 +356,7 @@ export class GardenScene extends Phaser.Scene {
       return;
     }
     if (this.crossFirstPlantId === plantId) {
-      this.showFlash('Selbe Pflanze - waehle eine andere', '#ff7e7e');
+      this.showFlash('Selbe Pflanze - wähle eine andere', '#ff7e7e');
       return;
     }
     // Preview-Modal vor Bestaetigung
