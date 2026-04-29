@@ -406,18 +406,9 @@ export class MenuScene extends Phaser.Scene {
     overlay.add(panel);
 
     const slides = [
-      {
-        title: 'Willkommen in Plantinvasion',
-        body: 'Sammle, zuechte plus kaempfe mit Pflanzen. Jede Spezies hat\nDNA die du kombinieren kannst um neue Hybriden zu schaffen.'
-      },
-      {
-        title: 'Cozy plus Strategisch',
-        body: 'Garten-Hub fÃ¼r Pflege plus Zuchten.\nWelt-Erkundung fÃ¼r Wild-Encounter plus Quests.\nKein Stress: dein Tempo bestimmt der Tag.'
-      },
-      {
-        title: 'Tipps zum Start',
-        body: 'X = Kreuzen plus G = Garten plus W = Welt\nKlick einen leeren Slot um zu pflanzen\nKlick eine Pflanze fÃ¼r Detail-Panel'
-      }
+      { title: t('menu.slide1Title'), body: t('menu.slide1Body') },
+      { title: t('menu.slide2Title'), body: t('menu.slide2Body') },
+      { title: t('menu.slide3Title'), body: t('menu.slide3Body') }
     ];
 
     let slideIdx = 0;
@@ -444,7 +435,7 @@ export class MenuScene extends Phaser.Scene {
       dots.forEach((d, i) => d.setFillStyle(i === slideIdx ? 0x9be36e : 0x44603f));
     };
 
-    const nextBtn = this.add.text(panelW / 2 - 50, panelH / 2 - 25, 'Weiter ->', {
+    const nextBtn = this.add.text(panelW / 2 - 50, panelH / 2 - 25, t('menu.next'), {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e',
       backgroundColor: '#000000', padding: { x: 10, y: 5 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -453,7 +444,7 @@ export class MenuScene extends Phaser.Scene {
       if (slideIdx < slides.length - 1) {
         slideIdx++;
         updateSlide();
-        if (slideIdx === slides.length - 1) nextBtn.setText('Los gehts!');
+        if (slideIdx === slides.length - 1) nextBtn.setText(t('menu.start'));
       } else {
         this.tweens.add({
           targets: overlay,
@@ -466,7 +457,7 @@ export class MenuScene extends Phaser.Scene {
     });
     overlay.add(nextBtn);
 
-    const skipBtn = this.add.text(-panelW / 2 + 35, panelH / 2 - 25, 'Skip', {
+    const skipBtn = this.add.text(-panelW / 2 + 35, panelH / 2 - 25, t('menu.skip'), {
       fontFamily: 'monospace', fontSize: '11px', color: '#888888',
       padding: { x: 6, y: 3 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
