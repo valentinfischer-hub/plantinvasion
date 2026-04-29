@@ -106,7 +106,7 @@ export class QuestLogScene extends Phaser.Scene {
     const bg = this.add.rectangle(width / 2, backY, 160, 32, 0x000000, 0.7)
       .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, backY, 'Zurueck (B)', {
+    this.add.text(width / 2, backY, 'Zurück (B)', {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');
