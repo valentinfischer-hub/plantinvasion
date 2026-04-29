@@ -53,6 +53,31 @@ function _getTierColor(fps: number): string {
   return '#ff4040';                // rot
 }
 
+function _getTierLabel(fps: number): string {
+  if (fps >= 55) return 'GRÜN (60fps OK)';
+  if (fps >= 40) return 'GELB (Warnung)';
+  return 'ROT (Performance-Problem)';
+}
+
+function _dumpSaveState(): void {
+  try {
+    const raw = localStorage.getItem('plantinvasion_save');
+    if (!raw) { console.warn('[PI Debug] Kein Save vorhanden.'); return; }
+    const parsed = JSON.parse(raw) as unknown;
+    console.groupCollapsed('[PI Debug] Save-State-Dump');
+    console.log(JSON.stringify(parsed, null, 2));
+    console.groupEnd();
+    // Clipboard-Copy
+    if (navigator.clipboard) {
+      void navigator.clipboard.writeText(JSON.stringify(parsed, null, 2))
+        .then(() => console.info('[PI Debug] Save in Zwischenablage kopiert.'))
+        .catch(() => { /* ignore */ });
+    }
+  } catch (e) {
+    console.error('[PI Debug] Dump-Fehler:', e);
+  }
+}
+
 function _renderPanel(): void {
   if (!_panel) return;
 
@@ -100,16 +125,24 @@ function _renderPanel(): void {
   } catch { /* ignore */ }
 
   _panel.innerHTML = [
-    `<b style="color:#fff">PI Debug v0.1</b>`,
+    `<b style="color:#fff">PI Debug v0.2</b>`,
     `<hr style="border-color:#39ff14;margin:4px 0">`,
-    `FPS: <span style="color:${tierColor}">${avgFps}</span>/${fps} (1min-avg/now)`,
+    `FPS: <span style="color:${tierColor}">${avgFps}</span>/${fps} (avg/now) — Tier: <span style="color:${tierColor}">${_getTierLabel(avgFps)}</span>`,
     `Save: ${saveInfo}`,
     `Genome[0]: ${genomeInfo}`,
     `FF: ${ffInfo}`,
     `URL: ${window.location.pathname}${window.location.search}`,
     `<hr style="border-color:#333;margin:4px 0">`,
+    `<button id="pi-debug-dump" style="font:10px monospace;padding:2px 6px;cursor:pointer;background:#1a2418;color:#39ff14;border:1px solid #39ff14;border-radius:3px">Save-State Dump</button>`,
+    `<hr style="border-color:#333;margin:4px 0">`,
     `<small style="color:#888">Schliessen: Ctrl+Shift+D</small>`,
   ].join('<br>');
+  // Dump-Button Event
+  const dumpBtn = document.getElementById('pi-debug-dump');
+  if (dumpBtn && !dumpBtn.dataset['bound']) {
+    dumpBtn.dataset['bound'] = '1';
+    dumpBtn.addEventListener('click', _dumpSaveState);
+  }
 }
 
 function _loop(): void {
