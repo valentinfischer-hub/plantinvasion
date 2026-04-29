@@ -10,5 +10,6 @@
   "error": "Error",
   "save": "Save",
   "delete": "Delete",
-  "reset": "Reset"
+  "reset": "Reset",
+  "failed": "Failed"
 }
