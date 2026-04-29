@@ -535,7 +535,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       salzbucht: 'ð Salzbucht',
       mordwald: 'ð Mordwald',
       glaciara: 'ð§ Glaciara',
-      magmabluete: 'ð¥ MagmablÃ¼te',
+      magmabluete: 'ð¥ Magmablüte',
     };
     const label = ZONE_LABELS[zone] ?? (zone.charAt(0).toUpperCase() + zone.slice(1));
     const cam = this.cameras.main;
@@ -629,14 +629,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
 
     // S-10 V0.1: Story-Akt-2-Auto-Tracking ("Verdanto erkundet").
-    // LÃ¤uft nur wenn currentAct >= 1 (Akt-1 abgeschlossen) UND doStoryCheck.
+    // Läuft nur wenn currentAct >= 1 (Akt-1 abgeschlossen) UND doStoryCheck.
     if (doStoryCheck && gameStore.getCurrentAct() >= 1) {
       const state = gameStore.get();
       const flags = state.story?.flags ?? {};
       const visitedZones = gameStore.getAchievementCounters().visitedZones;
       const inventory = gameStore.getInventory();
       const updatedFlags = autoSetAct2Flags(flags, visitedZones, inventory);
-      // Side-Effect nur bei Ãnderung
+      // Side-Effect nur bei Änderung
       const flagsChanged = Object.keys(updatedFlags).some(k => updatedFlags[k] !== flags[k]);
       if (flagsChanged) {
         for (const [k, v] of Object.entries(updatedFlags)) {
