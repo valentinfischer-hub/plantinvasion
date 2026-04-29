@@ -217,7 +217,7 @@ export class SettingsScene extends Phaser.Scene {
 
     // Back
     const backY = height - 30;
-    const _backBtn = this.makeButton(width / 2, backY, 'Zurueck (Esc)', COLOR_SUCCESS, () => this.back());
+    const _backBtn = this.makeButton(width / 2, backY, 'Zurück (Esc)', COLOR_SUCCESS, () => this.back());
     void _backBtn;
     if (this.input.keyboard) {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => this.back());
