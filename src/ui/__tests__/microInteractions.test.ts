@@ -1,3 +1,4 @@
+import { describe, test, it, expect, beforeEach, vi } from 'vitest';
 /**
  * Micro-Interactions Tests [b4-run14/15]
  */
@@ -10,7 +11,7 @@ import {
   popNotification,
 } from '../microInteractions';
 
-// Mock für MicroInteractionScene
+// Mock fÃ¼r MicroInteractionScene
 function createMockScene() {
   const tweens: Array<{ targets: object; scaleX?: number; scaleY?: number; alpha?: { from?: number; to?: number } | number; x?: number; duration?: number; ease?: string }> = [];
   const timers: Array<{ delay: number; callback: () => void }> = [];
@@ -108,7 +109,7 @@ describe('Micro-Interactions: shakeEnergyBar', () => {
 });
 
 describe('Micro-Interactions: pulseSaveIndicator', () => {
-  test('Save-Indicator Tween startet mit alpha 0→1', () => {
+  test('Save-Indicator Tween startet mit alpha 0â1', () => {
     const scene = createMockScene();
     const text = createMockText();
     // @ts-expect-error Mock
