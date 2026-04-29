@@ -126,5 +126,20 @@
   "menu.slide3Body": "X = Breed, G = Garden, W = World\nClick an empty slot to plant\nClick a plant for the detail panel",
   "menu.next": "Next ->",
   "menu.start": "Let's go!",
-  "menu.skip": "Skip"
+  "menu.skip": "Skip",
+  "tutorial.step0.title": "Welcome, Tilda!",
+  "tutorial.step0.text": "Wurzelheim welcomes you. You are the wandering botanist who will fill this valley with rare plants. Press [Next] — your adventure begins now.",
+  "tutorial.step1.title": "First Steps",
+  "tutorial.step1.text": "Move with W A S D or the arrow keys. Shift = Sprint. Try it out — just walk somewhere!",
+  "tutorial.step2.title": "The Villagers",
+  "tutorial.step2.text": "Anya, Björn and Clara stand at the market stalls. Walk to one and press E — they have tips for you.",
+  "tutorial.step3.title": "Your Garden Awaits",
+  "tutorial.step3.text": "The golden door at the player house leads to your garden. Your first seedling is already planted. X = Cross   O = Back to Overworld",
+  "tutorial.step4.title": "The Big Picture",
+  "tutorial.step4.text": "M = Market     P = Plantdex     Q = Quests\nE = Talk      Shift = Sprint\n\nEnjoy breeding! 🌱",
+  "npc.met": "You have already met.",
+  "overworld.forage.found": "Found: {{item}}!",
+  "overworld.forage.empty": "Nothing here right now.",
+  "battle.detail": "Strength {{power}} | {{accuracy}}% accuracy",
+  "battle.status": "Status move"
 }
