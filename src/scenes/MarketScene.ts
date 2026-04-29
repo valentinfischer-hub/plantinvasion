@@ -47,7 +47,7 @@ export class MarketScene extends Phaser.Scene {
 
     // Back-Button
     const backY = height - 30;
-    this.makeButton(width / 2, backY, 'Zurueck (B)', '#fcd95c', () => this.scene.start('OverworldScene'));
+    this.makeButton(width / 2, backY, 'Zurück (B)', '#fcd95c', () => this.scene.start('OverworldScene'));
     if (this.input.keyboard) {
       const backKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
       backKey.on('down', () => this.scene.start('OverworldScene'));
