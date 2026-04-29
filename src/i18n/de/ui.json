@@ -154,4 +154,12 @@
   "ow.pause.mainmenu": "Hauptmenu",
   "ow.save.indicator": "* gespeichert",
   "ow.dailyLogin.toast": "Tagesbelohnung: {{label}}"
+,
+  "ccs.title": "Charakter erstellen",
+  "ccs.subtitle": "Gib deinem Botaniker einen Namen und wähle ein Aussehen.",
+  "ccs.nameLabel": "Dein Name:",
+  "ccs.avatarLabel": "Aussehen waehlen:",
+  "ccs.startBtn": "Spiel starten",
+  "ccs.skipBtn": "Ueberspringen",
+  "ccs.skipHint": "Standard: Botaniker + Avatar 1"
 }
