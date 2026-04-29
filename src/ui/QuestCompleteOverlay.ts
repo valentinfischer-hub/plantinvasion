@@ -95,7 +95,7 @@ export class QuestCompleteOverlay {
         this.scene.tweens.add({
           targets: t, alpha: 1, duration: 300, ease: 'Cubic.Out'
         });
-        sfx.coin?.();
+        sfx.click?.();
       });
     });
 
