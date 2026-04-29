@@ -17,7 +17,7 @@
   "settings.localeDe": "DE",
   "settings.localeEn": "EN",
   "battle.attack": "Attack",
-  "battle.flee": "Flee",
+  "battle.flee": "Flee (70%)",
   "battle.win": "Victory!",
   "battle.lose": "Defeat",
   "garden.water": "Water",
@@ -58,5 +58,11 @@
   "garden.crossSuccess": "Crossing successful",
   "garden.mutation": "Mutation! New plant",
   "garden.gardenFull": "Garden full. Harvest or move plants.",
-  "garden.tutorialFirstPlant": "Click here to plant your first plant"
+  "garden.tutorialFirstPlant": "Click here to plant your first plant",
+  "battle.catch": "Catch",
+  "battle.captured": "{{name}} was caught!",
+  "battle.captureFailed": "Catch attempt failed.",
+  "battle.rooted": "You are rooted and cannot flee.",
+  "battle.fleeSuccess": "You flee from battle.",
+  "battle.fleeFailed": "Escape failed!"
 }
