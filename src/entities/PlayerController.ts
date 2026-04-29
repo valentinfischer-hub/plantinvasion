@@ -40,6 +40,7 @@ export class PlayerController {
   private targetTileY: number;
   private px: number;
   private py: number;
+  private stepProgress = 0; // 0..1 pro Tile-Schritt fuer Bob-Animation
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private keyShift: Phaser.Input.Keyboard.Key;
   private keyW: Phaser.Input.Keyboard.Key;
@@ -131,7 +132,10 @@ export class PlayerController {
       this.tileX = this.targetTileX;
       this.tileY = this.targetTileY;
       this.isMoving = false;
+      this.stepProgress = 0;
+      // D-041 Run11: Sprite-Bob reset
       this.sprite.setPosition(this.px, this.py);
+      this.sprite.setScale(1, 1);
       sfx.footstep();
       this.collision.onEnterTile?.(this.tileX, this.tileY, this);
     } else {
@@ -139,6 +143,12 @@ export class PlayerController {
       const ny = dy / dist;
       this.px += nx * step;
       this.py += ny * step;
+      // D-041 Run11: Walk-Bob — leichter Squash-Stretch per Tile-Schritt
+      this.stepProgress = Math.min(1, this.stepProgress + step / TILE_SIZE);
+      const bobPhase = Math.sin(this.stepProgress * Math.PI); // 0->1->0 pro Schritt
+      const bobScaleY = 1 - bobPhase * 0.06; // leichter Squash
+      const bobScaleX = 1 + bobPhase * 0.04; // kompensierender Stretch
+      this.sprite.setScale(bobScaleX, bobScaleY);
       this.sprite.setPosition(this.px, this.py);
     }
   }

@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 
 /**
- * S-POLISH-START-16: SplashScene als Vor-Hauptmenu-Boot.
- * Logo-Reveal mit Pollen-Drift, dann auto-switch zu MenuScene nach 4s
- * oder beim Klick/Tastendruck.
+ * S-POLISH-START-16 + D-041 FI-Boot-Time:
+ * SplashScene als Vor-Hauptmenu-Boot.
+ * - Neue User: voller Splash 3.5s mit Logo-Reveal + Pollen-Drift
+ * - Returning User (localStorage 'pi_visited'): Auto-Skip nach 800ms (FI-Boost)
+ * - Klick/Taste: sofortiger Skip immer verfuegbar
  */
 export class SplashScene extends Phaser.Scene {
   constructor() {
@@ -27,6 +29,33 @@ export class SplashScene extends Phaser.Scene {
     const cx = width / 2;
     const cy = height / 2;
 
+    // Returning-User-Detection: schnellerer Boot
+    const isReturning = (() => {
+      try { return !!localStorage.getItem('pi_visited'); } catch { return false; }
+    })();
+    const splashDuration = isReturning ? 800 : 3500;
+    try { localStorage.setItem('pi_visited', '1'); } catch { /* ignore */ }
+
+    let switched = false;
+    const goToMenu = () => {
+      if (switched) return;
+      switched = true;
+      this.cameras.main.fadeOut(150, 0, 0, 0);
+      this.time.delayedCall(160, () => this.scene.start('MenuScene'));
+    };
+
+    if (isReturning) {
+      // Minimaler Splash: nur Titel-Text, kein aufwendiges Rendering
+      this.add.text(cx, cy, 'Plantinvasion', {
+        fontFamily: 'monospace', fontSize: '32px', color: '#9be36e'
+      }).setOrigin(0.5).setAlpha(0.85);
+      this.input.on('pointerdown', goToMenu);
+      this.input.keyboard?.on('keydown', goToMenu);
+      this.time.delayedCall(splashDuration, goToMenu);
+      return;
+    }
+
+    // --- Neuer User: voller Splash ---
     if (this.textures.exists('plants_sprint_1')) {
       const hero = this.add.image(cx, cy - 40, 'plants_sprint_1', 'mondlilie_bloom.webp')
         .setOrigin(0.5)
@@ -61,23 +90,16 @@ export class SplashScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: title, alpha: 1, duration: 500, delay: 300 });
 
-    const hint = this.add.text(cx, cy + 120, 'Klick oder Taste...', {
+    const hint = this.add.text(cx, cy + 120, 'Klick oder Taste zum Starten...', {
       fontFamily: 'monospace', fontSize: '11px', color: '#8a6e4a'
     }).setOrigin(0.5).setAlpha(0);
-    this.tweens.add({
-      targets: hint,
-      alpha: 1,
-      duration: 400,
-      delay: 1000
-    });
+    this.tweens.add({ targets: hint, alpha: 1, duration: 400, delay: 1000 });
 
-    // S-POLISH Run4: Loading-Progress-Bar (smooth fill animation)
     const barW = 200;
     const barH = 4;
     const barX = cx - barW / 2;
     const barY = cy + 145;
-    const barBg = this.add.rectangle(cx, barY, barW, barH, 0x333333, 0.7).setOrigin(0.5, 0.5);
-    void barBg;
+    this.add.rectangle(cx, barY, barW, barH, 0x333333, 0.7).setOrigin(0.5, 0.5);
     const barFill = this.add.rectangle(barX, barY, 0, barH, 0x9be36e, 0.8).setOrigin(0, 0.5);
     this.tweens.add({
       targets: barFill,
@@ -87,18 +109,8 @@ export class SplashScene extends Phaser.Scene {
       delay: 200
     });
 
-    let switched = false;
-    const goToMenu = () => {
-      if (switched) return;
-      switched = true;
-      this.scene.start('MenuScene');
-    };
-
-    // Klick und Taste sofort verfuegbar (kein Cooldown der Bugs erzeugt)
     this.input.on('pointerdown', goToMenu);
     this.input.keyboard?.on('keydown', goToMenu);
-
-    // Auto-Skip nach 3.5s
-    this.time.delayedCall(3500, goToMenu);
+    this.time.delayedCall(splashDuration, goToMenu);
   }
 }

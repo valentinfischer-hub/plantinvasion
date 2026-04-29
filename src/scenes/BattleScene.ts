@@ -36,6 +36,8 @@ export class BattleScene extends Phaser.Scene {
   private wild!: BattleSide;
   private playerHpBar!: Phaser.GameObjects.Rectangle;
   private wildHpBar!: Phaser.GameObjects.Rectangle;
+  private playerHpGhost!: Phaser.GameObjects.Rectangle;
+  private wildHpGhost!: Phaser.GameObjects.Rectangle;
   private playerHpText!: Phaser.GameObjects.Text;
   private wildHpText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
@@ -48,12 +50,6 @@ export class BattleScene extends Phaser.Scene {
   private waitingForInput = false;
   private xpReward = 0;
   private capturedEnc?: { slug: string; rarity: number; level: number };
-  // S-POLISH-B3-R3: Battle-Log letzte 3 Aktionen
-  private battleLog: string[] = [];
-  private battleLogTexts: Phaser.GameObjects.Text[] = [];
-  // S-POLISH-B3-R3: Status-Effekt-Icon-Container
-  private playerStatusIcons?: Phaser.GameObjects.Container;
-  private wildStatusIcons?: Phaser.GameObjects.Container;
   private poolKey: string = 'wurzelheim-tallgrass';
   private bossId?: string;
   private bossDef?: BossDef;
@@ -171,6 +167,7 @@ export class BattleScene extends Phaser.Scene {
     this.wildSprite = this.add.sprite(width / 2, 110, wildSpriteKey);
     this.wildSprite.setDisplaySize(72, 72);
     this.wildSprite.setFlipX(true); // QW-14: Wild-Sprite gespiegelt fuer optische Differenzierung
+    this.wildHpGhost = this.add.rectangle(width / 2, 162, 200, 10, 0xbb4444, 0.5).setDepth(60);
     this.wildHpBar = this.add.rectangle(width / 2, 162, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
     this.wildHpText = this.add.text(width / 2, 180, '', {
@@ -189,6 +186,22 @@ export class BattleScene extends Phaser.Scene {
     }).setOrigin(0.5);
     this.playerSprite = this.add.sprite(width / 2, height - 170, 'tile_flowerbed');
     this.playerSprite.setDisplaySize(80, 80);
+    // D-041 Run10: Battle Intro Slide-in
+    const slideOriginWild = this.wildSprite.x;
+    const slideOriginPlayer = this.playerSprite.x;
+    this.wildSprite.setX(width + 60);
+    this.playerSprite.setX(-60);
+    this.tweens.add({
+      targets: this.wildSprite, x: slideOriginWild,
+      duration: 420, ease: 'Back.Out', delay: 80
+    });
+    this.tweens.add({
+      targets: this.playerSprite, x: slideOriginPlayer,
+      duration: 420, ease: 'Back.Out', delay: 160
+    });
+    // Flash wipe bei Battle-Start
+    this.cameras.main.flash(280, 220, 255, 220, false);
+    this.playerHpGhost = this.add.rectangle(width / 2, height - 118, 200, 10, 0xbb4444, 0.5).setDepth(60);
     this.playerHpBar = this.add.rectangle(width / 2, height - 118, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
     this.playerHpText = this.add.text(width / 2, height - 100, '', {
@@ -207,21 +220,8 @@ export class BattleScene extends Phaser.Scene {
     // Move-Buttons
     this.buildMoveButtons();
     // Run + Capture buttons (small row)
-    this.makeSmallButton(width / 4, 32, t('battle.flee'), '#fcd95c', () => this.tryRun());
-    this.makeSmallButton((width / 4) * 3, 32, t('battle.catch'), '#ff7eb8', () => this.tryCapture());
-
-    // S-POLISH-B3-R3: Battle-Log (letzte 3 Aktionen, links positioniert)
-    for (let i = 0; i < 3; i++) {
-      const lt = this.add.text(12, height / 2 + 16 + i * 14, '', {
-        fontFamily: 'monospace', fontSize: '9px', color: '#aaaaaa',
-        wordWrap: { width: width / 2 - 24 }
-      }).setDepth(200).setScrollFactor(0);
-      this.battleLogTexts.push(lt);
-    }
-
-    // S-POLISH-B3-R3: Status-Icon-Container unter HP-Bars
-    this.playerStatusIcons = this.add.container(width / 2, height - 72).setDepth(300);
-    this.wildStatusIcons = this.add.container(width / 2, 208).setDepth(300);
+    this.makeSmallButton(width / 4, 32, 'Fluechten', '#fcd95c', () => this.tryRun());
+    this.makeSmallButton((width / 4) * 3, 32, 'Fangen', '#ff7eb8', () => this.tryCapture());
 
     this.updateBars();
     sfx.dialogOpen();
@@ -360,17 +360,27 @@ export class BattleScene extends Phaser.Scene {
     for (const tl of outcome.tickLogs) log += tl + '\n';
 
     this.statusText.setText(log.trim());
-    // S-POLISH-B3-R3: Log-Eintrag hinzufuegen
-    this.pushBattleLog(log);
     this.updateBars();
     this.shakeSprites();
     sfx.bump();
+    // P1: Hitstop 50ms — kurzes Einfrieren fuer Impact-Feel
+    this.tweens.timeScale = 0;
+    setTimeout(() => { if (this.tweens) this.tweens.timeScale = 1; }, 50);
+    this.setMoveButtonsEnabled(false);
 
     // Damage-Floater
     for (const r of outcome.results) {
       if (r.dmg > 0) {
         const target = (r.defender === this.player) ? this.playerSprite : this.wildSprite;
         this.spawnDamageFloater(target, r.dmg, r.crit, effectivenessLabel(r.effectiveness));
+        // D-041 Run10: Hit-Shake auf dem getroffenen Sprite
+        const shakeDir = (r.defender === this.player) ? 1 : -1;
+        const origX = target.x;
+        this.tweens.add({
+          targets: target, x: origX + shakeDir * 8,
+          duration: 60, ease: 'Cubic.Out', yoyo: true, repeat: 2,
+          onComplete: () => { target.setX(origX); }
+        });
       }
       if (r.selfHeal && r.selfHeal > 0) {
         const target = (r.attacker === this.player) ? this.playerSprite : this.wildSprite;
@@ -397,15 +407,11 @@ if (this.bossDef && outcome.winner === this.player) {
             this.spawnVictoryConfetti();
             // Battle-Drop V0.2: 25% Seed, 10% Coins
             let dropMsg = '';
-            let dropCoins = 0;
-            let dropItem = '';
             if (this.capturedEnc?.slug) {
               const drop = gameStore.applyBattleDrop(this.capturedEnc.slug);
-              if (drop.itemSlug) { dropMsg += ` +1 ${drop.itemSlug}`; dropItem = drop.itemSlug; }
-              if (drop.coins) { dropMsg += ` +${drop.coins} Coins`; dropCoins = drop.coins; }
+              if (drop.itemSlug) dropMsg += ` +1 ${drop.itemSlug}`;
+              if (drop.coins) dropMsg += ` +${drop.coins} Coins`;
             }
-            // S-POLISH-B3-R3: Post-Battle-Summary animiert einblenden
-            this.spawnPostBattleSummary(this.xpReward, dropCoins, dropItem);
             this.endBattle(`Sieg! +${this.xpReward} XP${dropMsg}`);
           } else {
             this.endBattle(t('battle.exhausted'));
@@ -421,47 +427,9 @@ if (this.bossDef && outcome.winner === this.player) {
   }
 
   update(_time: number, _delta: number): void {
-    // S-POLISH-B3-R3: Status-Icons live updaten
-    this.updateStatusIcons(this.wildStatusIcons, this.wild);
-    this.updateStatusIcons(this.playerStatusIcons, this.player);
-    // Status-Text (fuer Screen-Reader / Klartext)
+    // status-Anzeige live updaten
     this.statusTextWild.setText(this.formatStatuses(this.wild));
     this.statusTextPlayer.setText(this.formatStatuses(this.player));
-  }
-
-  /**
-   * S-POLISH-B3-R3: Status-Effekt-Icons unter HP-Bar
-   */
-  private updateStatusIcons(container: Phaser.GameObjects.Container | undefined, side: { statuses: Array<{effect: string}> }): void {
-    if (!container) return;
-    container.removeAll(true);
-    const STATUS_COLORS: Record<string, string> = {
-      wilted: '#c8b860', pests: '#88cc44', poisoned: '#bb44bb',
-      asleep: '#4488ff', rooted: '#44aa44', fungus: '#aa8833', frostbite: '#88ddff'
-    };
-    side.statuses.forEach((s, i) => {
-      const col = STATUS_COLORS[s.effect] ?? '#ffffff';
-      const icon = this.add.text(i * 28 - side.statuses.length * 14 + 14, 0, s.effect.slice(0, 3).toUpperCase(), {
-        fontFamily: 'monospace', fontSize: '8px', color: '#000000',
-        backgroundColor: col, padding: { x: 3, y: 1 }
-      }).setOrigin(0.5);
-      container.add(icon);
-    });
-  }
-
-  /**
-   * S-POLISH-B3-R3: Letzten 3 Aktionen im Battle-Log anzeigen
-   */
-  private pushBattleLog(entry: string): void {
-    const lines = entry.split('\n').filter((l) => l.trim().length > 0);
-    for (const line of lines) {
-      this.battleLog.push(line.trim());
-    }
-    while (this.battleLog.length > 6) this.battleLog.shift();
-    const lastThree = this.battleLog.slice(-3);
-    this.battleLogTexts.forEach((t, i) => {
-      t.setText(lastThree[i] ?? '');
-    });
   }
 
   private formatStatuses(side: BattleSide): string {
@@ -476,6 +444,15 @@ if (this.bossDef && outcome.winner === this.player) {
     const wildPct = this.wild.stats.hp / this.wild.stats.maxHp;
     const targetPlayerW = Math.max(0, w * playerPct);
     const targetWildW = Math.max(0, w * wildPct);
+    // P1: Ghost-Bar — zeigt vorherigen HP-Stand kurz als roter Balken
+    if (this.playerHpGhost) {
+      this.playerHpGhost.width = this.playerHpBar.width;
+      this.tweens.add({ targets: this.playerHpGhost, width: targetPlayerW, duration: 600, delay: 250, ease: 'Cubic.Out' });
+    }
+    if (this.wildHpGhost) {
+      this.wildHpGhost.width = this.wildHpBar.width;
+      this.tweens.add({ targets: this.wildHpGhost, width: targetWildW, duration: 600, delay: 250, ease: 'Cubic.Out' });
+    }
     this.tweens.add({ targets: this.playerHpBar, width: targetPlayerW, duration: 300, ease: 'Cubic.Out' });
     this.tweens.add({ targets: this.wildHpBar, width: targetWildW, duration: 300, ease: 'Cubic.Out' });
     this.playerHpBar.fillColor = playerPct > 0.5 ? 0x6abf3a : (playerPct > 0.2 ? 0xfcd95c : 0xc94a4a);
@@ -505,18 +482,58 @@ if (this.bossDef && outcome.winner === this.player) {
     }
   }
 
+  /** P0 Fix 4 (D-041): Farbkodierte Schadenszahlen mit Scale-Pop + Effektivitäts-Label */
+  private getDamageColor(dmg: number, crit: boolean, effLabel: string): string {
+    if (crit) return '#ff4444';
+    if (effLabel === 'STARK') return '#ffa040';
+    if (effLabel === 'SCHWACH') return '#88ccff';
+    if (dmg >= 20) return '#ff7777';
+    return '#f4e8c1';
+  }
+
   private spawnDamageFloater(target: Phaser.GameObjects.Sprite, dmg: number, crit: boolean, effLabel: string): void {
-    const color = crit ? '#ff5c5c' : '#ffffff';
-    const text = this.add.text(target.x, target.y - 20, `-${dmg}${crit ? '!' : ''}`, {
-      fontFamily: 'monospace', fontSize: crit ? '20px' : '15px', color,
-      stroke: '#000000', strokeThickness: 3
-    }).setOrigin(0.5).setDepth(1500);
-    this.tweens.add({ targets: text, y: target.y - 60, alpha: 0, duration: 1100, ease: 'Quad.easeOut', onUpdate: () => { text.y = Math.round(text.y); }, onComplete: () => text.destroy() });
+    const color = this.getDamageColor(dmg, crit, effLabel);
+    const label = crit ? `-${dmg} KRIT!` : `-${dmg}`;
+    const fontSize = crit ? '22px' : dmg >= 20 ? '18px' : '15px';
+    const text = this.add.text(target.x, target.y - 20, label, {
+      fontFamily: 'monospace', fontSize, color,
+      stroke: '#000000', strokeThickness: crit ? 4 : 3
+    }).setOrigin(0.5).setDepth(1500).setScale(0.6);
+
+    // Scale-Pop: schnell hochskalieren, dann floaten + fade
+    this.tweens.add({
+      targets: text,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 120,
+      ease: 'Back.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: text,
+          y: Math.round(target.y - 65),
+          alpha: 0,
+          duration: 1100,
+          ease: 'Quad.Out',
+          onUpdate: () => { text.y = Math.round(text.y); },
+          onComplete: () => text.destroy()
+        });
+      }
+    });
+
     if (effLabel) {
-      const eff = this.add.text(target.x, target.y, effLabel, {
-        fontFamily: 'monospace', fontSize: '12px', color: '#fcd95c', stroke: '#000', strokeThickness: 2
+      const effColor = effLabel === 'STARK' ? '#ffa040' : effLabel === 'SCHWACH' ? '#88ccff' : '#fcd95c';
+      const eff = this.add.text(target.x, target.y + 8, effLabel, {
+        fontFamily: 'monospace', fontSize: '11px', color: effColor,
+        stroke: '#000', strokeThickness: 2
       }).setOrigin(0.5).setDepth(1499);
-      this.tweens.add({ targets: eff, y: target.y - 40, alpha: 0, duration: 1500, onUpdate: () => { eff.y = Math.round(eff.y); }, onComplete: () => eff.destroy() });
+      this.tweens.add({
+        targets: eff,
+        y: Math.round(target.y - 35),
+        alpha: 0,
+        duration: 1400,
+        onUpdate: () => { eff.y = Math.round(eff.y); },
+        onComplete: () => eff.destroy()
+      });
     }
   }
 
@@ -551,12 +568,12 @@ if (this.bossDef && outcome.winner === this.player) {
     const success = Math.random() < baseRate;
     if (success && this.capturedEnc) {
       gameStore.capturePlant(this.capturedEnc.slug, this.capturedEnc.level, 0, 0, 0);
-      this.statusText.setText(t('battle.captured', { name: this.wild.name }));
+      this.statusText.setText(`${this.wild.name} wurde gefangen!`);
       sfx.pickup();
       this.over = true;
       this.time.delayedCall(1500, () => this.endBattle('Gefangen!'));
     } else {
-      this.statusText.setText(t('battle.captureFailed'));
+      this.statusText.setText('Fang-Versuch misslungen.');
       sfx.bump();
       this.waitingForInput = false;
       const wildMoveSlug = pickWildMove(this.wild);
@@ -577,18 +594,18 @@ if (this.bossDef && outcome.winner === this.player) {
   private tryRun(): void {
     if (this.over) return;
     if (this.player.statuses.some((s) => s.effect === 'rooted')) {
-      this.statusText.setText(t('battle.rooted'));
+      this.statusText.setText('Du bist von Wurzeln gefangen und kannst nicht fliehen.');
       sfx.bump();
       return;
     }
     const success = Math.random() < 0.7;
     if (success) {
-      this.statusText.setText(t('battle.fleeSuccess'));
+      this.statusText.setText('Du fliehst aus dem Kampf.');
       sfx.dialogAdvance();
       this.over = true;
       this.time.delayedCall(800, () => this.endBattle('Geflohen.'));
     } else {
-      this.statusText.setText(t('battle.fleeFailed'));
+      this.statusText.setText('Flucht misslungen!');
       sfx.bump();
     }
   }
@@ -616,43 +633,6 @@ if (this.bossDef && outcome.winner === this.player) {
         onComplete: () => rect.destroy()
       });
     }
-  }
-
-  /**
-   * S-POLISH-B3-R3: Post-Battle-Summary — XP, Coins, Drop animiert eingeblendet.
-   */
-  private spawnPostBattleSummary(xp: number, coins: number, dropItem: string): void {
-    const { width, height } = this.scale;
-    const items = [
-      { label: `+${xp} XP`, color: '#9be36e', delay: 200 },
-    ];
-    if (coins > 0) items.push({ label: `+${coins} Coins`, color: '#ffd166', delay: 500 });
-    if (dropItem) items.push({ label: `+1 ${dropItem}`, color: '#ff7eb8', delay: 800 });
-
-    items.forEach(({ label, color, delay }) => {
-      const t = this.add.text(width / 2, height / 2 - 30, label, {
-        fontFamily: 'monospace', fontSize: '18px', color,
-        stroke: '#000000', strokeThickness: 3
-      }).setOrigin(0.5).setAlpha(0).setDepth(2500);
-      // Fade-In dann aufsteigen und fade-out
-      this.tweens.add({
-        targets: t,
-        alpha: 1,
-        duration: 200,
-        delay,
-        onComplete: () => {
-          this.tweens.add({
-            targets: t,
-            y: t.y - 50,
-            alpha: 0,
-            duration: 1000,
-            delay: 600,
-            ease: 'Cubic.Out',
-            onComplete: () => t.destroy()
-          });
-        }
-      });
-    });
   }
 
   private endBattle(msg: string): void {
