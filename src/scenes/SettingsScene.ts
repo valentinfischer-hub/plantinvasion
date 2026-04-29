@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM, setPersistedVolume, getPersistedVolume, setSfxVolume, getSfxVolume, setMusicVolume, getMusicVolume, getPersistedSfxVolume, setPersistedSfxVolume, getPersistedMusicVolume, setPersistedMusicVolume } from '../audio/sfxGenerator';
-import { getLocale, setLocale } from '../i18n/index';
+import { getLocale, setLocale, t } from '../i18n/index';
 import { COLOR_ERROR, COLOR_INFO, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR, getColorblindMode, setColorblindMode, type ColorblindMode } from '../ui/uiTheme';
 
 /**
@@ -12,7 +12,7 @@ import { COLOR_ERROR, COLOR_INFO, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, F
 export class SettingsScene extends Phaser.Scene {
   private volumeBarFill!: Phaser.GameObjects.Rectangle;
   private volumeText!: Phaser.GameObjects.Text;
-  // S-POLISH-B2-R14: SFX + Music separate Lautstärke
+  // S-POLISH-B2-R14: SFX + Music separate LautstÃ¤rke
   private sfxBarFill!: Phaser.GameObjects.Rectangle;
   private sfxText!: Phaser.GameObjects.Text;
   private musicBarFill!: Phaser.GameObjects.Rectangle;
@@ -37,7 +37,7 @@ export class SettingsScene extends Phaser.Scene {
     this.cameras.main.fadeIn(250, 0, 0, 0);
 
     this.add
-      .text(width / 2, 40, '⚙️ Einstellungen', {
+      .text(width / 2, 40, 'âï¸ Einstellungen', {
         fontFamily: FONT_FAMILY,
         fontSize: '22px',
         color: COLOR_SUCCESS
@@ -46,7 +46,7 @@ export class SettingsScene extends Phaser.Scene {
 
     let by = 100;
     // Volume-Slider
-    this.add.text(width / 2 - 150, by, 'Lautstaerke', {
+    this.add.text(width / 2 - 150, by, t('settings.labelVolume'), {
       fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_REWARD
     });
     by += 24;
@@ -77,8 +77,8 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     by += 50;
-    // S-POLISH-B2-R14: SFX-Lautstärke-Slider
-    this.add.text(width / 2 - 150, by, 'SFX-Lautstaerke', {
+    // S-POLISH-B2-R14: SFX-LautstÃ¤rke-Slider
+    this.add.text(width / 2 - 150, by, t('settings.labelSfxVolume'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
     });
     by += 22;
@@ -95,8 +95,8 @@ export class SettingsScene extends Phaser.Scene {
     sfxBarBg.on('pointermove', (p: Phaser.Input.Pointer) => { if (!p.isDown) return; this.setSfxVol(Math.max(0, Math.min(1, (p.x - sfxBarX) / sfxBarW))); });
 
     by += 44;
-    // S-POLISH-B2-R14: Musik-Lautstärke-Slider
-    this.add.text(width / 2 - 150, by, 'Musik-Lautstaerke', {
+    // S-POLISH-B2-R14: Musik-LautstÃ¤rke-Slider
+    this.add.text(width / 2 - 150, by, t('settings.labelMusicVolume'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
     });
     by += 22;
@@ -113,18 +113,18 @@ export class SettingsScene extends Phaser.Scene {
 
     by += 44;
     // BGM Toggle
-    this.add.text(width / 2 - 150, by, 'Hintergrundmusik', {
+    this.add.text(width / 2 - 150, by, t('settings.labelBgm'), {
       fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_REWARD
     });
     by += 24;
-    this.bgmStatusText = this.add.text(width / 2, by, this.bgmEnabled ? 'AN' : 'AUS', {
+    this.bgmStatusText = this.add.text(width / 2, by, this.bgmEnabled ? t('settings.on') : t('settings.off'), {
       fontFamily: FONT_FAMILY, fontSize: '13px', color: this.bgmEnabled ? COLOR_SUCCESS : COLOR_ERROR
     }).setOrigin(0.5, 0);
     this.makeButton(width / 2, by + 30, 'BGM umschalten', COLOR_REWARD, () => this.toggleBGM());
 
     by += 80;
     // Locale-Toggle DE | EN
-    this.add.text(width / 2 - 150, by, 'Sprache', {
+    this.add.text(width / 2 - 150, by, t('settings.labelLanguage'), {
       fontFamily: FONT_FAMILY, fontSize: '13px', color: COLOR_REWARD
     });
     by += 8;
@@ -145,7 +145,7 @@ export class SettingsScene extends Phaser.Scene {
 
     by += 36;
     // S-POLISH-B2-R16: Colorblind-Mode Selector
-    this.add.text(width / 2 - 150, by, 'Farbenblind-Modus', {
+    this.add.text(width / 2 - 150, by, t('settings.labelColorblind'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
     });
     by += 22;
@@ -170,11 +170,11 @@ export class SettingsScene extends Phaser.Scene {
     // Save-Reset (mit Bestaetigung)
     this.makeButton(width / 2 - 100, by, 'Spielstand loeschen', COLOR_ERROR, () => this.confirmReset());
     // B4-R4: Credits-Button
-    this.makeButton(width / 2 + 100, by, 'Credits', COLOR_REWARD, () => this.showCredits());
+    this.makeButton(width / 2 + 100, by, t('settings.credits'), COLOR_REWARD, () => this.showCredits());
 
     by += 60;
     // S-POLISH-B2-R17: Export + Import Spielstand
-    this.add.text(width / 2 - 150, by, 'Spielstand Export/Import', {
+    this.add.text(width / 2 - 150, by, t('settings.labelSaveExport'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
     });
     by += 26;
@@ -193,7 +193,7 @@ export class SettingsScene extends Phaser.Scene {
       sfx.click();
     });
     this.makeButton(width / 2 + 90, by, 'JSON importieren', COLOR_INFO, () => {
-      const json = prompt('Spielstand-JSON einfügen:');
+      const json = prompt('Spielstand-JSON einfÃ¼gen:');
       if (!json) return;
       const r = gameStore.importSaveJSON(json);
       if (r.ok) {
@@ -213,7 +213,7 @@ export class SettingsScene extends Phaser.Scene {
 
     // Back
     const backY = height - 30;
-    this.makeButton(width / 2, backY, 'Zurück (Esc)', COLOR_SUCCESS, () => this.back());
+    this.makeButton(width / 2, backY, 'ZurÃ¼ck (Esc)', COLOR_SUCCESS, () => this.back());
     if (this.input.keyboard) {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => this.back());
     }
@@ -265,7 +265,7 @@ export class SettingsScene extends Phaser.Scene {
     this.bgmEnabled = !this.bgmEnabled;
     if (this.bgmEnabled) startAmbientBGM();
     else stopAmbientBGM();
-    this.bgmStatusText.setText(this.bgmEnabled ? 'AN' : 'AUS');
+    this.bgmStatusText.setText(this.bgmEnabled ? t('settings.on') : t('settings.off'));
     this.bgmStatusText.setColor(this.bgmEnabled ? COLOR_SUCCESS : COLOR_ERROR);
     sfx.click();
   }
@@ -360,7 +360,7 @@ export class SettingsScene extends Phaser.Scene {
         this.showFlash('Spielstand geloescht.', COLOR_ERROR);
         this.time.delayedCall(1200, () => { this.scene.start('MenuScene'); });
       } else {
-        this.showFlash('Eingabe falsch — tippe LOESCHEN', COLOR_ERROR);
+        this.showFlash('Eingabe falsch â tippe LOESCHEN', COLOR_ERROR);
       }
     });
     confirmBtn.setDepth(DEPTH + 1);
@@ -393,7 +393,7 @@ export class SettingsScene extends Phaser.Scene {
     const DEPTH = 3000;
     const overlay = this.add.rectangle(width / 2, height / 2, 360, 280, 0x000000, 0.95)
       .setStrokeStyle(2, MODAL_BORDER_COLOR).setDepth(DEPTH);
-    this.add.text(width / 2, height / 2 - 110, 'Credits', {
+    this.add.text(width / 2, height / 2 - 110, t('settings.credits'), {
       fontFamily: FONT_FAMILY, fontSize: '16px', color: COLOR_REWARD
     }).setOrigin(0.5).setDepth(DEPTH + 1);
     const lines = [
