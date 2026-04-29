@@ -160,7 +160,7 @@ export class DiaryScene extends Phaser.Scene {
     const backBg = this.add.rectangle(width / 2, height - 24, 160, 32, 0x000000, 0.7)
       .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, height - 24, 'Zurueck (B)', {
+    this.add.text(width / 2, height - 24, 'Zurück (B)', {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');
