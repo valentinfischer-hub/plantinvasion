@@ -1,7 +1,7 @@
 /**
  * Achievement-System V0.1 (10 Achievements aus brain/design/endgame.md).
  *
- * Achievements werden serverless geprueft via gameStore.checkAchievements.
+ * Achievements werden serverless geprüft via gameStore.checkAchievements.
  * Trigger: nach jeder relevanten Action (harvest, capture, cross, defeat-Boss).
  */
 
@@ -12,20 +12,20 @@ export interface AchievementDef {
   /** Reward beim Unlock. */
   rewardCoins?: number;
   rewardItem?: { slug: string; amount: number };
-  /** Cosmetic-Flag fuer spaetere UI-Anzeige. */
+  /** Cosmetic-Flag für spätere UI-Anzeige. */
   cosmetic?: string;
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
   {
     slug: 'first-bloom',
-    name: 'Erste Bluete',
+    name: 'Erste Blüte',
     description: 'Bringe deine erste Pflanze zur Blooming-Stage.',
     rewardCoins: 500
   },
   {
     slug: 'pristine-grower',
-    name: 'Pristine-Pflueger',
+    name: 'Pristine-Pflüger',
     description: 'Erreiche Pristine-Tier auf einer Pflanze.',
     rewardItem: { slug: 'pristine-pollen', amount: 1 },
     cosmetic: 'border-pristine'
@@ -33,7 +33,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     slug: 'hybrid-architect',
     name: 'Hybrid-Architekt',
-    description: 'Erfolgreiche 10 Crossings durchgefuehrt.',
+    description: 'Erfolgreich 10 Crossings durchgeführt.',
     rewardCoins: 200,
     rewardItem: { slug: 'hybrid-booster', amount: 1 }
   },
@@ -46,7 +46,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   },
   {
     slug: 'cactus-bundle',
-    name: 'Kaktus-Buende',
+    name: 'Kaktus-Bünde',
     description: '5 Pristine-Kakteen gleichzeitig im Garten.',
     rewardItem: { slug: 'soil-gold', amount: 1 }
   },
@@ -59,7 +59,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   {
     slug: 'volcano-tamer',
     name: 'Vulkan-Bezwinger',
-    description: 'Magmabluete-Boss besiegt.',
+    description: 'Magmablüte-Boss besiegt.',
     rewardItem: { slug: 'volcano-ash', amount: 5 }
   },
   {
@@ -85,9 +85,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   // S-10 Story-Akt-2
   {
     slug: 'verdanto_erkundet',
-    name: 'Verdanto-Erkundet',
+    name: 'Verdanto erkundet',
     description: 'Du hast Verdanto zum ersten Mal erkundet.',
-    rewardCoins: 100,
+    rewardCoins: 100
   }
 ];
 
