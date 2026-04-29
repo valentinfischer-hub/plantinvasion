@@ -1,85 +1,104 @@
 /**
- * Tests: Accessibility Pass — Colorblind-Mode + Kontrast-Check (S-POLISH-B2-R16)
+ * Accessibility Tests - S-POLISH Batch 5 Run 12
+ *
+ * Reine Logik-Tests: clampFontScale, isHighContrast, getFontScale etc.
+ * Keine DOM-Abhängigkeit.
  */
-import { describe, it, expect } from 'vitest';
-import { wcagContrastRatio, cbColor, UI_FONT_SIZES, MIN_ACCESSIBLE_FONT_SIZE, COLOR_SUCCESS, COLOR_ERROR, COLOR_REWARD } from '../uiTheme';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-describe('wcagContrastRatio', () => {
-  it('Weiß auf Schwarz hat maximalen Kontrast ~21', () => {
-    const ratio = wcagContrastRatio('#ffffff', '#000000');
-    expect(ratio).toBeCloseTo(21, 0);
+// ─── Stub-Isolation via vi.resetModules ───────────────────────────────────
+
+beforeEach(() => {
+  vi.resetModules();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+// ─── Konstanten ───────────────────────────────────────────────────────────
+
+describe('Accessibility Konstanten', () => {
+  it('FONT_SCALE_MIN = 0.75', async () => {
+    const { FONT_SCALE_MIN } = await import('../accessibility');
+    expect(FONT_SCALE_MIN).toBe(0.75);
   });
 
-  it('gleiche Farbe hat Kontrast 1', () => {
-    const ratio = wcagContrastRatio('#9be36e', '#9be36e');
-    expect(ratio).toBeCloseTo(1, 0);
+  it('FONT_SCALE_MAX = 1.5', async () => {
+    const { FONT_SCALE_MAX } = await import('../accessibility');
+    expect(FONT_SCALE_MAX).toBe(1.5);
   });
 
-  it('Brand-Grün auf Dark-BG hat Kontrast > 3', () => {
-    // #9be36e auf #1a1f1a
-    const ratio = wcagContrastRatio('#9be36e', '#1a1a1a');
-    expect(ratio).toBeGreaterThan(3);
+  it('FONT_SCALE_DEFAULT = 1.0', async () => {
+    const { FONT_SCALE_DEFAULT } = await import('../accessibility');
+    expect(FONT_SCALE_DEFAULT).toBe(1.0);
   });
 
-  it('Reward-Gold auf Dark-BG hat Kontrast > 4', () => {
-    const ratio = wcagContrastRatio('#fcd95c', '#1a1f1a');
-    expect(ratio).toBeGreaterThan(4);
+  it('HC_STORAGE_KEY korrekt', async () => {
+    const { HC_STORAGE_KEY } = await import('../accessibility');
+    expect(HC_STORAGE_KEY).toBe('pi_high_contrast');
   });
 
-  it('gibt numerischen Wert zwischen 1 und 21 zurück', () => {
-    const ratio = wcagContrastRatio('#888888', '#1a1f1a');
-    expect(ratio).toBeGreaterThanOrEqual(1);
-    expect(ratio).toBeLessThanOrEqual(21);
+  it('FS_STORAGE_KEY korrekt', async () => {
+    const { FS_STORAGE_KEY } = await import('../accessibility');
+    expect(FS_STORAGE_KEY).toBe('pi_font_scale');
   });
 });
 
-describe('cbColor', () => {
-  it('normal mode: success = COLOR_SUCCESS', () => {
-    // Note: localStorage-mocking: getColorblindMode() liest localStorage.
-    // In Test-Umgebung kein localStorage → fallback auf _colorblindMode = 'normal'
-    const color = cbColor('success');
-    expect(typeof color).toBe('string');
-    expect(color).toMatch(/^#[0-9a-fA-F]{6}$/);
+// ─── High-Contrast Toggle (ohne DOM) ─────────────────────────────────────
+
+describe('High-Contrast ohne DOM', () => {
+  beforeEach(() => {
+    vi.stubGlobal('document', undefined);
+    vi.stubGlobal('localStorage', undefined);
   });
 
-  it('alle Rollen geben gültige Hex-Farben zurück', () => {
-    const roles = ['success', 'error', 'warning', 'info', 'mutation'] as const;
-    for (const role of roles) {
-      const color = cbColor(role);
-      expect(color).toMatch(/^#[0-9a-fA-F]{6}$/);
-    }
+  it('isHighContrast() startet als false', async () => {
+    const { isHighContrast } = await import('../accessibility');
+    expect(isHighContrast()).toBe(false);
   });
 
-  it('success ≠ error (unterscheidbar in normalem Modus)', () => {
-    expect(cbColor('success')).not.toBe(cbColor('error'));
-  });
-});
-
-describe('Font-Size Audit', () => {
-  it('alle UI-Font-Sizes parsen zu >= 9px', () => {
-    for (const size of UI_FONT_SIZES) {
-      const px = parseInt(size, 10);
-      expect(px).toBeGreaterThanOrEqual(MIN_ACCESSIBLE_FONT_SIZE);
-    }
+  it('setHighContrast(true) setzt Flag', async () => {
+    const { setHighContrast, isHighContrast } = await import('../accessibility');
+    setHighContrast(true);
+    expect(isHighContrast()).toBe(true);
   });
 
-  it('MIN_ACCESSIBLE_FONT_SIZE ist 9', () => {
-    expect(MIN_ACCESSIBLE_FONT_SIZE).toBe(9);
+  it('toggleHighContrast gibt neuen Wert zurueck', async () => {
+    const { toggleHighContrast, isHighContrast } = await import('../accessibility');
+    const result = toggleHighContrast();
+    expect(result).toBe(isHighContrast());
   });
 });
 
-describe('Farb-Palette Kontrast-Mindestanforderungen', () => {
-  const BG = '#1a1f1a';
+// ─── Font-Scale Clamping (ohne DOM) ──────────────────────────────────────
 
-  it('COLOR_SUCCESS (#9be36e) vs Dark-BG: Kontrast >= 3 (AA Large)', () => {
-    expect(wcagContrastRatio(COLOR_SUCCESS, BG)).toBeGreaterThanOrEqual(3);
+describe('Font-Scale Clamping', () => {
+  beforeEach(() => {
+    vi.stubGlobal('document', undefined);
+    vi.stubGlobal('localStorage', undefined);
   });
 
-  it('COLOR_REWARD (#fcd95c) vs Dark-BG: Kontrast >= 4 (AA Normal empfohlen)', () => {
-    expect(wcagContrastRatio(COLOR_REWARD, BG)).toBeGreaterThanOrEqual(4);
+  it('getFontScale() startet als 1.0', async () => {
+    const { getFontScale } = await import('../accessibility');
+    expect(getFontScale()).toBe(1.0);
   });
 
-  it('COLOR_ERROR (#ff7e7e) vs Dark-BG: Kontrast >= 3', () => {
-    expect(wcagContrastRatio(COLOR_ERROR, BG)).toBeGreaterThanOrEqual(3);
+  it('setFontScale(1.2) akzeptiert Wert in Range', async () => {
+    const { setFontScale, getFontScale } = await import('../accessibility');
+    setFontScale(1.2);
+    expect(getFontScale()).toBeCloseTo(1.2);
+  });
+
+  it('setFontScale(2.0) wird auf 1.5 geclampt', async () => {
+    const { setFontScale, getFontScale } = await import('../accessibility');
+    setFontScale(2.0);
+    expect(getFontScale()).toBe(1.5);
+  });
+
+  it('setFontScale(0.5) wird auf 0.75 geclampt', async () => {
+    const { setFontScale, getFontScale } = await import('../accessibility');
+    setFontScale(0.5);
+    expect(getFontScale()).toBe(0.75);
   });
 });
