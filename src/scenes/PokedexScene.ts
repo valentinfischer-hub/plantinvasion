@@ -48,6 +48,8 @@ export class PokedexScene extends Phaser.Scene {
   private sortMode: 'family' | 'rarity' | 'name' = 'family';
   private filterBtn!: Phaser.GameObjects.Text;
   private sortBtn!: Phaser.GameObjects.Text;
+  // B6-R7: Detail-Panel für Einzel-Eintrag
+  private _detailPanel?: Phaser.GameObjects.Container;
 
   constructor() {
     super('PokedexScene');
@@ -319,6 +321,13 @@ export class PokedexScene extends Phaser.Scene {
           ease: 'Sine.InOut', yoyo: true, repeat: -1
         });
       }
+      // B6-R7: Klick öffnet Detail-Modal (nur bei entdeckten Einträgen)
+      if (isDiscovered) {
+        t.setInteractive({ useHandCursor: true });
+        t.on('pointerover', () => t.setAlpha(0.8));
+        t.on('pointerout', () => t.setAlpha(1));
+        t.on('pointerup', () => this.openEntryDetail(entry.slug, isDiscovered, isCaptured));
+      }
       this.listContainer.add(t);
       by += this.rowHeight;
     }
@@ -330,6 +339,102 @@ export class PokedexScene extends Phaser.Scene {
         }).setOrigin(0.5, 0)
       );
     }
+  }
+
+  /**
+   * B6-R7: Öffnet Detail-Modal für einen Pokedex-Eintrag.
+   * Zeigt: botanischen Namen, Familie, Rarity, Status, Beschreibung.
+   */
+  private openEntryDetail(slug: string, isDiscovered: boolean, isCaptured: boolean): void {
+    // Altes Panel schliessen
+    this._detailPanel?.destroy();
+
+    const { width, height } = this.scale;
+    const panelW = width - 40;
+    const panelH = 180;
+    const panelX = width / 2;
+    const panelY = height / 2;
+
+    const container = this.add.container(panelX, height + panelH);
+    container.setDepth(3000);
+
+    // Hintergrund
+    const bg = this.add.graphics();
+    bg.fillStyle(0x0e1a0e, 0.97);
+    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 10);
+    bg.lineStyle(2, 0x4a8228, 1);
+    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 10);
+    container.add(bg);
+
+    // Pflanze in STARTER_SPECIES finden für vollständige Info
+    const sp = STARTER_SPECIES.find((s) => s.slug === slug);
+    const displayName = sp ? sp.commonName : slug;
+    const sciName    = sp ? sp.scientificName : '';
+    const desc       = sp ? sp.description : '';
+    const statusLabel = isCaptured ? '✓ Gefangen' : isDiscovered ? '? Gesehen' : '▓ Unbekannt';
+    const statusColor = isCaptured ? '#9be36e' : '#fcd95c';
+
+    // Titel
+    const nameText = this.add.text(0, -panelH / 2 + 18, displayName, {
+      fontFamily: 'monospace', fontSize: '16px', color: '#ffffff'
+    }).setOrigin(0.5);
+    container.add(nameText);
+
+    // Botanischer Name (kursiv via font-style nicht verfügbar -> * prefix)
+    if (sciName) {
+      const sciText = this.add.text(0, -panelH / 2 + 36, `* ${sciName}`, {
+        fontFamily: 'monospace', fontSize: '11px', color: '#9be36e'
+      }).setOrigin(0.5);
+      container.add(sciText);
+    }
+
+    // Status
+    const statusText = this.add.text(0, -panelH / 2 + 54, statusLabel, {
+      fontFamily: 'monospace', fontSize: '11px', color: statusColor
+    }).setOrigin(0.5);
+    container.add(statusText);
+
+    // Beschreibung
+    if (desc) {
+      const descText = this.add.text(0, -panelH / 2 + 76, desc, {
+        fontFamily: 'monospace', fontSize: '10px', color: '#cccccc',
+        wordWrap: { width: panelW - 30 }, align: 'center'
+      }).setOrigin(0.5, 0);
+      container.add(descText);
+    }
+
+    // Schliessen-Button
+    const closeBg = this.add.rectangle(0, panelH / 2 - 22, 120, 24, 0x1a2418, 0.9)
+      .setStrokeStyle(1, 0x4a8228)
+      .setInteractive({ useHandCursor: true });
+    const closeTxt = this.add.text(0, panelH / 2 - 22, 'Schliessen (X)', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
+    }).setOrigin(0.5);
+    container.add([closeBg, closeTxt]);
+    closeBg.on('pointerup', () => this._closeDetailPanel());
+    if (this.input.keyboard) {
+      this.input.keyboard.addKey('X').once('down', () => this._closeDetailPanel());
+    }
+
+    // Slide-In
+    this.tweens.add({
+      targets: container, y: panelY, duration: 300, ease: 'Cubic.Out'
+    });
+    this._detailPanel = container;
+  }
+
+  private _closeDetailPanel(): void {
+    if (!this._detailPanel) return;
+    const panel = this._detailPanel;
+    this._detailPanel = undefined;
+    this.tweens.add({
+      targets: panel,
+      y: this.scale.height + 200,
+      alpha: 0,
+      duration: 250,
+      ease: 'Cubic.In',
+      onComplete: () => panel.destroy()
+    });
   }
 
   /** S-POLISH-B2-R10: Zeichnet Completeness-Bar mit Gradient-Feel. */
