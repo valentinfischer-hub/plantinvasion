@@ -304,11 +304,11 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.miniMap = new MiniMap(this);
     this.miniMap.refresh(this.currentZone);
     this.pauseMenu = new PauseOverlay(this, [
-      { label: 'Weiterspielen', onSelect: () => this.pauseMenu.close() },
-      { label: 'Inventar (I)', onSelect: () => { this.pauseMenu.close(); this.scene.start('InventoryScene'); } },
-      { label: 'Pokedex (P)', onSelect: () => { this.pauseMenu.close(); this.scene.start('PokedexScene'); } },
-      { label: 'Quests (Q)', onSelect: () => { this.pauseMenu.close(); this.scene.start('QuestLogScene'); } },
-      { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.scene.start('MenuScene'); } }
+      { label: t('ow.pause.continue'), onSelect: () => this.pauseMenu.close() },
+      { label: t('ow.pause.inventory'), onSelect: () => { this.pauseMenu.close(); this.scene.start('InventoryScene'); } },
+      { label: t('ow.pause.pokedex'), onSelect: () => { this.pauseMenu.close(); this.scene.start('PokedexScene'); } },
+      { label: t('ow.pause.quests'), onSelect: () => { this.pauseMenu.close(); this.scene.start('QuestLogScene'); } },
+      { label: t('ow.pause.mainmenu'), onSelect: () => { this.pauseMenu.close(); this.scene.start('MenuScene'); } }
     ]);
     this.registerInAllUiCams(this.pauseMenu.container);
     this.registerInAllUiCams(this.pauseMenu.dim);
@@ -353,7 +353,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Auto-Save-Indicator (oben-links, blendet kurz auf bei jedem Save)
     const camS = this.cameras.main;
     const zS = camS.zoom || 1;
-    this.saveIcon = this.add.text(8 / zS, 24 / zS, '* gespeichert', {
+    this.saveIcon = this.add.text(8 / zS, 24 / zS, t('ow.save.indicator'), {
       fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: COLOR_SUCCESS, backgroundColor: '#1a1f1a', padding: { x: 4, y: 2 }
     }).setScrollFactor(0).setDepth(1900).setScale(1 / zS).setAlpha(0);
     this.registerInAllUiCams(this.saveIcon);
@@ -416,10 +416,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     bg.fillRoundedRect(-44, -16, 88, 32, 6);
     bg.lineStyle(2, 0x4a8228, 1);
     bg.strokeRoundedRect(-44, -16, 88, 32, 6);
-    const txt = this.add.text(0, -2, 'FARM (G)', {
+    const txt = this.add.text(0, -2, t('ow.farmBtn.label'), {
       fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#1a1f1a'
     }).setOrigin(0.5);
-    const hint = this.add.text(0, 9, 'giessen', {
+    const hint = this.add.text(0, 9, t('ow.farmBtn.hint'), {
       fontFamily: FONT_FAMILY, fontSize: '7px', color: '#1a1f1a'
     }).setOrigin(0.5);
     c.add([bg, txt, hint]);
@@ -447,7 +447,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (!r.ok || !r.reward) return;
     // Tier-3 V0.2: Tagesbelohnung-Toast als reward-Variante (gold), bottom-positioniert.
     const cam = this.cameras.main;
-    const toast = showToast(this, `Tagesbelohnung: ${r.reward.label}`, 'reward', {
+    const toast = showToast(this, t('ow.dailyLogin.toast', { label: r.reward.label }), 'reward', {
       cameraZoom: cam.zoom || 1,
       yAbsolute: cam.height - 60,
       padding: { x: 12, y: 8 },
