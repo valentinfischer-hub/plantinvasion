@@ -44,27 +44,32 @@ import { COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
-  'verdanto:7:9': ['Schild: Verdanto-Pfad', 'Achte auf die Bromelien, sie speichern Wasser.'],
-  'verdanto:20:12': ['Schild: Wuergefeigen-Sektor', 'Hinter den hohen Lianen leben rare Encounter.'],
+  'verdanto:7:9': [t('sign.verdanto_7_9.title'), t('sign.verdanto_7_9.text')],
+  'verdanto:20:12': [t('sign.verdanto_20_12.title'), t('sign.verdanto_20_12.text')],
   // Kaktoria
-  'kaktoria:8:7': ['Schild: Wuesten-Pfad', 'Wasser ist hier knapp. Trag immer Aloe-Saft mit dir.'],
-  'kaktoria:22:11': ['Schild: Saguaro-Hain', 'Riesenkakteen koennen 100 Jahre alt werden.'],
+  'kaktoria:8:7': [t('sign.kaktoria_8_7.title'), t('sign.kaktoria_8_7.text')],
+  'kaktoria:22:11': [t('sign.kaktoria_22_11.title'), t('sign.kaktoria_22_11.text')],
   // Frostkamm
-  'frostkamm:8:7': ['Schild: Eisroute', 'Vorsicht, Eis-Tiles rutschen.'],
-  'frostkamm:22:12': ['Schild: Bergfichten-Wald', 'Ueber Tausenden Jahren gewachsen.'],
+  'frostkamm:8:7': [t('sign.frostkamm_8_7.title'), t('sign.frostkamm_8_7.text')],
+  'frostkamm:22:12': [t('sign.frostkamm_22_12.title'), t('sign.frostkamm_22_12.text')],
   // Salzbucht
-  'salzbucht:7:6': ['Schild: Strandweg', 'Bei Sturm kommen rare Encounter.'],
-  'salzbucht:21:11': ['Schild: Mangrove-Inseln', 'Brackwasser - manche Pflanzen lieben es.'],
+  'salzbucht:7:6': [t('sign.salzbucht_7_6.title'), t('sign.salzbucht_7_6.text')],
+  'salzbucht:21:11': [t('sign.salzbucht_21_11.title'), t('sign.salzbucht_21_11.text')],
   // Mordwald
-  'mordwald:8:5': ['Schild: Sumpfpfad', 'Folge dem Holzsteg, sonst sinkst du.'],
-  'mordwald:20:12': ['Schild: Karnivoren-Anbau', 'Hier wachsen die hungrigsten Pflanzen.'],
+  'mordwald:8:5': [t('sign.mordwald_8_5.title'), t('sign.mordwald_8_5.text')],
+  'mordwald:20:12': [t('sign.mordwald_20_12.title'), t('sign.mordwald_20_12.text')],
   // Magmabluete
-  'magmabluete:7:5': ['Schild: Lava-Adern', 'Vorsicht: Lava-Tiles geben Schaden!'],
-  'magmabluete:22:12': ['Schild: Krater-Pfad', 'Ganz oben wartet das Magmaherz.'],
+  'magmabluete:7:5': [t('sign.magmabluete_7_5.title'), t('sign.magmabluete_7_5.text')],
+  'magmabluete:22:12': [t('sign.magmabluete_22_12.title'), t('sign.magmabluete_22_12.text')],
   // Glaciara
-  'glaciara:8:6': ['Schild: Endgame-Eis', 'Hier wachsen die haertesten Pflanzen.'],
-  'glaciara:22:12': ['Schild: Mythical-Tor', 'Eden Lost wartet hinter dem Tor.'],
+  'glaciara:8:6': [t('sign.glaciara_8_6.title'), t('sign.glaciara_8_6.text')],
+  'glaciara:22:12': [t('sign.glaciara_22_12.title'), t('sign.glaciara_22_12.text')],
 };
+
+// SIGN_DIALOGS wird lazy evaluiert damit t() zum Zeitpunkt des Zugriffs die richtige Locale hat
+function getSignDialogs(): Record<string, string[]> {
+  return SIGN_DIALOGS;
+}
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43, 50, 51, 61, 62, 64]);
