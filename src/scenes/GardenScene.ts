@@ -604,6 +604,19 @@ export class GardenScene extends Phaser.Scene {
     // Cards auf Top-Layer heben damit ueber anderen Karten gezeichnet
     cardA.container.setDepth(2000);
     cardB.container.setDepth(2000);
+    // D-041 R33: Pollen-Trail zwischen Eltern-Cards — 6 Punkte fliegen von A nach B
+    const ax = cardA.container.x; const ay = cardA.container.y;
+    const bx = cardB.container.x; const by = cardB.container.y;
+    for (let pi = 0; pi < 6; pi++) {
+      const pDot = this.add.circle(ax, ay, 3, 0xb86ee3, 0.9).setDepth(2001);
+      this.tweens.add({
+        targets: pDot, x: bx, y: by, alpha: 0,
+        duration: 600 + pi * 80,
+        delay: pi * 60,
+        ease: 'Cubic.InOut',
+        onComplete: () => pDot.destroy()
+      });
+    }
     return new Promise<boolean>((resolve) => {
       let pending = 2;
       const done = () => {
@@ -751,6 +764,27 @@ export class GardenScene extends Phaser.Scene {
         onComplete: () => particle.destroy()
       });
     }
+
+    // D-041 R32: Hybrid-Stinger
+    const revealColor = isMutation ? 0xb86ee3 : 0xfcd95c;
+    const revealHex = isMutation ? '#b86ee3' : '#fcd95c';
+    for (let ri = 0; ri < 2; ri++) {
+      const sRing = this.add.circle(cx, cy, 40, revealColor, 0)
+        .setStrokeStyle(3 - ri, revealColor, 0.7 - ri * 0.2).setDepth(9998);
+      this.tweens.add({ targets: sRing, scaleX: 5 + ri * 2, scaleY: 5 + ri * 2, alpha: 0,
+        duration: 900 + ri * 300, delay: ri * 200, ease: 'Cubic.Out', onComplete: () => sRing.destroy() });
+    }
+    const stingerLabel = isMutation ? '⚡ Mutation!' : '✨ Hybrid entdeckt!';
+    const stinger = this.add.text(cx, cy - 20, stingerLabel, {
+      fontFamily: 'monospace', fontSize: '18px', color: revealHex,
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setAlpha(0).setDepth(9999);
+    this.tweens.add({ targets: stinger, y: cy - 70, alpha: { from: 0, to: 1 }, duration: 400, ease: 'Back.Out',
+      onComplete: () => {
+        this.tweens.add({ targets: stinger, alpha: 0, y: cy - 110, duration: 600, delay: 800,
+          ease: 'Cubic.In', onComplete: () => stinger.destroy() });
+      }
+    });
 
     // PostHog-Event fuer Telemetrie
     const posthog = (window as Window & { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog;

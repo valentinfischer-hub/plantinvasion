@@ -127,12 +127,24 @@ export class SplashScene extends Phaser.Scene {
     const barY = cy + 145;
     this.add.rectangle(cx, barY, barW, barH, 0x333333, 0.7).setOrigin(0.5, 0.5);
     const barFill = this.add.rectangle(barX, barY, 0, barH, 0x9be36e, 0.8).setOrigin(0, 0.5);
+    // D-041 R34: Shimmer-Highlight auf Loading-Bar
+    const shimmer = this.add.rectangle(barX - 16, barY, 16, barH, 0xffffff, 0.45)
+      .setOrigin(0, 0.5).setDepth(1);
     this.tweens.add({
       targets: barFill,
       width: barW,
       duration: 3200,
       ease: 'Cubic.Out',
       delay: 200
+    });
+    // Shimmer laeuft synchron ueber die Bar
+    this.tweens.add({
+      targets: shimmer,
+      x: barX + barW,
+      duration: 3200,
+      ease: 'Cubic.Out',
+      delay: 200,
+      onComplete: () => shimmer.destroy()
     });
 
     this.input.on('pointerdown', goToMenu);
