@@ -155,11 +155,12 @@
   "ow.save.indicator": "* saved",
   "ow.dailyLogin.toast": "Daily reward: {{label}}"
 ,
-  "ccs.title": "Create Character",
-  "ccs.subtitle": "Give your botanist a name and choose an appearance.",
-  "ccs.nameLabel": "Your Name:",
-  "ccs.avatarLabel": "Choose Appearance:",
-  "ccs.startBtn": "Start Game",
-  "ccs.skipBtn": "Skip",
-  "ccs.skipHint": "Default: Botaniker + Avatar 1"
+  "qls.title": "Quest Log",
+  "qls.back": "Back (B)",
+  "qls.filterAll": "All",
+  "qls.filterActive": "Active",
+  "qls.filterCompleted": "Completed",
+  "inv.title": "Inventory",
+  "inv.back": "Back (I)",
+  "inv.hint": "Click item for details   Scroll   I/Esc back"
 }
