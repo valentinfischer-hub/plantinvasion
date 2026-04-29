@@ -117,3 +117,14 @@ game.events.once('ready', () => {
     canvas.focus();
   }
 });
+
+// R63: Global Error-Handler fuer unhandled Rejections
+// Filtert bekannte harmlose Fehler (ResizeObserver, AudioContext) heraus
+window.addEventListener('unhandledrejection', (e) => {
+  const msg = String(e?.reason ?? '');
+  const harmless = [
+    'ResizeObserver loop', 'AudioContext', 'play() request',
+    'NotAllowedError', 'AbortError'
+  ];
+  if (harmless.some((h) => msg.includes(h))) { e.preventDefault(); return; }
+});

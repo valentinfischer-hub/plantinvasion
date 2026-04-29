@@ -547,6 +547,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   public update(time: number, delta: number): void {
+    // R64: Delta-Cap 50ms — verhindert spiral-of-death bei Tab-Wechsel oder langen Frames
+    const cappedDelta = Math.min(delta, 50);
     // S-09 V0.1: NPC-Auto-Walking. Pure-Function pro NPC, walls-Set leer (V0.1).
     // Performance: Max 5-10 NPCs, jeweils ein Funktions-Call alle Frames mit fruehem Return wenn Idle. Vernachlaessigbar bei 60fps.
     if (this.npcs && this.npcs.length > 0) {
@@ -664,14 +666,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       return;
     }
 
-    this.player.update(time, delta);
+    this.player.update(time, cappedDelta);
 
     // Update Interact-Hint
     this.updateInteractHint();
 
     // Tageszeit ticken
-    this.timeOverlay?.tick(delta);
-    this.weatherOverlay?.tick(delta);
+    this.timeOverlay?.tick(cappedDelta);
+    this.weatherOverlay?.tick(cappedDelta);
     this.seasonTint?.refresh();
     this.particles?.update(this.weatherOverlay?.getCurrentWeather?.() ?? 'clear');
 
