@@ -94,6 +94,11 @@ export interface GameState {
   forageJournal?: Record<string, string[]>;     // zone -> [itemSlug, ...] (dedupliziert)
   // B4-R8: NPC-Dialog-History (letzte 5 Dialoge pro NPC)
   npcDialogHistory?: Record<string, string[]>;  // npcId -> [lastLine, ...]
+  // B4-R10: Score-System
+  playerScore?: number;                // aktueller Session-Score
+  scoreMultiplier?: number;            // 1.0 bis 3.0
+  highscores?: number[];               // Top-5 lokal, absteigend sortiert
+  lastDailyChallengeSeed?: number;     // dayIndex des letzten Daily-Challenge
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
