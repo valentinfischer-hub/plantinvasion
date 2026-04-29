@@ -681,6 +681,8 @@ class GameStore {
     const def = getAchievement(slug);
     if (!def) return;
     this.state.achievements.push(slug);
+    // PostHog: achievement unlocked
+    (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('achievement_unlocked', { slug, coins: def.rewardCoins ?? 0 });
     if (def.rewardCoins) this.addCoins(def.rewardCoins);
     if (def.rewardItem) this.addItem(def.rewardItem.slug, def.rewardItem.amount);
     this.notify();
