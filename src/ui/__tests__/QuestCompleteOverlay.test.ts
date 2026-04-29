@@ -21,7 +21,7 @@ function computeRewardParts(quest: QuestDef): string[] {
 
 const questWithCoins: QuestDef = {
   id: 'q1', title: 'Test-Quest', description: 'Test',
-  goal: { type: 'capture', speciesSlug: 'sunflower' },
+  goal: { type: 'capture', speciesSlug: 'sunflower', count: 1 },
   reward: { coins: 100, items: { 'great-lure': 2 } }
 };
 
