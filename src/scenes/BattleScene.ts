@@ -207,8 +207,8 @@ export class BattleScene extends Phaser.Scene {
     // Move-Buttons
     this.buildMoveButtons();
     // Run + Capture buttons (small row)
-    this.makeSmallButton(width / 4, 32, 'Fluechten (70%)', '#fcd95c', () => this.tryRun());
-    this.makeSmallButton((width / 4) * 3, 32, 'Fangen', '#ff7eb8', () => this.tryCapture());
+    this.makeSmallButton(width / 4, 32, t('battle.flee'), '#fcd95c', () => this.tryRun());
+    this.makeSmallButton((width / 4) * 3, 32, t('battle.catch'), '#ff7eb8', () => this.tryCapture());
 
     // S-POLISH-B3-R3: Battle-Log (letzte 3 Aktionen, links positioniert)
     for (let i = 0; i < 3; i++) {
@@ -551,12 +551,12 @@ if (this.bossDef && outcome.winner === this.player) {
     const success = Math.random() < baseRate;
     if (success && this.capturedEnc) {
       gameStore.capturePlant(this.capturedEnc.slug, this.capturedEnc.level, 0, 0, 0);
-      this.statusText.setText(`${this.wild.name} wurde gefangen!`);
+      this.statusText.setText(t('battle.captured', { name: this.wild.name }));
       sfx.pickup();
       this.over = true;
       this.time.delayedCall(1500, () => this.endBattle('Gefangen!'));
     } else {
-      this.statusText.setText('Fang-Versuch misslungen.');
+      this.statusText.setText(t('battle.captureFailed'));
       sfx.bump();
       this.waitingForInput = false;
       const wildMoveSlug = pickWildMove(this.wild);
@@ -577,18 +577,18 @@ if (this.bossDef && outcome.winner === this.player) {
   private tryRun(): void {
     if (this.over) return;
     if (this.player.statuses.some((s) => s.effect === 'rooted')) {
-      this.statusText.setText('Du bist von Wurzeln gefangen und kannst nicht fliehen.');
+      this.statusText.setText(t('battle.rooted'));
       sfx.bump();
       return;
     }
     const success = Math.random() < 0.7;
     if (success) {
-      this.statusText.setText('Du fliehst aus dem Kampf.');
+      this.statusText.setText(t('battle.fleeSuccess'));
       sfx.dialogAdvance();
       this.over = true;
       this.time.delayedCall(800, () => this.endBattle('Geflohen.'));
     } else {
-      this.statusText.setText('Flucht misslungen!');
+      this.statusText.setText(t('battle.fleeFailed'));
       sfx.bump();
     }
   }
