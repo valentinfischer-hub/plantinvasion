@@ -43,5 +43,20 @@
   "quest.completed": "Abgeschlossen",
   "quest.active": "Aktiv",
   "quest.pending": "Verfügbar",
-  "diary.firstDay": "Tagebuch: Mein erster Tag in Wurzelheim"
+  "diary.firstDay": "Tagebuch: Mein erster Tag in Wurzelheim",
+  "garden.btnSeed": "Säen",
+  "garden.btnWorld": "Welt (W)",
+  "garden.btnCross": "Kreuzen",
+  "garden.btnCrossActive": "Aktiv",
+  "garden.btnCrossConfirm": "Kreuzen!",
+  "garden.crossModeOn": "Cross-Mode aktiv — wähle erste Pflanze",
+  "garden.hintFirstPlant": "Cross-Mode: klicke erste Pflanze zum Auswählen",
+  "garden.hintSecondPlant": "Wähle zweite Pflanze (Kreuzen-Btn für Abbruch)",
+  "garden.samePlant": "Selbe Pflanze — wähle eine andere",
+  "garden.crossPreviewTitle": "Kreuzungs-Vorschau",
+  "garden.crossFailed": "Crossing fehlgeschlagen",
+  "garden.crossSuccess": "Kreuzung erfolgreich",
+  "garden.mutation": "Mutation! Neue Pflanze",
+  "garden.gardenFull": "Garten voll. Ernte oder verschiebe Pflanzen.",
+  "garden.tutorialFirstPlant": "Klick hier um deine erste Pflanze zu setzen"
 }
