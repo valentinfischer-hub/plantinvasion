@@ -4,7 +4,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Plant } from '../../types/plant';
 
 /** Hilfsfunktion: Dominanz-Berechnung (wie im Modal) */
 function isDominantA(a: number, b: number): boolean {
@@ -29,12 +28,12 @@ function mutChancePct(mutationChance: number): number {
 }
 
 describe('BreedingModal Punnett-Square Logik', () => {
-  it('dominanz korrekt: A > B → A dominant', () => {
+  it('dominanz korrekt: A > B â A dominant', () => {
     expect(isDominantA(15, 10)).toBe(true);
     expect(isDominantA(10, 15)).toBe(false);
   });
 
-  it('dominanz korrekt: B > A → B dominant', () => {
+  it('dominanz korrekt: B > A â B dominant', () => {
     expect(isDominantB(10, 15)).toBe(true);
     expect(isDominantB(15, 10)).toBe(false);
   });
@@ -73,7 +72,7 @@ describe('BreedingModal Hybrid-Erkennung', () => {
   });
 
   it('Hybrid wenn childSlug != parentA.speciesSlug', () => {
-    const childSlug = 'sunflower-cactus-hybrid';
+    const childSlug: string = 'sunflower-cactus-hybrid';
     const isHybrid = childSlug !== baseSlug;
     expect(isHybrid).toBe(true);
   });
