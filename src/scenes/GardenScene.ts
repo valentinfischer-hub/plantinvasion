@@ -409,6 +409,13 @@ export class GardenScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '12px', color: '#1a1f1a',
       backgroundColor: '#b86ee3', padding: { left: 14, right: 14, top: 6, bottom: 6 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    // R45: Hover-Scale fuer bessere Crossbreed-UX
+    okBtn.on('pointerover', () => {
+      this.tweens.add({ targets: okBtn, scaleX: 1.08, scaleY: 1.08, duration: 100, ease: 'Back.Out' });
+    });
+    okBtn.on('pointerout', () => {
+      this.tweens.add({ targets: okBtn, scaleX: 1, scaleY: 1, duration: 80, ease: 'Cubic.Out' });
+    });
     okBtn.on('pointerdown', () => {
       ((window as Window & { __posthog?: { capture: (e: string) => void } }).__posthog?.capture('breeding_attempted'));
       // s-polish-02: Modal zuerst schliessen, dann Eltern-Anflug-Animation, dann Crossing

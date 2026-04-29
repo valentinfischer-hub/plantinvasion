@@ -52,6 +52,7 @@ export class TutorialOverlay {
   private bodyText!: Phaser.GameObjects.Text;
   private currentStep = -1;
   private uiCam!: Phaser.Cameras.Scene2D.Camera;
+  private progressDots: Phaser.GameObjects.Arc[] = [];
   public lastInteract: string | undefined;
 
   constructor(scene: Phaser.Scene) {
@@ -90,6 +91,14 @@ export class TutorialOverlay {
 
     const nextBtn = this.makeButton(w / 2 - 60, h / 2 - 18, 'Weiter', '#9be36e', () => this.handleNext());
     const skipBtn = this.makeButton(-w / 2 + 50, h / 2 - 18, 'Skip', '#ff7e7e', () => this.handleSkip());
+
+    // R44: Step-Progress-Dots visuell (filled=aktiv, leer=pending)
+    this.progressDots = [];
+    for (let di = 0; di < TUTORIAL_STEPS.length; di++) {
+      const dot = this.scene.add.circle(-((TUTORIAL_STEPS.length - 1) * 10) / 2 + di * 10, h / 2 - 36, 3, 0x555555, 1);
+      this.progressDots.push(dot);
+      this.container.add(dot);
+    }
 
     this.container.add([bg, this.titleText, this.bodyText, nextBtn, skipBtn]);
 
@@ -169,6 +178,11 @@ export class TutorialOverlay {
     this.container.setVisible(true);
     this.titleText.setText(`(${t.step + 1}/${TUTORIAL_STEPS.length})  ${def.title}`);
     this.bodyText.setText(def.text);
+    // R44: Progress-Dots aktualisieren
+    this.progressDots.forEach((dot, i) => {
+      dot.setFillStyle(i <= t.step ? 0xfcd95c : 0x555555);
+      dot.setScale(i === t.step ? 1.4 : 1);
+    });
     if (this.currentStep !== t.step) {
       sfx.dialogOpen();
       this.currentStep = t.step;

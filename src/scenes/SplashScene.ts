@@ -124,6 +124,12 @@ export class SplashScene extends Phaser.Scene {
       }
     });
 
+    // R46: Tagline fuer persoenliche Note beim Loading
+    const tagline = this.add.text(cx, cy + 96, 'Zueichte. Entdecke. Staune.', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#6a9e4a'
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: tagline, alpha: 0.75, duration: 700, delay: 950, ease: 'Cubic.Out' });
+
     // D-041 R21: Animierte Dots statt statischer Hint
     const hint = this.add.text(cx, cy + 120, 'Lädt', {
       fontFamily: 'monospace', fontSize: '11px', color: '#8a6e4a'
