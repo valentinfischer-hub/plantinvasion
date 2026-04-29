@@ -34,8 +34,8 @@ export class AmbientParticles {
     let mode: ParticleMode = 'none';
     if (weather === 'snow' || season === 3) mode = 'snow';
     else if (weather === 'rain' || weather === 'storm') mode = 'rain';
-    else if (phase === 'night') mode = 'night';
-    else if (phase === 'day' || phase === 'morning' || phase === 'afternoon') mode = 'day';
+    else if ((phase as string) === 'night') mode = 'night';
+    else if (phase === 'day' || (phase as string) === 'morning' || (phase as string) === 'afternoon') mode = 'day';
     if (mode !== this.currentMode) {
       this.currentMode = mode;
       this.rebuild();
