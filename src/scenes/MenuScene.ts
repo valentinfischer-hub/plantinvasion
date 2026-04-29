@@ -219,7 +219,7 @@ export class MenuScene extends Phaser.Scene {
 
     const save = loadGame();
 
-    // D-041 Run9: Staggered Button Entrance – alle Buttons starten bei alpha=0, y+20 (slide up)
+    // D-041 Run9: Staggered Button Entrance â alle Buttons starten bei alpha=0, y+20 (slide up)
     const menuBtns: Phaser.GameObjects.Container[] = [];
     let by = plantY + 170;
     if (save) {
@@ -273,7 +273,6 @@ export class MenuScene extends Phaser.Scene {
     by += 60;
     // Staggered entrance: slide up + fade in, 80ms apart, starts after title reveal (delay 800ms)
     menuBtns.forEach((btn, i) => {
-      const targetY = (btn as Phaser.GameObjects.Container & { staggerTargetY?: number }).staggerTargetY ?? btn.y - 20;
       this.tweens.add({
         targets: btn,
         alpha: 1,
@@ -455,7 +454,7 @@ export class MenuScene extends Phaser.Scene {
     const txt = this.add.text(0, 0, label, {
       fontFamily: 'monospace', fontSize: '14px', color: accent
     }).setOrigin(0.5);
-    // D-041 R22: Hover/Press polish — fill tint + text brighten + scale
+    // D-041 R22: Hover/Press polish â fill tint + text brighten + scale
     bg.on('pointerover', () => {
       this.tweens.killTweensOf(c);
       this.tweens.add({ targets: c, scale: 1.06, duration: 150, ease: 'Back.Out' });
