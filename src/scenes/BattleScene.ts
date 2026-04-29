@@ -48,6 +48,12 @@ export class BattleScene extends Phaser.Scene {
   private waitingForInput = false;
   private xpReward = 0;
   private capturedEnc?: { slug: string; rarity: number; level: number };
+  // S-POLISH-B3-R3: Battle-Log letzte 3 Aktionen
+  private battleLog: string[] = [];
+  private battleLogTexts: Phaser.GameObjects.Text[] = [];
+  // S-POLISH-B3-R3: Status-Effekt-Icon-Container
+  private playerStatusIcons?: Phaser.GameObjects.Container;
+  private wildStatusIcons?: Phaser.GameObjects.Container;
   private poolKey: string = 'wurzelheim-tallgrass';
   private bossId?: string;
   private bossDef?: BossDef;
@@ -201,8 +207,21 @@ export class BattleScene extends Phaser.Scene {
     // Move-Buttons
     this.buildMoveButtons();
     // Run + Capture buttons (small row)
-    this.makeSmallButton(width / 4, 32, 'Fluechten', '#fcd95c', () => this.tryRun());
+    this.makeSmallButton(width / 4, 32, 'Fluechten (70%)', '#fcd95c', () => this.tryRun());
     this.makeSmallButton((width / 4) * 3, 32, 'Fangen', '#ff7eb8', () => this.tryCapture());
+
+    // S-POLISH-B3-R3: Battle-Log (letzte 3 Aktionen, links positioniert)
+    for (let i = 0; i < 3; i++) {
+      const lt = this.add.text(12, height / 2 + 16 + i * 14, '', {
+        fontFamily: 'monospace', fontSize: '9px', color: '#aaaaaa',
+        wordWrap: { width: width / 2 - 24 }
+      }).setDepth(200).setScrollFactor(0);
+      this.battleLogTexts.push(lt);
+    }
+
+    // S-POLISH-B3-R3: Status-Icon-Container unter HP-Bars
+    this.playerStatusIcons = this.add.container(width / 2, height - 72).setDepth(300);
+    this.wildStatusIcons = this.add.container(width / 2, 208).setDepth(300);
 
     this.updateBars();
     sfx.dialogOpen();
@@ -341,6 +360,8 @@ export class BattleScene extends Phaser.Scene {
     for (const tl of outcome.tickLogs) log += tl + '\n';
 
     this.statusText.setText(log.trim());
+    // S-POLISH-B3-R3: Log-Eintrag hinzufuegen
+    this.pushBattleLog(log);
     this.updateBars();
     this.shakeSprites();
     sfx.bump();
@@ -376,11 +397,15 @@ if (this.bossDef && outcome.winner === this.player) {
             this.spawnVictoryConfetti();
             // Battle-Drop V0.2: 25% Seed, 10% Coins
             let dropMsg = '';
+            let dropCoins = 0;
+            let dropItem = '';
             if (this.capturedEnc?.slug) {
               const drop = gameStore.applyBattleDrop(this.capturedEnc.slug);
-              if (drop.itemSlug) dropMsg += ` +1 ${drop.itemSlug}`;
-              if (drop.coins) dropMsg += ` +${drop.coins} Coins`;
+              if (drop.itemSlug) { dropMsg += ` +1 ${drop.itemSlug}`; dropItem = drop.itemSlug; }
+              if (drop.coins) { dropMsg += ` +${drop.coins} Coins`; dropCoins = drop.coins; }
             }
+            // S-POLISH-B3-R3: Post-Battle-Summary animiert einblenden
+            this.spawnPostBattleSummary(this.xpReward, dropCoins, dropItem);
             this.endBattle(`Sieg! +${this.xpReward} XP${dropMsg}`);
           } else {
             this.endBattle(t('battle.exhausted'));
@@ -396,9 +421,47 @@ if (this.bossDef && outcome.winner === this.player) {
   }
 
   update(_time: number, _delta: number): void {
-    // status-Anzeige live updaten
+    // S-POLISH-B3-R3: Status-Icons live updaten
+    this.updateStatusIcons(this.wildStatusIcons, this.wild);
+    this.updateStatusIcons(this.playerStatusIcons, this.player);
+    // Status-Text (fuer Screen-Reader / Klartext)
     this.statusTextWild.setText(this.formatStatuses(this.wild));
     this.statusTextPlayer.setText(this.formatStatuses(this.player));
+  }
+
+  /**
+   * S-POLISH-B3-R3: Status-Effekt-Icons unter HP-Bar
+   */
+  private updateStatusIcons(container: Phaser.GameObjects.Container | undefined, side: { statuses: Array<{effect: string}> }): void {
+    if (!container) return;
+    container.removeAll(true);
+    const STATUS_COLORS: Record<string, string> = {
+      wilted: '#c8b860', pests: '#88cc44', poisoned: '#bb44bb',
+      asleep: '#4488ff', rooted: '#44aa44', fungus: '#aa8833', frostbite: '#88ddff'
+    };
+    side.statuses.forEach((s, i) => {
+      const col = STATUS_COLORS[s.effect] ?? '#ffffff';
+      const icon = this.add.text(i * 28 - side.statuses.length * 14 + 14, 0, s.effect.slice(0, 3).toUpperCase(), {
+        fontFamily: 'monospace', fontSize: '8px', color: '#000000',
+        backgroundColor: col, padding: { x: 3, y: 1 }
+      }).setOrigin(0.5);
+      container.add(icon);
+    });
+  }
+
+  /**
+   * S-POLISH-B3-R3: Letzten 3 Aktionen im Battle-Log anzeigen
+   */
+  private pushBattleLog(entry: string): void {
+    const lines = entry.split('\n').filter((l) => l.trim().length > 0);
+    for (const line of lines) {
+      this.battleLog.push(line.trim());
+    }
+    while (this.battleLog.length > 6) this.battleLog.shift();
+    const lastThree = this.battleLog.slice(-3);
+    this.battleLogTexts.forEach((t, i) => {
+      t.setText(lastThree[i] ?? '');
+    });
   }
 
   private formatStatuses(side: BattleSide): string {
@@ -553,6 +616,43 @@ if (this.bossDef && outcome.winner === this.player) {
         onComplete: () => rect.destroy()
       });
     }
+  }
+
+  /**
+   * S-POLISH-B3-R3: Post-Battle-Summary — XP, Coins, Drop animiert eingeblendet.
+   */
+  private spawnPostBattleSummary(xp: number, coins: number, dropItem: string): void {
+    const { width, height } = this.scale;
+    const items = [
+      { label: `+${xp} XP`, color: '#9be36e', delay: 200 },
+    ];
+    if (coins > 0) items.push({ label: `+${coins} Coins`, color: '#ffd166', delay: 500 });
+    if (dropItem) items.push({ label: `+1 ${dropItem}`, color: '#ff7eb8', delay: 800 });
+
+    items.forEach(({ label, color, delay }) => {
+      const t = this.add.text(width / 2, height / 2 - 30, label, {
+        fontFamily: 'monospace', fontSize: '18px', color,
+        stroke: '#000000', strokeThickness: 3
+      }).setOrigin(0.5).setAlpha(0).setDepth(2500);
+      // Fade-In dann aufsteigen und fade-out
+      this.tweens.add({
+        targets: t,
+        alpha: 1,
+        duration: 200,
+        delay,
+        onComplete: () => {
+          this.tweens.add({
+            targets: t,
+            y: t.y - 50,
+            alpha: 0,
+            duration: 1000,
+            delay: 600,
+            ease: 'Cubic.Out',
+            onComplete: () => t.destroy()
+          });
+        }
+      });
+    });
   }
 
   private endBattle(msg: string): void {
