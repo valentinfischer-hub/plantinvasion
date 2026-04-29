@@ -507,7 +507,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // R47: Slide-in Zonen-Banner von rechts
     const cam47 = this.cameras.main;
     const W47 = cam47.width; const H47 = cam47.height;
-    const zoneName = zone.charAt(0).toUpperCase() + zone.slice(1);
+    const zoneNameKey = `ow.zone.${zone}`; const zoneName = t(zoneNameKey) || (zone.charAt(0).toUpperCase() + zone.slice(1));
     const banner = this.add.text(W47 + 100, H47 / 2 - 24, zoneName, {
       fontFamily: 'monospace', fontSize: '20px', color: '#ffffff',
       stroke: '#000000', strokeThickness: 3
@@ -524,18 +524,9 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     const bColor = BIOME_COLORS[zone] ?? 0x335533;
     const cam = this.cameras.main;
     cam.flash(400, (bColor >> 16) & 0xff, (bColor >> 8) & 0xff, bColor & 0xff, true);
-    // D-041 R24: Zone-Toast mit Emoji + deutschen Namen
-    const ZONE_LABELS: Record<string, string> = {
-      wurzelheim: 'Ã°ÂÂÂ¿ Wurzelheim',
-      verdanto: 'Ã°ÂÂÂ² Verdanto',
-      kaktoria: 'Ã°ÂÂÂµ Kaktoria',
-      frostkamm: 'Ã¢ÂÂÃ¯Â¸Â Frostkamm',
-      salzbucht: 'Ã°ÂÂÂ Salzbucht',
-      mordwald: 'Ã°ÂÂÂ Mordwald',
-      glaciara: 'Ã°ÂÂ§Â Glaciara',
-      magmabluete: 'Ã°ÂÂÂ¥ MagmablÃ¼te',
-    };
-    const label = ZONE_LABELS[zone] ?? (zone.charAt(0).toUpperCase() + zone.slice(1));
+    // D-041 R24 + R60: Zone-Toast via t() internationalisiert
+    const zoneKey = `ow.zone.${zone}`;
+    const label = t(zoneKey) || (zone.charAt(0).toUpperCase() + zone.slice(1));
     const cam2 = this.cameras.main;
     const toast = showToast(this, label, 'success', {
       cameraZoom: cam2.zoom || 1,
