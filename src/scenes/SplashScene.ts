@@ -163,14 +163,24 @@ export class SplashScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: tapHint, alpha: 0.7, duration: 300, delay: 1600 });
 
-    const barW = 200;
-    const barH = 4;
+    // R68: Loading-Bar poliert — breiter, hoher, mit Glow-Rahmen + Shimmer
+    const barW = 240;
+    const barH = 6;
     const barX = cx - barW / 2;
-    const barY = cy + 145;
-    this.add.rectangle(cx, barY, barW, barH, 0x333333, 0.7).setOrigin(0.5, 0.5);
-    const barFill = this.add.rectangle(barX, barY, 0, barH, 0x9be36e, 0.8).setOrigin(0, 0.5);
-    // D-041 R34: Shimmer-Highlight auf Loading-Bar
-    const shimmer = this.add.rectangle(barX - 16, barY, 16, barH, 0xffffff, 0.45)
+    const barY = cy + 148;
+    // Aeusserer Glow-Rahmen
+    const barGlow = this.add.rectangle(cx, barY, barW + 6, barH + 6, 0x9be36e, 0)
+      .setOrigin(0.5, 0.5);
+    this.tweens.add({
+      targets: barGlow, alpha: 0.15, duration: 600, delay: 800,
+      yoyo: true, repeat: -1, ease: 'Sine.InOut'
+    });
+    // Hintergrund-Leiste
+    this.add.rectangle(cx, barY, barW, barH, 0x333333, 0.8).setOrigin(0.5, 0.5);
+    // Fortschritts-Fill
+    const barFill = this.add.rectangle(barX, barY, 0, barH, 0x9be36e, 0.9).setOrigin(0, 0.5);
+    // D-041 R34 + R68: Shimmer-Highlight auf Loading-Bar
+    const shimmer = this.add.rectangle(barX - 20, barY, 20, barH, 0xffffff, 0.55)
       .setOrigin(0, 0.5).setDepth(1);
     this.tweens.add({
       targets: barFill,
