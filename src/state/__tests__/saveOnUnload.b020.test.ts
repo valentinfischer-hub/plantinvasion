@@ -43,7 +43,7 @@ describe('B-020 F5-mid-Cross-Mode state rollback', () => {
     const loaded = loadGame();
     // Muss post-crossing State zeigen â Regression: rollte auf pre-crossing zurueck
     expect(loaded?.coins).toBe(153);
-    expect(loaded?.crossings).toBe(1);
+    expect((loaded as any)?.crossings).toBe(1);
     expect(loaded?.plants).toHaveLength(3);
   });
 
@@ -54,7 +54,7 @@ describe('B-020 F5-mid-Cross-Mode state rollback', () => {
     saveGame(s2);
     const loaded = loadGame();
     expect(loaded?.coins).toBe(50);
-    expect(loaded?.crossings).toBe(1);
+    expect((loaded as any)?.crossings).toBe(1);
   });
 });
 
