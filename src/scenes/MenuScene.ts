@@ -292,6 +292,27 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       delay: 1400
     });
+    // D-041 R31: Attract-Ring Beacon — expandierende Ringe als persistentes CTA-Signal
+    const spawnBeaconRing = (delayMs: number) => {
+      this.time.delayedCall(delayMs, () => {
+        if (!this.scene.isActive()) return;
+        const ring = this.add.circle(newGameBtn.x, newGameBtn.y, 110, 0xfcd95c, 0)
+          .setStrokeStyle(2, 0xfcd95c, 0.6)
+          .setDepth(89);
+        this.tweens.add({
+          targets: ring,
+          scaleX: 1.8,
+          scaleY: 1.8,
+          alpha: 0,
+          duration: 1800,
+          ease: 'Cubic.Out',
+          onComplete: () => ring.destroy()
+        });
+        spawnBeaconRing(2400); // wiederhole alle 2.4s
+      });
+    };
+    spawnBeaconRing(2000);
+    spawnBeaconRing(3200); // zweiter Ring versetzt
 
     const _hint = this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'

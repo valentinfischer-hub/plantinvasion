@@ -12,11 +12,11 @@ Alles was der Spieler in den **ersten 5 Minuten** sieht, hört, anklickt oder sp
 |---|---|---|---|---|---|---|
 | Browser-Tab-Title plus Favicon | 0-2s | Art-UI plus Tech-Code | 3 | 1 | 2026-04-29 | Art-UI plus Tech-Code |
 | Boot-Time bis Title-Screen | 0-3s | Tech-Code | 4 | 3 | 2026-04-29 | Tech-Code |
-| Loading-Indicator-Animation | 0-3s | Art-UI | 3 | 1 | 2026-04-27 | Art-UI |
+| Loading-Indicator-Animation | 0-3s | Art-UI | 4 | 2 | 2026-04-29 | Art-UI plus Tech-Code |
 | Title-Screen-Logo | 3-5s | Art-UI | 2 | 0 | n/a | Art-UI |
 | Title-BGM (erste 10s) | 3-15s | Narrative-Sound | 1 | 0 | n/a | Narrative-Sound |
 | MenuScene-Layout | 5-15s | Art-UI plus Tech-Code | 4 | 4 | 2026-04-29 | Art-UI plus Tech-Code |
-| New-Game-Button-Hover plus Press | 10-15s | Art-UI | 2 | 1 | 2026-04-26 | Art-UI |
+| New-Game-Button-Hover plus Press | 10-15s | Art-UI | 3 | 2 | 2026-04-29 | Art-UI plus Tech-Code |
 | MenuScene-zu-GameScene-Transition | 15-20s | Art-UI plus Tech-Code | 3 | 2 | 2026-04-29 | Art-UI plus Tech-Code |
 | FTUE-Schritt 1 (Begrüssung) | 20-40s | Narrative-Sound plus Design-Balance | 3 | 2 | 2026-04-29 | Design-Balance plus Tech-Code |
 | FTUE-Schritt 2 (Bewegung) | 40-60s | Design-Balance plus Tech-Code | 3 | 2 | 2026-04-29 | Design-Balance plus Tech-Code |
@@ -26,9 +26,9 @@ Alles was der Spieler in den **ersten 5 Minuten** sieht, hört, anklickt oder sp
 | Tilda-Welcome-Dialog (3 Sätze) | 30-60s | Narrative-Sound | 2 | 1 | 2026-04-25 | Narrative-Sound |
 | Tilda-Sprite-Idle | 30-300s | Art-UI | 2 | 1 | 2026-04-26 | Art-UI |
 | GardenScene-Initial-Render | 60-120s | Art-UI plus Tech-Code | 4 | 4 | 2026-04-29 | Art-UI plus Tech-Code |
-| Erste Bestäubungs-Animation | 120-180s | Art-UI plus Tech-Code | 3 | 2 | 2026-04-29 | Art-UI plus Tech-Code |
+| Erste Bestäubungs-Animation | 120-180s | Art-UI plus Tech-Code | 4 | 3 | 2026-04-29 | Art-UI plus Tech-Code |
 | Erster Bestäubungs-SFX | 120-180s | Narrative-Sound | 1 | 0 | n/a | Narrative-Sound |
-| Erster Hybrid-Reveal-Stinger | 180-240s | Art-UI plus Narrative-Sound | 1 | 0 | n/a | Art-UI |
+| Erster Hybrid-Reveal-Stinger | 180-240s | Art-UI plus Narrative-Sound | 3 | 2 | 2026-04-29 | Art-UI plus Tech-Code |
 | Erste 5 SFX (Click, Walk, Pickup, Plant, Pollinate) | 0-300s | Narrative-Sound | 2 | 0 | n/a | Narrative-Sound |
 | Heimatdorf-Wurzelheim-BGM | 60-300s | Narrative-Sound | 1 | 0 | n/a | Narrative-Sound |
 | 60-FPS-Lock erste 5min | 0-300s | Tech-Code | 4 | 4 | 2026-04-29 | Tech-Code |
