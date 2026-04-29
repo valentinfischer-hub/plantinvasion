@@ -317,7 +317,7 @@ export class MenuScene extends Phaser.Scene {
     spawnBeaconRing(2000);
     spawnBeaconRing(3200); // zweiter Ring versetzt
 
-    const _hint = this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
+    this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
     // S-POLISH-START: First-Visit-Welcome-Modal fÃ¼r neue Spieler ohne Save
