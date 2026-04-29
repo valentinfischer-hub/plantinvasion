@@ -323,7 +323,7 @@ export class BattleScene extends Phaser.Scene {
       const nameTxt = this.add.text(-slotW / 2 + 8, -10, m ? m.name : '-', {
         fontFamily: 'monospace', fontSize: '11px', color: m ? '#ffffff' : '#666666'
       });
-      const detailTxt = this.add.text(-slotW / 2 + 8, 4, m ? `${m.power > 0 ? `StÃ¤rke ${m.power}` : 'Status'} | ${Math.round(m.accuracy * 100)}%` : '', {
+      const detailTxt = this.add.text(-slotW / 2 + 8, 4, m ? `${m.power > 0 ? `Stärke ${m.power}` : 'Status'} | ${Math.round(m.accuracy * 100)}%` : '', {
         fontFamily: 'monospace', fontSize: '9px', color: mColorHex
       });
       if (m) {
@@ -513,7 +513,7 @@ if (this.bossDef && outcome.winner === this.player) {
     }
   }
 
-  /** P0 Fix 4 (D-041): Farbkodierte Schadenszahlen mit Scale-Pop + EffektivitÃ¤ts-Label */
+  /** P0 Fix 4 (D-041): Farbkodierte Schadenszahlen mit Scale-Pop + Effektivitäts-Label */
   private getDamageColor(dmg: number, crit: boolean, effLabel: string): string {
     if (crit) return '#ff4444';
     if (effLabel === 'STARK') return '#ffa040';
