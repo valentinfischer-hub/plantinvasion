@@ -17,7 +17,7 @@
   "settings.localeDe": "DE",
   "settings.localeEn": "EN",
   "battle.attack": "Angriff",
-  "battle.flee": "Fliehen",
+  "battle.flee": "Fliehen (70%)",
   "battle.win": "Sieg!",
   "battle.lose": "Niederlage",
   "garden.water": "Wässern",
@@ -58,5 +58,11 @@
   "garden.crossSuccess": "Kreuzung erfolgreich",
   "garden.mutation": "Mutation! Neue Pflanze",
   "garden.gardenFull": "Garten voll. Ernte oder verschiebe Pflanzen.",
-  "garden.tutorialFirstPlant": "Klick hier um deine erste Pflanze zu setzen"
+  "garden.tutorialFirstPlant": "Klick hier um deine erste Pflanze zu setzen",
+  "battle.catch": "Fangen",
+  "battle.captured": "{{name}} wurde gefangen!",
+  "battle.captureFailed": "Fang-Versuch misslungen.",
+  "battle.rooted": "Du bist von Wurzeln gefangen und kannst nicht fliehen.",
+  "battle.fleeSuccess": "Du fliehst aus dem Kampf.",
+  "battle.fleeFailed": "Flucht misslungen!"
 }
