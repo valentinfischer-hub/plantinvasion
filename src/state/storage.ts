@@ -92,6 +92,8 @@ export interface GameState {
   loginDaysTotal?: number;                     // Gesamtzahl der Login-Tage
   // B4-R7: Foraging-Journal (welche Items in welchem Biom gefunden)
   forageJournal?: Record<string, string[]>;     // zone -> [itemSlug, ...] (dedupliziert)
+  // B4-R8: NPC-Dialog-History (letzte 5 Dialoge pro NPC)
+  npcDialogHistory?: Record<string, string[]>;  // npcId -> [lastLine, ...]
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
