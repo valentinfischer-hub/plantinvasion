@@ -1,18 +1,29 @@
 # Agent Coordination
 
 ## Tech-Code-Run idle
-- Letzte Run-ID: 2026-04-30_R41-R50 (abgeschlossen)
-- 10x-Session komplett: 4 Commits, 9 Files geändert
-- Commits: ff2fa4c924ee, 545aaeafdb07, 4f112bb9508d + docs
+- Letzte Run-ID: 2026-04-29_b5_R1-R12 (abgeschlossen)
+- Session: 20x Polish-Run, Runs 1-12 komplett
+- Zuletzt: Run 12/20 — QuestLogScene ESLint-Cleanup (void-Hacks entfernt)
 
-## FI-Score-Updates dieser Session
-- MenuScene-zu-GameScene-Transition: 2→3
-- FTUE-Schritt 2+4: 2→3
-- Erste Bestäubungs-Animation: 2→3
-- Tilda-Welcome-Dialog: 2→3
-- Loading-Indicator: 3→4
+## Commits dieser Session (b5 Runs 1-12)
+- Run 1: QA-Run Browser-Smoke (GRUEN, kein Commit)
+- Run 2-3: scheduleAutoSave-Vitest, NPC-Wander (bereits implementiert)
+- Run 4: GardenScene Gene-Overflow-Fix (Tier 3)
+- Run 5: achievements.ts Umlaut-Fix (9 Stellen)
+- Run 6: BattleScene Encoding-Fix + test_write.txt gelöscht
+- Run 7: OverworldScene Encoding-Fix (3 Stellen)
+- Run 8: HelpScene Umlaut-Fix (18 Stellen)
+- Run 9: 8 Scenes Umlaut-Sweep (SettingsScene/InventoryScene/MenuScene/MarketScene/QuestLog/Diary/Pokedex/GardenScene)
+- Run 10: storage.test.ts v10→v11 Migration-Guard erweitert
+- Run 11: InventoryScene selectedSlug + Card-Highlight
+- Run 12: QuestLogScene ESLint void-Hacks entfernt
 
-## Letzte Runs
-- 2026-04-30 R41-R50: Shutdown-Cleanup, i18n Phase 2 (3 Keys), Tutorial-Dots, okBtn-Hover, Tagline, Zone-Banner, Version-Badge, Speaker-BG
-- 2026-04-30 16:00 Polish-Run: OverworldScene i18n-Audit, noUncheckedIndexedAccess-Plan, Tween-Analyse
-- 2026-04-29 P0: B-020 FIXED, B-023 FIXED, B-019 FIXED
+## Offene FI-Score-Items (Tech-Code-Owner)
+- GardenScene Saeen-Modal: 3 (Ziel 4)
+- Plant-Card Detail: 3 (Ziel 4)
+
+## Nächste Runs (13-20)
+- Run 13: brain/architecture.md Update
+- Run 14: GardenScene ESLint-Sweep
+- Run 15: QA-Run Browser-Smoke
+- Run 16-20: weitere Polish-Items
