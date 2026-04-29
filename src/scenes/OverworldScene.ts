@@ -8,7 +8,7 @@ import mordwald from '../data/maps/mordwald';
 import magmabluete from '../data/maps/magmabluete';
 import glaciara from '../data/maps/glaciara';
 import { WURZELHEIM_TALLGRASS, VERDANTO_TALLGRASS, VERDANTO_BROMELIEN, KAKTORIA_TALLGRASS, FROSTKAMM_TALLGRASS, SALZBUCHT_TALLGRASS, MORDWALD_TALLGRASS, MAGMABLUETE_TALLGRASS,
-  GLACIARA_TALLGRASS, pickEncounter, randomLevel, type EncounterDef } from '../data/encounters';
+  GLACIARA_TALLGRASS, type EncounterDef } from '../data/encounters';
 import {
   TILE_SIZE,
   CAMERA_ZOOM,
@@ -94,7 +94,6 @@ function getEncounterPool(zone: string, tile: number): EncounterDef[] {
   return WURZELHEIM_TALLGRASS;
 }
 
-void pickEncounter; void randomLevel;
 
 // Tile-Position -> Dialog-Daten fuer Building-Tueren in V0.3
 interface BuildingDoor {
@@ -1184,7 +1183,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.changeZone('mordwald', tileX, this.map.height - 2, 'up');
       return;
     }
-    void tileX;
   }
 
   private changeZone(newZone: string, spawnX: number, spawnY: number, facing: 'up' | 'down' | 'left' | 'right'): void {
