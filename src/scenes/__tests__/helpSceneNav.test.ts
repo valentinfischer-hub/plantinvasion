@@ -3,7 +3,12 @@
  * Testet: Tab-Daten, SCENE_HELP_HINT, Tab-Index-Logik
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('phaser', () => ({
+  default: { Scene: class {}, GameObjects: { Text: class {}, Image: class {}, Graphics: class {} }, Math: { Clamp: (v: number) => v } },
+}));
+
 import { SCENE_HELP_HINT } from '../HelpScene';
 
 // Tab-Daten inline (ohne Phaser-Import)

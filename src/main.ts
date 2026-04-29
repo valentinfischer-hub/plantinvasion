@@ -18,6 +18,7 @@ import { SettingsScene } from './scenes/SettingsScene';
 import { HelpScene } from './scenes/HelpScene';
 import { CharacterCreationScene } from './scenes/CharacterCreationScene';
 import { fpsMonitor } from './utils/fpsMonitor';
+import { initDebugOverlay } from './ui/DebugOverlay';
 
 /**
  * Adaptive Resolution (D-001 Fix 2026-04-25):
@@ -98,6 +99,9 @@ const config: Phaser.Types.Core.GameConfig = {
     HelpScene
   ]
 };
+
+// Debug-Overlay (nur wenn ?debug=1 in URL)
+initDebugOverlay();
 
 const game = new Phaser.Game(config);
 (globalThis as { __game?: Phaser.Game; __layout?: string }).__game = game;
