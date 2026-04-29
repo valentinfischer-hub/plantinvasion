@@ -196,6 +196,12 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private saveIcon!: Phaser.GameObjects.Text;
   private coinHud!: Phaser.GameObjects.Text;
   private forageSparkleTimer?: Phaser.Time.TimerEvent;
+  // S-POLISH-B3-R2: Hotspot-Glow-Graphics fuer interaktive Objekte in Naehe
+  private hotspotGlowGraphics?: Phaser.GameObjects.Graphics;
+  private hotspotGlowTimer?: number;
+  // S-POLISH-B3-R2: Vollbild-Weltkarte (N-Taste)
+  private worldMapOverlay?: Phaser.GameObjects.Container;
+  private keyN!: Phaser.Input.Keyboard.Key;
   private weatherOverlay!: WeatherOverlay;
   private seasonTint!: SeasonTintOverlay;
   private particles!: AmbientParticles;
@@ -281,6 +287,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.key4 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.FOUR);
     this.keyBoss = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
     this.keyDiary = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
+    this.keyN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
 
     // Debug
     this.debugText = this.add.text(8, 8, '', {
@@ -347,6 +354,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
 
     debugLog('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
+
+    // S-POLISH-B3-R2: Hotspot-Glow-Graphics Overlay
+    this.hotspotGlowGraphics = this.add.graphics();
+    this.hotspotGlowGraphics.setDepth(600);
     (globalThis as { __overworld?: OverworldScene }).__overworld = this;
 
     // Daily-Login-Reward: einmalig pro Real-Time-Tag claimen, dann Toast
@@ -658,6 +669,137 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
   }
 
+  /**
+   * S-POLISH-B3-R2: Hotspot-Highlight-Glow fuer interaktive Objekte im 3-Tile-Radius.
+   * Zeichnet subtilen Glow-Ring um NPCs, Forage-Tiles und Zone-Eingaenge.
+   */
+  private refreshHotspotGlows(): void {
+    if (!this.hotspotGlowGraphics) return;
+    const g = this.hotspotGlowGraphics;
+    g.clear();
+
+    const px = this.player?.tileX ?? 0;
+    const py = this.player?.tileY ?? 0;
+    const RADIUS = 3;
+    const now = Date.now();
+    const pulse = 0.35 + 0.15 * Math.sin(now / 600);
+
+    // NPC-Glows
+    for (const npc of this.npcs) {
+      const dx = Math.abs(npc.data.tileX - px);
+      const dy = Math.abs(npc.data.tileY - py);
+      if (Math.max(dx, dy) <= RADIUS) {
+        const wx = npc.data.tileX * TILE_SIZE + TILE_SIZE / 2;
+        const wy = npc.data.tileY * TILE_SIZE + TILE_SIZE / 2;
+        g.fillStyle(0xfcd95c, pulse * 0.5);
+        g.fillCircle(wx, wy, TILE_SIZE * 0.55);
+        g.lineStyle(2, 0xfcd95c, pulse);
+        g.strokeCircle(wx, wy, TILE_SIZE * 0.55);
+      }
+    }
+
+    // Forage-Tiles in Naehe (check in 3x3 grid around player)
+    for (let ty = py - RADIUS; ty <= py + RADIUS; ty++) {
+      for (let tx = px - RADIUS; tx <= px + RADIUS; tx++) {
+        const t = this.getTile(tx, ty);
+        if (isForageTile(t)) {
+          const wx = tx * TILE_SIZE + TILE_SIZE / 2;
+          const wy = ty * TILE_SIZE + TILE_SIZE / 2;
+          g.fillStyle(0x9be36e, pulse * 0.35);
+          g.fillCircle(wx, wy, TILE_SIZE * 0.4);
+          g.lineStyle(1, 0x9be36e, pulse * 0.8);
+          g.strokeCircle(wx, wy, TILE_SIZE * 0.4);
+        }
+      }
+    }
+  }
+
+  /**
+   * S-POLISH-B3-R2: Vollbild-Weltkarte mit allen Biomen und Player-Position.
+   */
+  private showWorldMapOverlay(): void {
+    if (this.worldMapOverlay) {
+      this.worldMapOverlay.destroy();
+      this.worldMapOverlay = undefined;
+      return;
+    }
+    const cam = this.cameras.main;
+    const W = cam.width;
+    const H = cam.height;
+    const z = cam.zoom || 1;
+
+    const overlay = this.add.container(W / (2 * z), H / (2 * z));
+    overlay.setScrollFactor(0);
+    overlay.setDepth(3000);
+    overlay.setScale(1 / z);
+    this.worldMapOverlay = overlay;
+
+    // Hintergrund
+    const bg = this.add.rectangle(0, 0, W - 40, H - 40, 0x0a1208, 0.95)
+      .setStrokeStyle(2, 0x9be36e);
+    overlay.add(bg);
+
+    const title = this.add.text(0, -(H - 40) / 2 + 14, 'WELTKARTE (N zum Schliessen)', {
+      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
+    }).setOrigin(0.5, 0);
+    overlay.add(title);
+
+    // Biom-Grid (8 Biome)
+    const ZONES_MAP = [
+      { slug: 'wurzelheim', label: 'Wurzelheim',   col: 1, row: 2, color: 0x4a7a3a },
+      { slug: 'verdanto',   label: 'Verdanto',      col: 1, row: 1, color: 0x2e8b57 },
+      { slug: 'kaktoria',   label: 'Kaktoria',      col: 0, row: 2, color: 0xd2a024 },
+      { slug: 'mordwald',   label: 'Mordwald',      col: 2, row: 1, color: 0x4a2d6a },
+      { slug: 'frostkamm', label: 'Frostkamm',     col: 1, row: 0, color: 0x6ab4d4 },
+      { slug: 'salzbucht', label: 'Salzbucht',     col: 2, row: 2, color: 0x1e6e8c },
+      { slug: 'magmabluete', label: 'Magmabluete', col: 0, row: 1, color: 0xc43a2a },
+      { slug: 'glaciara',  label: 'Glaciara',       col: 1, row: -1, color: 0x9de8f0 },
+    ];
+
+    const CELL_W = 110;
+    const CELL_H = 60;
+    const GRID_PAD = 14;
+    const startX = -(CELL_W + GRID_PAD);  // 3 cols centered
+    const startY = -(CELL_H + GRID_PAD) * 1.5;
+
+    for (const zone of ZONES_MAP) {
+      const cx = startX + zone.col * (CELL_W + GRID_PAD);
+      const cy = startY + zone.row * (CELL_H + GRID_PAD);
+      const isCurrentZone = zone.slug === this.currentZone;
+      const cell = this.add.rectangle(cx, cy, CELL_W, CELL_H, zone.color, 0.75)
+        .setStrokeStyle(isCurrentZone ? 3 : 1, isCurrentZone ? 0xfcd95c : 0x444444);
+      const lbl = this.add.text(cx, cy - 8, zone.label, {
+        fontFamily: 'monospace', fontSize: '10px',
+        color: isCurrentZone ? '#fcd95c' : '#dcdcdc'
+      }).setOrigin(0.5);
+      const hint = this.add.text(cx, cy + 6, isCurrentZone ? '▶ Hier' : '', {
+        fontFamily: 'monospace', fontSize: '9px', color: '#fcd95c'
+      }).setOrigin(0.5);
+      overlay.add([cell, lbl, hint]);
+    }
+
+    // Player-Marker in aktuellem Biom
+    const curZone = ZONES_MAP.find((z) => z.slug === this.currentZone);
+    if (curZone) {
+      const mcx = startX + curZone.col * (CELL_W + GRID_PAD);
+      const mcy = startY + curZone.row * (CELL_H + GRID_PAD);
+      const marker = this.add.text(mcx + CELL_W / 2 - 14, mcy - CELL_H / 2 + 4, '★', {
+        fontFamily: 'monospace', fontSize: '16px', color: '#fcd95c'
+      }).setOrigin(0.5, 0);
+      overlay.add(marker);
+    }
+
+    // Close-Button
+    const closeBtn = this.add.text((W - 40) / 2 - 12, -(H - 40) / 2 + 10, 'X', {
+      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
+    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerdown', () => {
+      overlay.destroy();
+      this.worldMapOverlay = undefined;
+    });
+    overlay.add(closeBtn);
+  }
+
   private refreshNpcNameTags(): void {
     const px = this.player?.tileX ?? 0;
     const py = this.player?.tileY ?? 0;
@@ -852,6 +994,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         this._lastPlayerTileX = curX;
         this._lastPlayerTileY = curY;
         this.refreshNpcNameTags();
+        this.refreshHotspotGlows();
       }
     }
     // Periodische Position-Speicherung (alle ~2s wenn nicht moving)
@@ -883,6 +1026,19 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         return;
       }
     }
+    // S-POLISH-B3-R2: Hotspot-Glow kontinuierlicher Pulse-Update (alle 100ms)
+    const now2 = Date.now();
+    if (!this.hotspotGlowTimer || now2 - this.hotspotGlowTimer > 100) {
+      this.hotspotGlowTimer = now2;
+      this.refreshHotspotGlows();
+    }
+
+    // S-POLISH-B3-R2: Weltkarte (N-Taste)
+    if (Phaser.Input.Keyboard.JustDown(this.keyN)) {
+      this.showWorldMapOverlay();
+      return;
+    }
+
     // Quest-Log-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyQ)) {
       this.tutorial?.markInteract('quest');
