@@ -140,17 +140,18 @@ export class BattleScene extends Phaser.Scene {
       this.capturedEnc = { slug: enc.slug, rarity: 2, level: wildLevel };
     }
 
-    // Battle-Background: TileSprite-Textur statt flacher Farbe (QW-14)
+    // Battle-Background: Biom-spezifische Textur + Tint (R12: QA-Critic-Audit)
     const bgTileKey = this.getBgTileKey();
+    const biomTints = this.getBiomTints();
     if (this.textures.exists(bgTileKey)) {
       const bgTop = this.add.tileSprite(0, 0, width, height / 2, bgTileKey)
-        .setOrigin(0, 0).setAlpha(0.72).setTint(0x6aaa44);
+        .setOrigin(0, 0).setAlpha(0.72).setTint(biomTints.top);
       const bgBot = this.add.tileSprite(0, height / 2, width, height / 2, bgTileKey)
-        .setOrigin(0, 0).setAlpha(0.55).setTint(0x2e5c1e);
+        .setOrigin(0, 0).setAlpha(0.55).setTint(biomTints.bot);
       void bgTop; void bgBot;
     } else {
-      const bgTop = this.add.rectangle(width / 2, height / 4, width, height / 2, 0x4a8228, 0.4).setOrigin(0.5);
-      const bgBot = this.add.rectangle(width / 2, height * 3 / 4, width, height / 2, 0x2d4a1f, 0.5).setOrigin(0.5);
+      const bgTop = this.add.rectangle(width / 2, height / 4, width, height / 2, biomTints.top, 0.4).setOrigin(0.5);
+      const bgBot = this.add.rectangle(width / 2, height * 3 / 4, width, height / 2, biomTints.bot, 0.5).setOrigin(0.5);
       void bgTop; void bgBot;
     }
     // Trennlinie Gegner/Spieler-Zone
@@ -164,9 +165,10 @@ export class BattleScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
     }).setOrigin(0.5);
     const wildSpriteKey = this.bossDef?.spriteKey ?? this.pickWildSpriteKey(this.capturedEnc?.slug ?? 'common-daisy');
-    this.wildSprite = this.add.sprite(width / 2, 110, wildSpriteKey);
-    this.wildSprite.setDisplaySize(72, 72);
-    this.wildSprite.setFlipX(true); // QW-14: Wild-Sprite gespiegelt fuer optische Differenzierung
+    // R12: Pokemon-Style Positioning — Wild oben links (96px), zeigt nach rechts
+    this.wildSprite = this.add.sprite(width * 0.3, 110, wildSpriteKey);
+    this.wildSprite.setDisplaySize(96, 96);
+    this.wildSprite.setFlipX(true);
     this.wildHpGhost = this.add.rectangle(width / 2, 162, 200, 10, 0xbb4444, 0.5).setDepth(60);
     this.wildHpBar = this.add.rectangle(width / 2, 162, 200, 10, 0x6abf3a)
       .setStrokeStyle(1, 0x111111);
@@ -184,7 +186,8 @@ export class BattleScene extends Phaser.Scene {
     this.add.text(width / 2, height - 230, this.player.family, {
       fontFamily: 'monospace', fontSize: '12px', color: '#82d44e'
     }).setOrigin(0.5);
-    this.playerSprite = this.add.sprite(width / 2, height - 170, 'tile_flowerbed');
+    // R12: Player-Sprite unten rechts (80px)
+    this.playerSprite = this.add.sprite(width * 0.7, height - 170, 'tile_flowerbed');
     this.playerSprite.setDisplaySize(80, 80);
     // D-041 Run10: Battle Intro Slide-in
     const slideOriginWild = this.wildSprite.x;
@@ -242,17 +245,36 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private getBgTileKey(): string {
-    // QW-14: Biom-basierter Hintergrund
+    // R12: Biom-spezifische Hintergrund-Textur (QA-Critic-Audit)
     const map: Record<string, string> = {
       'verdanto-tallgrass': 'tile_tropical',
       'verdanto-bromelien': 'tile_bromeliad',
       'kaktoria-tallgrass': 'tile_cactus',
-      'frostkamm-tallgrass': 'tile_grass',
-      'salzbucht-tallgrass': 'tile_flowerbed',
+      'frostkamm-tallgrass': 'tile_snow',
+      'salzbucht-tallgrass': 'tile_beachsand',
       'wurzelheim-tallgrass': 'tile_grass',
+      'mordwald-tallgrass': 'tile_swampfloor',
+      'magmabluete-tallgrass': 'tile_ash',
+      'glaciara-tallgrass': 'tile_iceground',
     };
     const key = map[this.poolKey] ?? 'tile_grass';
     return this.textures.exists(key) ? key : 'tile_grass';
+  }
+
+  /** Biom-spezifische Tint-Farben fuer Arena-Hintergrund (R12: QA-Critic-Audit) */
+  private getBiomTints(): { top: number; bot: number } {
+    const biom = this.poolKey.split('-')[0];
+    const tints: Record<string, { top: number; bot: number }> = {
+      kaktoria:     { top: 0xd4a855, bot: 0xa87820 },
+      frostkamm:   { top: 0xaaccee, bot: 0x5588aa },
+      salzbucht:   { top: 0x88aacc, bot: 0x446688 },
+      verdanto:    { top: 0x44aa66, bot: 0x226644 },
+      mordwald:    { top: 0x558844, bot: 0x334422 },
+      magmabluete: { top: 0xcc5533, bot: 0x882211 },
+      glaciara:    { top: 0x99bbdd, bot: 0x6699bb },
+      wurzelheim:  { top: 0x6aaa44, bot: 0x2e5c1e },
+    };
+    return tints[biom] ?? { top: 0x6aaa44, bot: 0x2e5c1e };
   }
 
   private pickWildSpriteKey(slug: string): string {
