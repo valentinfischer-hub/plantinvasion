@@ -306,10 +306,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.miniMap.refresh(this.currentZone);
     this.pauseMenu = new PauseOverlay(this, [
       { label: 'Weiterspielen', onSelect: () => this.pauseMenu.close() },
-      { label: 'Inventar (I)', onSelect: () => { this.pauseMenu.close(); this.scene.start('InventoryScene'); } },
-      { label: 'Pokedex (P)', onSelect: () => { this.pauseMenu.close(); this.scene.start('PokedexScene'); } },
-      { label: 'Quests (Q)', onSelect: () => { this.pauseMenu.close(); this.scene.start('QuestLogScene'); } },
-      { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.scene.start('MenuScene'); } }
+      { label: 'Inventar (I)', onSelect: () => { this.pauseMenu.close(); this.trackStart('InventoryScene'); } },
+      { label: 'Pokedex (P)', onSelect: () => { this.pauseMenu.close(); this.trackStart('PokedexScene'); } },
+      { label: 'Quests (Q)', onSelect: () => { this.pauseMenu.close(); this.trackStart('QuestLogScene'); } },
+      { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.trackStart('MenuScene'); } }
     ]);
     this.registerInAllUiCams(this.pauseMenu.container);
     this.registerInAllUiCams(this.pauseMenu.dim);
@@ -531,7 +531,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (this.dialog?.open_) return;
     sfx.door();
     gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GardenScene', this.currentZone);
-    this.scene.start('GardenScene');
+    this.trackStart('GardenScene');
   }
 
   private tryClaimDailyLogin(): void {
@@ -867,7 +867,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Tagebuch-Hotkey (T)
     if (Phaser.Input.Keyboard.JustDown(this.keyDiary)) {
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-      this.scene.start('DiaryScene');
+      this.trackStart('DiaryScene');
       return;
     }
     // Boss-Battle-Trigger (K-Hotkey): startet aktive boss-quest in current zone
@@ -879,7 +879,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       });
       if (activeBossQuest && activeBossQuest.goal.type === 'defeat-boss') {
         gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-        this.scene.start('BattleScene', { bossId: activeBossQuest.goal.bossId });
+        this.trackStart('BattleScene', { bossId: activeBossQuest.goal.bossId });
         return;
       }
     }
@@ -887,14 +887,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (Phaser.Input.Keyboard.JustDown(this.keyQ)) {
       this.tutorial?.markInteract('quest');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-      this.scene.start('QuestLogScene');
+      this.trackStart('QuestLogScene');
       return;
     }
     // Markt-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyM)) {
       this.tutorial?.markInteract('market');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-      this.scene.start('MarketScene');
+      this.trackStart('MarketScene');
       return;
     }
     // Pokedex-Hotkey
@@ -918,13 +918,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyI)) {
       sfx.dialogOpen();
-      this.scene.start('InventoryScene');
+      this.trackStart('InventoryScene');
       return;
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyP)) {
       this.tutorial?.markInteract('pokedex');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-      this.scene.start('PokedexScene');
+      this.trackStart('PokedexScene');
       return;
     }
     // Interact-Key (Tastatur oder Touch)
@@ -1360,7 +1360,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       debugLog('[OverworldScene] door triggered, switching to GardenScene');
       sfx.door();
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GardenScene');
-      this.scene.start('GardenScene');
+      this.trackStart('GardenScene');
       return;
     }
     // Map-Edge: Zone-Wechsel
@@ -1401,8 +1401,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       else if (this.currentZone === 'mordwald') poolKey = 'mordwald-tallgrass';
       else if (this.currentZone === 'magmabluete') poolKey = 'magmabluete-tallgrass';
       else if (this.currentZone === 'glaciara') poolKey = 'glaciara-tallgrass';
-      this.scene.start('BattleScene', { poolKey });
+      this.trackStart('BattleScene', { poolKey });
       return;
     }
+  }
+
+  /** PostHog: scene transition tracker (S-POLISH) */
+  private trackStart(key: string, data?: Record<string, unknown>): void {
+    (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('scene_changed', { from: 'OverworldScene', to: key });
+    this.scene.start(key, data);
   }
 }
