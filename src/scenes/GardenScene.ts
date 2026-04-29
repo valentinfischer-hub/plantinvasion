@@ -32,6 +32,7 @@ import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
 import { showToast, type ToastType } from '../ui/Toast';
 import { drawModalBox } from '../ui/uiTheme';
+import { bounceCoinCounter, pulseSaveIndicator } from '../ui/microInteractions';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -66,6 +67,8 @@ export class GardenScene extends Phaser.Scene {
   private crossBtnBg?: Phaser.GameObjects.Rectangle;
   private crossBtnTxt?: Phaser.GameObjects.Text;
   private headerText!: Phaser.GameObjects.Text;
+  private saveIndicator?: Phaser.GameObjects.Text;
+  private _lastCoinCount = 0;
   private detailPanel?: Phaser.GameObjects.Container;
   private slotHotspots: Array<{ gridX: number; gridY: number; hotspot: Phaser.GameObjects.Rectangle }> = [];
   private dragSource?: { plantId: string; startX: number; startY: number };
@@ -124,6 +127,10 @@ export class GardenScene extends Phaser.Scene {
       fontSize: '14px',
       color: '#9be36e'
     }).setOrigin(0.5, 0);
+    // R14: Save-Indikator (Diskette-Symbol, erscheint kurz nach Auto-Save)
+    this.saveIndicator = this.add.text(width - 10, 10, '💾', {
+      fontFamily: 'monospace', fontSize: '14px', color: '#9be36e'
+    }).setOrigin(1, 0).setAlpha(0);
 
     const gridWidth = GRID_COLUMNS * (TILE + TILE_PAD) - TILE_PAD;
     const gridHeight = GRID_ROWS * (TILE + TILE_PAD) - TILE_PAD;
@@ -784,6 +791,15 @@ export class GardenScene extends Phaser.Scene {
     this.headerText.setText(
       `Plantinvasion · ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS} · Coins ${state.coins}`
     );
+    // R14: Coin-Counter Bounce bei Änderung
+    if (state.coins !== this._lastCoinCount) {
+      bounceCoinCounter(this, this.headerText);
+      // Pulsiere Save-Indikator als Feedback
+      if (this.saveIndicator) {
+        pulseSaveIndicator(this, this.saveIndicator, 800);
+      }
+      this._lastCoinCount = state.coins;
+    }
   }
 
   private renderPlants(): void {
