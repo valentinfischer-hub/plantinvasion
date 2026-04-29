@@ -106,15 +106,19 @@ interface BuildingDoor {
   tileY: number;
   dialog: string[];
 }
-const BUILDING_DOORS: BuildingDoor[] = [
-  // Markthalle
-  { tileX: 20, tileY: 6, dialog: ['Markthalle: Heute geschlossen.', 'Markthalle: (Voll funktional in V0.3)'] },
-  { tileX: 21, tileY: 6, dialog: ['Markthalle: Heute geschlossen.', 'Markthalle: (Voll funktional in V0.3)'] },
-  // Botanik-Akademie
-  { tileX: 6, tileY: 15, dialog: ['Botanik-Akademie: Die Tuer ist verschlossen.', 'Akademie: Komm zurueck wenn du den ersten Pokedex-Eintrag hast.'] },
-  // NPC-Wohnhaus
-  { tileX: 21, tileY: 15, dialog: ['NPC-Wohnhaus: Niemand zuhause.', '(Privater Bereich, V0.3)'] }
-];
+function getBuildingDoors(): BuildingDoor[] {
+  return [
+    // Markthalle
+    { tileX: 20, tileY: 6, dialog: [t('building.markt.title'), t('building.markt.text')] },
+    { tileX: 21, tileY: 6, dialog: [t('building.markt.title'), t('building.markt.text')] },
+    // Botanik-Akademie
+    { tileX: 6, tileY: 15, dialog: [t('building.akademie.title'), t('building.akademie.text')] },
+    // NPC-Wohnhaus
+    { tileX: 21, tileY: 15, dialog: [t('building.wohnhaus.title'), t('building.wohnhaus.text')] }
+  ];
+}
+// Backward-compat Alias
+const BUILDING_DOORS: BuildingDoor[] = getBuildingDoors();
 
 function checkQuestComplete(quest: QuestDef): boolean {
   const dex = gameStore.getPokedex();

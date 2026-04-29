@@ -39,5 +39,11 @@
   "sign.glaciara_8_6.title": "Sign: Endgame Ice",
   "sign.glaciara_8_6.text": "The toughest plants grow here.",
   "sign.glaciara_22_12.title": "Sign: Mythical Gate",
-  "sign.glaciara_22_12.text": "Eden Lost awaits beyond the gate."
+  "sign.glaciara_22_12.text": "Eden Lost awaits beyond the gate.",
+  "building.markt.title": "Market Hall: Closed today.",
+  "building.markt.text": "Market Hall: Come back when the market is open.",
+  "building.akademie.title": "Botany Academy: The door is locked.",
+  "building.akademie.text": "Academy: Come back once you have your first Plantdex entry.",
+  "building.wohnhaus.title": "NPC House: Nobody home.",
+  "building.wohnhaus.text": "(Private area)"
 }
