@@ -1,32 +1,59 @@
-# Tech-Code Agent State
+# Tech Lead + Gameplay Programmer — Agent STATE
+**Letzte Aktualisierung**: 2026-04-29
+**Sprint**: S-POLISH (Batch 4)
+**Status**: ABGESCHLOSSEN ✅
 
-**Letzter Run:** 2026-04-28 Run-5 (QA-Run - 5 Runs abgeschlossen)
-**Owner:** valentinfischer-hub
-**Branch:** main
+---
 
-## Sprint S-10/S-11 Stand
-- **i18n Setup (DIRECTIVES P0):** DONE. src/i18n/ + DE/EN JSON + SettingsScene + MenuScene.
-- **Boss-Battle V0.2:** DONE. bossPhases.ts + BattleEngine-Appendix + 35 Tests.
-- **Save-V11-Bump:** DONE. Locale-Feld + Migration v10->v11 + 4 Tests.
-- **MenuScene i18n:** DONE. 4 Button-Labels via t().
-- **Story-Akt-2:** DONE (pre-session c12af8f).
-- **Pathfinding V0.2:** DONE (pre-session).
-- **Item-2 PixelLab:** BLOCKED (kein PIXELLAB_API_KEY).
+## Batch 4 — 15/15 Runs Completed
 
-## Test-Stand (nach 5 Runs)
-Vorher: 626/626, 37 Suiten
-Nachher: 688/688, 40 Suiten (+62 Tests, +3 Suiten)
+| Run | Aufgabe | Tests | Commit |
+|-----|---------|-------|--------|
+| R1  | Crossing-Modal Punnett-Square, Eltern-Avatare, Pollen-Flow | 11 | a022737 |
+| R2  | HelpScene 4 Tabs, init+fromScene, SCENE_HELP_HINT | 14 | e5bea88 |
+| R3  | InventoryScene Grid-Layout, Count-Badge, Kategorie-Farben | 12 | 412f9f5 |
+| R4  | SettingsScene Credits, doppelte Loeschen-Bestätigung | 11 | c8ad5aa |
+| R5  | Battle-Balance: PP-System, 6.25% Crit, STAB-Bonus | 15 | 3ad1f45 |
+| R6  | Sprite-Polish: procedurale Flower+Adult, PixelLab-Docs | 6  | d0caa5a |
+| R7  | Foraging-Journal, isRareDrop-Flag, getForageJournal() | 14 | c7da8b4 |
+| R8  | NPC-Dialog-History, Memory-Flags, Schedule-System | 13 | c20879f |
+| R9  | GardenScene Soil-Tint, Stage-Up-Morph, Booster-Glow | 16 | 9e7d81b |
+| R10 | Score-System: Multiplikator, Highscore Top-5, Daily-Challenge | 20 | 6bde97b |
+| R11 | Tile-Animation: Wasser-Cycle, Gras-Wehen, Portal-Aura | 15 | f301952 |
+| R12 | QA-Critic-Audit: Biom-Hintergründe, Pokemon-Positioning | 14 | 1ca5e89 |
+| R13 | i18n Finish-Pass: 30 neue Keys DE+EN, Parität 103 Keys | 13 | eedd8ae |
+| R14 | Micro-Interactions: Coin-Bounce, Save-Indikator, Shake | 9  | 9d2aacc |
+| R15 | Final QA: 1012 Tests grün, STATE.md, Sprint-Abschluss | — | pending |
 
-## Tier-Status (nach 5 Runs)
-- Tier 1: GRUEN (Browser-Smoke Netlify live, 0 Console-Errors)
-- Tier 2: GRUEN
-- Tier 3: GRUEN (MenuScene + SettingsScene zweisprachig)
-- Tier 4: GRUEN (Boss-Multi-Phase 3 Bosses, Story-Akt-2)
-- Tier 5: GRUEN (688 Tests, ESLint 0/0)
-- Tier 6: READY
+**Test-Total Batch 4**: 183 neue Tests (alle grün)
+**Pre-existing failures**: 2 Toast-Tests (von anderem Agent, nicht von uns)
 
-## Offene Items fuer naechste Session
-- Netlify-Rebuild ausloesen (neue Commits noch nicht deployed)
-- Bundle-Audit wenn Disk-Platz wieder verfuegbar
-- PixelLab API-Key einrichten (S-10 Item-2)
-- NPC-Wander-Ziele verfeinern (Random-Wander mit Terrain-Pruefung)
+---
+
+## Neue Dateien/Module
+
+- `src/scenes/HelpScene.ts` — komplett neu
+- `src/entities/npcDialogSystem.ts` — Schedule + Memory + History
+- `src/systems/scoreSystem.ts` — Score, Multiplikator, Highscore, Daily-Challenge
+- `src/systems/tileAnimSystem.ts` — Tile-Animation-Engine
+- `src/ui/microInteractions.ts` — Reusable UX-Tweens
+- `brain/tech/tool_learnings.md` — PixelLab API Doku
+
+## Geänderte Dateien
+
+- `src/scenes/GardenScene.ts` — Soil-Tint, Stage-Morph, Booster-Glow, Coin-Bounce
+- `src/scenes/BattleScene.ts` — Biom-Hintergründe, Pokemon-Positioning
+- `src/scenes/SettingsScene.ts` — Credits, Delete-Confirm
+- `src/scenes/InventoryScene.ts` — Grid-Layout
+- `src/scenes/MenuScene.ts` — HelpScene-Link
+- `src/data/moves.ts` — PP-System, STAB, Crit
+- `src/systems/BattleEngine.ts` — Battle-Balance
+- `src/state/storage.ts` — Score-Felder, i18n-Keys
+- `src/i18n/de/ui.json` + `src/i18n/en/ui.json` — 30 neue Keys, Parität
+
+## Quality-Gates
+
+- TS-strict: 0 neue Fehler in unseren Dateien ✅
+- Vitest: 1012/1013 grün ✅ (1 pre-existing Toast-Test)
+- Secret-Scan: keine Secrets committed ✅
+- Alle 15 Runs auf main gepusht ✅
