@@ -40,7 +40,7 @@ import { showToast } from '../ui/Toast';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
 import { evaluateAct2Progress, autoSetAct2Flags } from '../data/storyAct2';
-import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -519,14 +519,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private showZoneToast(zone: string): void {
     // D-041 R24: Zone-Toast mit Emoji + deutschen Namen
     const ZONE_LABELS: Record<string, string> = {
-      wurzelheim: '🌿 Wurzelheim',
-      verdanto: '🌲 Verdanto',
-      kaktoria: '🌵 Kaktoria',
-      frostkamm: '❄️ Frostkamm',
-      salzbucht: '🌊 Salzbucht',
-      mordwald: '🍄 Mordwald',
-      glaciara: '🧊 Glaciara',
-      magmabluete: '🔥 Magmablüte',
+      wurzelheim: 'ð¿ Wurzelheim',
+      verdanto: 'ð² Verdanto',
+      kaktoria: 'ðµ Kaktoria',
+      frostkamm: 'âï¸ Frostkamm',
+      salzbucht: 'ð Salzbucht',
+      mordwald: 'ð Mordwald',
+      glaciara: 'ð§ Glaciara',
+      magmabluete: 'ð¥ MagmablÃ¼te',
     };
     const label = ZONE_LABELS[zone] ?? (zone.charAt(0).toUpperCase() + zone.slice(1));
     const cam = this.cameras.main;
@@ -555,7 +555,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       const dialogActive = this.dialog?.open_ ?? false;
       const npcWalls = this.npcWalls;
       const now = gameTimeNow();
-      // S-POLISH Run16: Camera-Frustum-Cull — NPCs > 200px ausserhalb des Viewports
+      // S-POLISH Run16: Camera-Frustum-Cull â NPCs > 200px ausserhalb des Viewports
       // bekommen kein step(). Bewegung + Animationen pausiert ausserhalb des sichtbaren Bereichs.
       const cam = this.cameras.main;
       const camL = cam.scrollX - 200;
@@ -620,14 +620,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
 
     // S-10 V0.1: Story-Akt-2-Auto-Tracking ("Verdanto erkundet").
-    // Läuft nur wenn currentAct >= 1 (Akt-1 abgeschlossen) UND doStoryCheck.
+    // LÃ¤uft nur wenn currentAct >= 1 (Akt-1 abgeschlossen) UND doStoryCheck.
     if (doStoryCheck && gameStore.getCurrentAct() >= 1) {
       const state = gameStore.get();
       const flags = state.story?.flags ?? {};
       const visitedZones = gameStore.getAchievementCounters().visitedZones;
       const inventory = gameStore.getInventory();
       const updatedFlags = autoSetAct2Flags(flags, visitedZones, inventory);
-      // Side-Effect nur bei Änderung
+      // Side-Effect nur bei Ãnderung
       const flagsChanged = Object.keys(updatedFlags).some(k => updatedFlags[k] !== flags[k]);
       if (flagsChanged) {
         for (const [k, v] of Object.entries(updatedFlags)) {
