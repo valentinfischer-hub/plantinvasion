@@ -43,7 +43,7 @@ export class MenuScene extends Phaser.Scene {
     this.load.atlas('ui_sprint_0', 'assets/atlases/ui_sprint_0.webp', 'assets/atlases/ui_sprint_0.json');
 
     // 16 einzelne Boden-Tile-Files (erdig/steinig/moosig/aschig je 4 Varianten)
-    // für GardenScene-Slot-Variation per Slot-Index modulo 4.
+    // fÃ¼r GardenScene-Slot-Variation per Slot-Index modulo 4.
     const groundTypes = ['erdig', 'steinig', 'moosig', 'aschig'];
     groundTypes.forEach((type) => {
       for (let v = 1; v <= 4; v++) {
@@ -51,7 +51,7 @@ export class MenuScene extends Phaser.Scene {
       }
     });
 
-    // Plant-Sprites Legacy-Fallback (Sprint 0 Pilot-Spezies für existierende species-Map).
+    // Plant-Sprites Legacy-Fallback (Sprint 0 Pilot-Spezies fÃ¼r existierende species-Map).
     const species = ['sunflower', 'spike-cactus', 'venus-flytrap', 'lavender', 'tomato-plant'];
     const stageFiles = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
     species.forEach((slug) => {
@@ -114,7 +114,7 @@ export class MenuScene extends Phaser.Scene {
       const leaf2 = this.add.ellipse(cx + 14, plantY + 24, 22, 12, 0x6abf3a).setRotation(0.3);
       const flower = this.add.circle(cx, plantY, 14, 0xff7eb8).setStrokeStyle(2, 0x000000);
       const flowerCenter = this.add.circle(cx, plantY, 5, 0xfcd95c);
-      // QW-14: Idle-Bob-Tween für das Logo-Pflanz-Objekt
+      // QW-14: Idle-Bob-Tween fÃ¼r das Logo-Pflanz-Objekt
     this.tweens.add({
       targets: [stem, leaf1, leaf2, flower, flowerCenter],
       y: '-=5',
@@ -223,7 +223,7 @@ export class MenuScene extends Phaser.Scene {
 
     const save = loadGame();
 
-    // D-041 Run9: Staggered Button Entrance â alle Buttons starten bei alpha=0, y+20 (slide up)
+    // D-041 Run9: Staggered Button Entrance Ã¢ÂÂ alle Buttons starten bei alpha=0, y+20 (slide up)
     const menuBtns: Phaser.GameObjects.Container[] = [];
     let by = plantY + 170;
     if (save) {
@@ -296,7 +296,7 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       delay: 1400
     });
-    // D-041 R31: Attract-Ring Beacon — expandierende Ringe als persistentes CTA-Signal
+    // D-041 R31: Attract-Ring Beacon â expandierende Ringe als persistentes CTA-Signal
     const spawnBeaconRing = (delayMs: number) => {
       this.time.delayedCall(delayMs, () => {
         if (!this.scene.isActive()) return;
@@ -321,13 +321,13 @@ export class MenuScene extends Phaser.Scene {
     const _hint = this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
-    // S-POLISH-START: First-Visit-Welcome-Modal für neue Spieler ohne Save
+    // S-POLISH-START: First-Visit-Welcome-Modal fÃ¼r neue Spieler ohne Save
     if (!save) {
       this.time.delayedCall(1500, () => this.showWelcomeModal());
     }
 
     // S-POLISH-START: Auto-Ambient-BGM nach 2s damit Hauptmenue Atmosphaere bekommt
-    // (mit Try-Catch für Browser-Autoplay-Block, dann erst beim ersten Button-Click)
+    // (mit Try-Catch fÃ¼r Browser-Autoplay-Block, dann erst beim ersten Button-Click)
     this.time.delayedCall(2000, () => {
       try { startAmbientBGM(); } catch { /* Browser-Autoplay-Block, BGM startet bei erstem Click */ }
     });
@@ -339,16 +339,16 @@ export class MenuScene extends Phaser.Scene {
       const plantY = height - 80;
       const stages = ['sonnenherz_stage_0_seed.webp', 'sonnenherz_stage_1_sprout.webp', 'sonnenherz_stage_2_juvenile.webp', 'sonnenherz_stage_3_adult.webp'];
       const ambientPlant = this.add.image(plantX, plantY, 'plants_sprint_0', stages[0]).setOrigin(0.5, 1).setScale(0.6).setAlpha(0.7);
-      // D-041 Run9: Idle-Breathing für Ambient-Plants
+      // D-041 Run9: Idle-Breathing fÃ¼r Ambient-Plants
       this.tweens.add({
         targets: ambientPlant,
         scaleY: 0.63,
         scaleX: 0.57,
-        duration: 1800 + i * 300,
+        duration: 1800,
         ease: 'Sine.InOut',
         yoyo: true,
         repeat: -1,
-        delay: i * 400
+        delay: 0
       });
       let stageIdx = 0;
       this.time.addEvent({
@@ -368,7 +368,7 @@ export class MenuScene extends Phaser.Scene {
           });
         }
       });
-      // D-041 R38: Spiegel-Pflanze rechts für Tiefe + Symmetrie
+      // D-041 R38: Spiegel-Pflanze rechts fÃ¼r Tiefe + Symmetrie
       const mirrorStages = ['steinblatt_stage_0_seed.webp', 'steinblatt_stage_1_sprout.webp', 'steinblatt_stage_2_juvenile.webp', 'steinblatt_stage_3_adult.webp'];
       const mirrorPlant = this.add.image(width - 60, height - 80, 'plants_sprint_0', mirrorStages[0])
         .setOrigin(0.5, 1).setScale(0.6).setAlpha(0.55).setFlipX(true);
@@ -414,11 +414,11 @@ export class MenuScene extends Phaser.Scene {
       },
       {
         title: 'Cozy plus Strategisch',
-        body: 'Garten-Hub für Pflege plus Zuchten.\nWelt-Erkundung für Wild-Encounter plus Quests.\nKein Stress: dein Tempo bestimmt der Tag.'
+        body: 'Garten-Hub fÃ¼r Pflege plus Zuchten.\nWelt-Erkundung fÃ¼r Wild-Encounter plus Quests.\nKein Stress: dein Tempo bestimmt der Tag.'
       },
       {
         title: 'Tipps zum Start',
-        body: 'X = Kreuzen plus G = Garten plus W = Welt\nKlick einen leeren Slot um zu pflanzen\nKlick eine Pflanze für Detail-Panel'
+        body: 'X = Kreuzen plus G = Garten plus W = Welt\nKlick einen leeren Slot um zu pflanzen\nKlick eine Pflanze fÃ¼r Detail-Panel'
       }
     ];
 
@@ -500,7 +500,7 @@ export class MenuScene extends Phaser.Scene {
     const txt = this.add.text(0, 0, label, {
       fontFamily: 'monospace', fontSize: '14px', color: accent
     }).setOrigin(0.5);
-    // D-041 R22: Hover/Press polish â fill tint + text brighten + scale
+    // D-041 R22: Hover/Press polish Ã¢ÂÂ fill tint + text brighten + scale
     bg.on('pointerover', () => {
       this.tweens.killTweensOf(c);
       this.tweens.add({ targets: c, scale: 1.06, duration: 150, ease: 'Back.Out' });
