@@ -79,11 +79,14 @@ export function showToast(
     : ((height / 2) + (opts.yOffset ?? 0)) / z;
 
   const baseScale = 1 / z;
+  // D-041 R20: Stroke fuer besseren Kontrast auf allen Hintergründen
   const toast = scene.add.text(x, y, message, {
     fontFamily: 'monospace',
     fontSize: opts.fontSize ?? '14px',
     color: COLOR_BY_TYPE[type],
-    backgroundColor: '#1a1f1a',
+    backgroundColor: '#1a1f1aee',
+    stroke: '#000000',
+    strokeThickness: 1,
     padding: opts.padding ?? { x: 10, y: 6 }
   })
     .setOrigin(0.5)

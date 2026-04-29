@@ -45,10 +45,20 @@ export class SplashScene extends Phaser.Scene {
     };
 
     if (isReturning) {
-      // Minimaler Splash: nur Titel-Text, kein aufwendiges Rendering
-      this.add.text(cx, cy, 'Plantinvasion', {
+      // D-041 R21: Returning-User — schneller aber nicht kahl
+      const titleR = this.add.text(cx, cy - 10, 'Plantinvasion', {
         fontFamily: 'monospace', fontSize: '32px', color: '#9be36e'
-      }).setOrigin(0.5).setAlpha(0.85);
+      }).setOrigin(0.5).setAlpha(0);
+      this.tweens.add({ targets: titleR, alpha: 0.9, scale: { from: 0.92, to: 1 }, duration: 300, ease: 'Back.Out' });
+      const subR = this.add.text(cx, cy + 32, '🌿 Willkommen zurück', {
+        fontFamily: 'monospace', fontSize: '12px', color: '#8a6e4a'
+      }).setOrigin(0.5).setAlpha(0);
+      this.tweens.add({ targets: subR, alpha: 1, duration: 250, delay: 150 });
+      // Minimal pollen (5 statt 25)
+      for (let i = 0; i < 5; i++) {
+        const pp = this.add.circle(Math.random() * width, height + 10, 2, 0xfcd95c, 0.5);
+        this.tweens.add({ targets: pp, y: -10, alpha: 0, duration: 800 + Math.random() * 400, delay: i * 100 });
+      }
       this.input.on('pointerdown', goToMenu);
       this.input.keyboard?.on('keydown', goToMenu);
       this.time.delayedCall(splashDuration, goToMenu);
@@ -90,10 +100,26 @@ export class SplashScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: title, alpha: 1, duration: 500, delay: 300 });
 
-    const hint = this.add.text(cx, cy + 120, 'Klick oder Taste zum Starten...', {
+    // D-041 R21: Animierte Dots statt statischer Hint
+    const hint = this.add.text(cx, cy + 120, 'Lädt', {
       fontFamily: 'monospace', fontSize: '11px', color: '#8a6e4a'
     }).setOrigin(0.5).setAlpha(0);
-    this.tweens.add({ targets: hint, alpha: 1, duration: 400, delay: 1000 });
+    this.tweens.add({ targets: hint, alpha: 1, duration: 400, delay: 800 });
+    let dots = 0;
+    const dotTimer = this.time.addEvent({
+      delay: 400,
+      loop: true,
+      startAt: 800,
+      callback: () => {
+        dots = (dots + 1) % 4;
+        hint.setText('Lädt' + '.'.repeat(dots));
+      }
+    });
+    void dotTimer;
+    const tapHint = this.add.text(cx, cy + 136, 'Tippen zum Überspringen', {
+      fontFamily: 'monospace', fontSize: '9px', color: '#5a4e3a'
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: tapHint, alpha: 0.7, duration: 300, delay: 1600 });
 
     const barW = 200;
     const barH = 4;

@@ -93,6 +93,8 @@ export class GardenScene extends Phaser.Scene {
     generateAllPlantStages(this);
 
     this.cameras.main.setBackgroundColor('#2d3a2a');
+    // D-041 R16: Fade-In beim Scene-Einstieg
+    this.cameras.main.fadeIn(280, 0, 0, 0);
 
     // Boden-Tile-Background (Sprint 1 Atlas): full-screen 32x32 Tile-Pattern
     // mit ground_erdig-Variationen rotiert per Hash-Index. Subtle Alpha
@@ -636,7 +638,7 @@ export class GardenScene extends Phaser.Scene {
     const isMutation = !!result.child?.isMutation;
     this.playHybridReveal(isMutation);
     this.showFlash(isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', successColor);
-    // Scale-In der neuen Hybrid-Card sobald renderPlants sie erstellt hat
+    // D-041 R18: Scale-In + 3-Pulse Glow auf neuer Hybrid-Card
     if (result.child) {
       const hybridId = result.child.id;
       this.time.delayedCall(20, () => {
@@ -644,11 +646,33 @@ export class GardenScene extends Phaser.Scene {
         if (!newCard) return;
         const targetScale = newCard.container.scale || 1;
         newCard.container.setScale(0);
+        // Scale-in mit overshooting Back.Out
         this.tweens.add({
           targets: newCard.container,
           scale: targetScale,
-          duration: 420,
-          ease: 'Back.Out'
+          duration: 480,
+          ease: 'Back.Out',
+          onComplete: () => {
+            // 3x Pulse-Glow nach Reveal
+            let pulses = 0;
+            const doPulse = () => {
+              if (pulses >= 3) return;
+              pulses++;
+              this.tweens.add({
+                targets: newCard.container,
+                scaleX: targetScale * 1.08,
+                scaleY: targetScale * 1.08,
+                duration: 140,
+                ease: 'Sine.Out',
+                yoyo: true,
+                onComplete: () => {
+                  newCard.container.setScale(targetScale);
+                  this.time.delayedCall(180, doPulse);
+                }
+              });
+            };
+            doPulse();
+          }
         });
       });
     }
@@ -1382,7 +1406,35 @@ export class GardenScene extends Phaser.Scene {
           const parts = [`+${result.coins} Coin`];
           if (result.seedSlug) parts.push(`+1 ${result.seedSlug} Samen`);
           if (result.pollen) parts.push(`+1 Pristine-Pollen`);
-          this.showFlash(`Ernte: ${parts.join(', ')}`, '#ffd166');
+          // D-041 R23: Harvest-Animation — Coin-Burst aus Karte
+          const card = this.cards.get(plant.id);
+          if (card) {
+            const cx = card.container.x;
+            const cy = card.container.y;
+            // Coin-Burst: 8 goldene Kreise fliegen nach oben
+            for (let i = 0; i < 8; i++) {
+              const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
+              const dist = 40 + Math.random() * 50;
+              const coin = this.add.circle(cx, cy, 4, 0xffd166, 1).setDepth(2000);
+              this.tweens.add({
+                targets: coin,
+                x: cx + Math.cos(angle) * dist,
+                y: cy + Math.sin(angle) * dist - 20,
+                alpha: 0,
+                scale: 0.3,
+                duration: 600 + Math.random() * 300,
+                ease: 'Cubic.Out',
+                onComplete: () => coin.destroy()
+              });
+            }
+            // Card shrink + flash bei Ernte
+            this.tweens.add({
+              targets: card.container,
+              scaleX: 1.15, scaleY: 1.15,
+              duration: 100, ease: 'Cubic.Out', yoyo: true
+            });
+          }
+          this.showFlash(`🌾 Ernte: ${parts.join(', ')}`, '#ffd166');
           this.openDetailPanel(plant.id);
         } else {
           this.showFlash(result.reason ?? 'Ernte fehlgeschlagen', '#ff8c42');

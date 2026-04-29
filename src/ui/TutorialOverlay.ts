@@ -9,34 +9,35 @@ export interface TutorialStep {
   advanceWhen?: (ctx: { tileX: number; tileY: number; facing: string; isMoving: boolean; lastInteract?: string }) => boolean;
 }
 
+// D-041 R19: Tutorial-Texte überarbeitet — persönlicher, klarer, Stardew-Warmth
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     step: 0,
-    title: 'Willkommen in Wurzelheim',
-    text: 'Du bist die wandernde Botanikerin. Druecke [Weiter] um zu beginnen.'
+    title: '🌿 Willkommen, Tilda!',
+    text: 'Wurzelheim begrüsst dich. Du bist die wandernde Botanikerin,\ndie dieses Tal mit seltenen Pflanzen erfüllen wird.\nDrücke [Weiter] — dein Abenteuer beginnt jetzt.'
   },
   {
     step: 1,
-    title: 'Bewegung',
-    text: 'Bewege dich mit WASD oder den Pfeiltasten. Halte Shift fuer Rennen.\nLaufe einen Tile in eine Richtung.',
+    title: '👣 Erste Schritte',
+    text: 'Bewege dich mit W A S D oder den Pfeiltasten.\nShift = Rennen. Probier es aus — lauf einfach irgendwohin!',
     advanceWhen: (ctx) => ctx.tileX !== 14 || ctx.tileY !== 17
   },
   {
     step: 2,
-    title: 'NPCs ansprechen',
-    text: 'Anya, Bjoern und Clara warten in der Naehe der Marktstaende.\nLaufe zu einem NPC und druecke E um zu reden.',
+    title: '💬 Die Dorfbewohner',
+    text: 'Anya, Björn und Clara stehen bei den Marktständen.\nLauf zu einem und drücke E — sie haben Tipps für dich.',
     advanceWhen: (ctx) => ctx.lastInteract === 'npc'
   },
   {
     step: 3,
-    title: 'Garten betreten',
-    text: 'Die goldene Tuer am Spielerhaus (oben in der Mitte) fuehrt zum Garten.\nDort waechst dein Sonnenblumen-Setzling. X kreuzt 2 Pflanzen, O bringt zurueck.',
+    title: '🪴 Dein Garten wartet',
+    text: 'Die goldene Tür am Spielerhaus führt zu deinem Garten.\nDein erster Sämling ist schon eingepflanzt.\nX = Kreuzen   O = Zurück zur Overworld',
     advanceWhen: (ctx) => ctx.lastInteract === 'garden'
   },
   {
     step: 4,
-    title: 'Hotkeys merken',
-    text: 'M = Markt   P = Pokedex   Q = Quests\nE = NPC reden   Shift = Rennen\n\nViel Spass beim Erkunden!'
+    title: '🗺️ Alles im Überblick',
+    text: 'M = Markt     P = Pokédex     Q = Quests\nE = Reden      Shift = Rennen\n\nViel Freude beim Züchten! 🌱'
   }
 ];
 
@@ -50,8 +51,6 @@ export class TutorialOverlay {
   private titleText!: Phaser.GameObjects.Text;
   private bodyText!: Phaser.GameObjects.Text;
   private currentStep = -1;
-  private progressBar!: Phaser.GameObjects.Graphics;
-  private stepText!: Phaser.GameObjects.Text;
   private uiCam!: Phaser.Cameras.Scene2D.Camera;
   public lastInteract: string | undefined;
 
@@ -90,13 +89,9 @@ export class TutorialOverlay {
     });
 
     const nextBtn = this.makeButton(w / 2 - 60, h / 2 - 18, 'Weiter', '#9be36e', () => this.handleNext());
-    const skipBtn = this.makeButton(-w / 2 + 50, h / 2 - 18, 'Überspringen', '#888888', () => this.handleSkip());
-    // S-POLISH-B2-R7: Progress-Bar und Schritt-Anzeige
-    this.progressBar = this.scene.add.graphics();
-    this.stepText = this.scene.add.text(w / 2 - 12, -h / 2 + 10, '', {
-      fontFamily: 'monospace', fontSize: '9px', color: '#888888'
-    }).setOrigin(1, 0);
-    this.container.add([bg, this.titleText, this.bodyText, this.progressBar, this.stepText, nextBtn, skipBtn]);
+    const skipBtn = this.makeButton(-w / 2 + 50, h / 2 - 18, 'Skip', '#ff7e7e', () => this.handleSkip());
+
+    this.container.add([bg, this.titleText, this.bodyText, nextBtn, skipBtn]);
 
     // Camera-Routing: Main-Cam ignoriert Tutorial, UI-Cam ignoriert World
     cam.ignore(this.container);
@@ -172,27 +167,11 @@ export class TutorialOverlay {
       return;
     }
     this.container.setVisible(true);
-    this.titleText.setText(def.title);
+    this.titleText.setText(`(${t.step + 1}/${TUTORIAL_STEPS.length})  ${def.title}`);
     this.bodyText.setText(def.text);
-    // S-POLISH-B2-R7: Progress-Bar aktualisieren
-    this.stepText?.setText(`${t.step + 1}/${TUTORIAL_STEPS.length}`);
-    if (this.progressBar) {
-      this.progressBar.clear();
-      const barW = 200;
-      const barX = -barW / 2;
-      const barY = 52; // Unter dem Body-Text
-      this.progressBar.fillStyle(0x333333, 0.8);
-      this.progressBar.fillRoundedRect(barX, barY, barW, 4, 2);
-      const progress = (t.step + 1) / TUTORIAL_STEPS.length;
-      this.progressBar.fillStyle(0x9be36e, 1);
-      this.progressBar.fillRoundedRect(barX, barY, progress * barW, 4, 2);
-    }
     if (this.currentStep !== t.step) {
       sfx.dialogOpen();
       this.currentStep = t.step;
-      // S-POLISH-B2-R7: Slide-In Animation bei jedem Schritt-Wechsel
-      this.container.setAlpha(0.5);
-      this.scene.tweens.add({ targets: this.container, alpha: 1, duration: 200, ease: 'Cubic.Out' });
     }
   }
 

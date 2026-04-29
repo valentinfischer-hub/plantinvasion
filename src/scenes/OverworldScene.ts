@@ -517,8 +517,18 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private showZoneToast(zone: string): void {
-    // Tier-3 V0.2: Zone-Toast als Header-Variante des zentralen Helpers.
-    const label = zone.charAt(0).toUpperCase() + zone.slice(1);
+    // D-041 R24: Zone-Toast mit Emoji + deutschen Namen
+    const ZONE_LABELS: Record<string, string> = {
+      wurzelheim: '🌿 Wurzelheim',
+      verdanto: '🌲 Verdanto',
+      kaktoria: '🌵 Kaktoria',
+      frostkamm: '❄️ Frostkamm',
+      salzbucht: '🌊 Salzbucht',
+      mordwald: '🍄 Mordwald',
+      glaciara: '🧊 Glaciara',
+      magmabluete: '🔥 Magmablüte',
+    };
+    const label = ZONE_LABELS[zone] ?? (zone.charAt(0).toUpperCase() + zone.slice(1));
     const cam = this.cameras.main;
     const toast = showToast(this, label, 'success', {
       cameraZoom: cam.zoom || 1,
@@ -526,7 +536,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       fontSize: '18px',
       padding: { x: 14, y: 6 },
       depth: 1950,
-      duration: 1200,
+      duration: 1400,
       delay: 1500
     });
     this.registerInAllUiCams(toast);
