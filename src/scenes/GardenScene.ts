@@ -76,6 +76,8 @@ export class GardenScene extends Phaser.Scene {
   // B6-R1: Empty-Slot-Placeholder — dezente Samen-Symbole in leeren Slots
   private emptySlotGraphics?: Phaser.GameObjects.Graphics;
   private emptySlotTexts: Phaser.GameObjects.Text[] = [];
+  // R57: Glow-Circles fuer leere Slots (pulsierend)
+  private emptySlotGlows: Phaser.GameObjects.Arc[] = [];
 
   constructor() {
     super('GardenScene');
@@ -880,6 +882,9 @@ export class GardenScene extends Phaser.Scene {
     }
     this.emptySlotTexts.forEach((t) => t.destroy());
     this.emptySlotTexts = [];
+    // R57: Alte Glow-Circles entfernen
+    this.emptySlotGlows.forEach((g) => { this.tweens.killTweensOf(g); g.destroy(); });
+    this.emptySlotGlows = [];
 
     const g = this.emptySlotGraphics;
     for (let y = 0; y < GRID_ROWS; y++) {
@@ -888,20 +893,34 @@ export class GardenScene extends Phaser.Scene {
         const sx = this.gridOriginX + x * (TILE + TILE_PAD) + TILE / 2;
         const sy = this.gridOriginY + y * (TILE + TILE_PAD) + TILE / 2;
 
+        // R57: Pulsierender Glow-Ring (hellgruen, dezent)
+        const glow = this.add.arc(sx, sy - 6, 20, 0, 360, false, 0x9be36e, 0.06)
+          .setDepth(0);
+        this.emptySlotGlows.push(glow);
+        this.tweens.add({
+          targets: glow,
+          scaleX: 1.18, scaleY: 1.18,
+          alpha: { from: 0.04, to: 0.14 },
+          duration: 1800 + (x * 7 + y * 13) * 50,
+          ease: 'Sine.InOut',
+          yoyo: true,
+          repeat: -1,
+          delay: (x + y * GRID_COLUMNS) * 120
+        });
+
         // Dezenter Samen-Kreis
-        g.lineStyle(1.5, 0x5a7050, 0.35);
-        g.strokeCircle(sx, sy - 6, 14);
-        // Mini-Kreuz im Zentrum
-        g.lineStyle(1, 0x5a7050, 0.4);
-        g.lineBetween(sx, sy - 14, sx, sy + 2);
-        g.lineBetween(sx - 8, sy - 6, sx + 8, sy - 6);
+        g.lineStyle(1.5, 0x6a8060, 0.5);
+        g.strokeCircle(sx, sy - 6, 16);
+        // Seed-Punkt im Zentrum
+        g.fillStyle(0x7a9070, 0.4);
+        g.fillCircle(sx, sy - 6, 3);
 
         // "+"-Text dezent
-        const txt = this.add.text(sx, sy + 10, 'pflanzen', {
+        const txt = this.add.text(sx, sy + 14, '+ pflanzen', {
           fontFamily: 'monospace',
           fontSize: '7px',
-          color: '#4a6040',
-        }).setAlpha(0.45).setOrigin(0.5, 0).setDepth(2);
+          color: '#6a9060',
+        }).setAlpha(0.55).setOrigin(0.5, 0).setDepth(2);
         this.emptySlotTexts.push(txt);
       }
     }
