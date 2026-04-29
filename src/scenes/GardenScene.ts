@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { t } from '../i18n';
 import { gameStore, GRID_COLUMNS, GRID_ROWS } from '../state/gameState';
 import {
   stageOf,
@@ -59,7 +58,7 @@ export class GardenScene extends Phaser.Scene {
   private gridOriginX = 0;
   private gridOriginY = 0;
   private cards: Map<string, PlantCard> = new Map();
-  // S-POLISH Run16: Subscribe-Throttle â renderPlants() max 1x alle 500ms aus der store-Subscription
+  // S-POLISH Run16: Subscribe-Throttle — renderPlants() max 1x alle 500ms aus der store-Subscription
   private _renderPending = false;
   private crossMode = false;
   private crossFirstPlantId: string | null = null;
@@ -146,7 +145,7 @@ export class GardenScene extends Phaser.Scene {
         const sx = this.gridOriginX + x * (TILE + TILE_PAD);
         const sy = this.gridOriginY + y * (TILE + TILE_PAD);
         const slot = this.add.graphics();
-        // QW-14: Slot-Farbvariation per Position â leicht unterschiedliche Erdtoene
+        // QW-14: Slot-Farbvariation per Position – leicht unterschiedliche Erdtoene
         const hash = (x * 3 + y * 7) % 6;
         const slotColors = [0x223520, 0x1e3018, 0x27391e, 0x1c2e16, 0x243822, 0x1a2c14];
         const borderColors = [0x44603f, 0x3a5234, 0x4e6a47, 0x3c5838, 0x486244, 0x405a3a];
@@ -211,7 +210,7 @@ export class GardenScene extends Phaser.Scene {
     });
 
     gameStore.subscribe(() => {
-      // S-POLISH Run16: Throttle â verzoegert renderPlants() via rAF-Debounce (max 1x pro Frame)
+      // S-POLISH Run16: Throttle — verzoegert renderPlants() via rAF-Debounce (max 1x pro Frame)
       if (!this._renderPending) {
         this._renderPending = true;
         this.time.delayedCall(500, () => {
@@ -286,7 +285,7 @@ export class GardenScene extends Phaser.Scene {
     this.refreshCrossUI();
     this.renderPlants();
 
-    // P0 Fix 3 (D-041): Cross-Mode Affordance â Pulse + Shake + Toast
+    // P0 Fix 3 (D-041): Cross-Mode Affordance — Pulse + Shake + Toast
     if (this.crossBtnBg && this.crossBtnTxt) {
       if (this.crossMode) {
         // Aktivierung: Gold-Pulse auf Button + Shake-Feedback
@@ -310,9 +309,9 @@ export class GardenScene extends Phaser.Scene {
             }
           }
         });
-        this.showFlash('Cross-Mode aktiv â wÃ¤hle erste Pflanze', '#fcd95c');
+        this.showFlash('Cross-Mode aktiv — wähle erste Pflanze', '#fcd95c');
       } else {
-        // Deaktivierung: alle Pulse-Tweens stoppen, zurÃ¼cksetzen
+        // Deaktivierung: alle Pulse-Tweens stoppen, zurücksetzen
         this.tweens.killTweensOf(this.crossBtnTxt);
         this.tweens.killTweensOf(this.crossBtnBg);
         this.crossBtnTxt?.setAlpha(1);
@@ -783,7 +782,7 @@ export class GardenScene extends Phaser.Scene {
   private refreshHeader(): void {
     const state = gameStore.get();
     this.headerText.setText(
-      `Plantinvasion Â· ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS} Â· Coins ${state.coins}`
+      `Plantinvasion · ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS} · Coins ${state.coins}`
     );
   }
 
@@ -1070,7 +1069,7 @@ export class GardenScene extends Phaser.Scene {
     if (stage > card.lastSeenStage) {
       this.spawnStageUpBurst(card.container.x, card.container.y);
       card.lastSeenStage = stage;
-      // R9: Morph â altes Sprite fade-out + scale 0.8, dann neue Textur + fade-in 0.8â1.0
+      // R9: Morph — altes Sprite fade-out + scale 0.8, dann neue Textur + fade-in 0.8→1.0
       this.tweens.add({
         targets: card.sprite,
         alpha: 0,
@@ -1119,7 +1118,7 @@ export class GardenScene extends Phaser.Scene {
       let soilAlpha: number;
       const hStatus2 = hydrationStatus(plant);
       if (hStatus2 === 'saftig') {
-        // ÃberwÃ¤ssert: blÃ¤ulich
+        // Überwässert: bläulich
         soilColor = 0x5b9bd6; soilAlpha = 0.45;
       } else if (hMin < 60) {
         // Feucht (< 1h): dunkelbraun
@@ -1147,9 +1146,9 @@ export class GardenScene extends Phaser.Scene {
       if (activeBoosters2.length > 0) {
         // Bestimme dominante Booster-Farbe (erste aktive)
         const b = activeBoosters2[0];
-        let glowColor = 0x4caf50; // Grow = grÃ¼n (default)
+        let glowColor = 0x4caf50; // Grow = grün (default)
         if (b.type === 'xp') {
-          glowColor = 0x4caf50;     // Grow-XP = grÃ¼n
+          glowColor = 0x4caf50;     // Grow-XP = grün
         } else if (b.type === 'sun-lamp') {
           glowColor = 0xffd700;    // Pristine = gold
         } else if (b.type === 'sprinkler') {
@@ -1318,7 +1317,7 @@ export class GardenScene extends Phaser.Scene {
       `ATK ${plant.stats.atk}  DEF ${plant.stats.def}  SPD ${plant.stats.spd}`,
       `Generation: F${plant.generation}${plant.isMutation ? ' (Mutation' + (plant.mutationKind ? '-' + plant.mutationKind : '') + ')' : ''}`,
       `Rolle: ${plantRole(plant).role} (${plantRole(plant).hint})`,
-      plant.hydration >= 80 ? t('garden.genGrowth') : (plant.hydration < 25 ? t('garden.genDefense') : ''),
+      plant.hydration >= 80 ? 'Gen: Growth-Gen aktiv (+Wachstum)' : (plant.hydration < 25 ? 'Gen: Resistenz-Gen aktiv (+Defense)' : ''),
       plant.genes ? this.formatGeneSummary(plant) : ''
     ].filter((l) => l !== '');
     const stats = this.add.text(-panelW / 2 + 14, -panelH / 2 + 50, lines.join('\n'), {
@@ -1442,7 +1441,7 @@ export class GardenScene extends Phaser.Scene {
     // Wasser-Button
     const ready = canBeWatered(plant);
     const btnLabelW = ready
-      ? (plant.hydration < 50 ? t('garden.btnWaterCare') : t('garden.btnWaterXp'))
+      ? (plant.hydration < 50 ? 'Giessen (+5 XP, +Care)' : 'Giessen (+5 XP)')
       : `Wasser CD ${Math.ceil(waterCooldownRemaining(plant) / 1000)}s`;
     const waterBtn = this.add.text(-90, panelH / 2 - 30, btnLabelW, {
       fontFamily: 'monospace',
@@ -1458,6 +1457,28 @@ export class GardenScene extends Phaser.Scene {
         const { plant: updated } = waterPlant(p);
         return updated;
       });
+      // D-041 R28: Wasser-Ripple-Animation — 3 konzentrische Ringe expandieren
+      const card = this.cards.get(plant.id);
+      if (card) {
+        const cx = card.container.x;
+        const cy = card.container.y;
+        for (let ri = 0; ri < 3; ri++) {
+          const ring = this.add.circle(cx, cy, 8, 0x5b8de8, 0)
+            .setStrokeStyle(2, 0x5b8de8, 0.8 - ri * 0.2)
+            .setDepth(200);
+          this.tweens.add({
+            targets: ring,
+            scaleX: 3 + ri * 1.5,
+            scaleY: 3 + ri * 1.5,
+            alpha: 0,
+            duration: 500 + ri * 150,
+            delay: ri * 100,
+            ease: 'Cubic.Out',
+            onComplete: () => ring.destroy()
+          });
+        }
+      }
+      this.showToast('💧 Gegossen!');
       this.openDetailPanel(plant.id);
     });
     container.add(waterBtn);
@@ -1477,7 +1498,7 @@ export class GardenScene extends Phaser.Scene {
           const parts = [`+${result.coins} Coin`];
           if (result.seedSlug) parts.push(`+1 ${result.seedSlug} Samen`);
           if (result.pollen) parts.push(`+1 Pristine-Pollen`);
-          // D-041 R23: Harvest-Animation â Coin-Burst aus Karte
+          // D-041 R23: Harvest-Animation — Coin-Burst aus Karte
           const card = this.cards.get(plant.id);
           if (card) {
             const cx = card.container.x;
@@ -1505,7 +1526,7 @@ export class GardenScene extends Phaser.Scene {
               duration: 100, ease: 'Cubic.Out', yoyo: true
             });
           }
-          this.showFlash(`ð¾ Ernte: ${parts.join(', ')}`, '#ffd166');
+          this.showFlash(`🌾 Ernte: ${parts.join(', ')}`, '#ffd166');
           this.openDetailPanel(plant.id);
         } else {
           this.showFlash(result.reason ?? 'Ernte fehlgeschlagen', '#ff8c42');
@@ -1525,7 +1546,7 @@ export class GardenScene extends Phaser.Scene {
     }
 
     // Booster-Apply-Button
-    const boosterBtn = this.add.text(-90, panelH / 2 - 56, t('garden.btnBooster'), {
+    const boosterBtn = this.add.text(-90, panelH / 2 - 56, 'Booster anwenden', {
       fontFamily: 'monospace', fontSize: '10px', color: '#1a1f1a',
       backgroundColor: '#ffd166',
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
@@ -1536,7 +1557,7 @@ export class GardenScene extends Phaser.Scene {
     container.add(boosterBtn);
 
     // Soil-Upgrade-Button
-    const soilBtn = this.add.text(90, panelH / 2 - 56, t('garden.btnSoilUpgrade'), {
+    const soilBtn = this.add.text(90, panelH / 2 - 56, 'Soil upgraden', {
       fontFamily: 'monospace', fontSize: '10px', color: '#1a1f1a',
       backgroundColor: '#b86ee3',
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
@@ -1592,7 +1613,7 @@ export class GardenScene extends Phaser.Scene {
     const bg = this.add.graphics();
     drawModalBox(bg, { width: panelW, height: panelH, borderColor: 0xffd166 });
     container.add(bg);
-    const title = this.add.text(0, -panelH / 2 + 12, t('garden.btnBooster'), {
+    const title = this.add.text(0, -panelH / 2 + 12, 'Booster anwenden', {
       fontFamily: 'monospace', fontSize: '13px', color: '#ffd166'
     }).setOrigin(0.5, 0);
     container.add(title);
