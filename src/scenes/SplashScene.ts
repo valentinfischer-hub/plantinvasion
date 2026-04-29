@@ -136,7 +136,7 @@ export class SplashScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: hint, alpha: 1, duration: 400, delay: 800 });
     let dots = 0;
-    const dotTimer = this.time.addEvent({
+    this.time.addEvent({
       delay: 400,
       loop: true,
       startAt: 800,
@@ -145,7 +145,6 @@ export class SplashScene extends Phaser.Scene {
         hint.setText('Lädt' + '.'.repeat(dots));
       }
     });
-    void dotTimer;
     const tapHint = this.add.text(cx, cy + 136, 'Tippen zum Überspringen', {
       fontFamily: 'monospace', fontSize: '9px', color: '#5a4e3a'
     }).setOrigin(0.5).setAlpha(0);
