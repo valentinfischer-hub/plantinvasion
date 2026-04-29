@@ -37,6 +37,7 @@ import { AmbientParticles } from '../ui/AmbientParticles';
 import { debugLog } from '../utils/debugLog';
 import { t } from '../i18n/index';
 import { showToast } from '../ui/Toast';
+import { showAchievementToast as showAchievementToastUI, type AchievementRank } from '../ui/AchievementToast';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
 import { evaluateAct2Progress, autoSetAct2Flags } from '../data/storyAct2';
@@ -389,46 +390,18 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private showAchievementToast(slug: string): void {
     const def = getAchievement(slug);
     if (!def) return;
-    const cam = this.cameras.main;
-    const z = cam.zoom || 1;
-    // Camera-Zoom-aware Position (siehe DialogBox.ts)
-    const container = this.add
-      .container(cam.width / 2 / z, 80 / z)
-      .setScrollFactor(0)
-      .setDepth(2100)
-      .setScale(1 / z);
-    const bg = this.add.graphics();
-    bg.fillStyle(0xffd166, 0.95);
-    bg.fillRoundedRect(-160, -28, 320, 56, 8);
-    bg.lineStyle(2, 0xb86ee3, 1);
-    bg.strokeRoundedRect(-160, -28, 320, 56, 8);
-    container.add(bg);
-    const title = this.add.text(0, -16, 'Achievement!', {
-      fontFamily: FONT_FAMILY, fontSize: '12px', color: '#1a1f1a'
-    }).setOrigin(0.5, 0);
-    const name = this.add.text(0, 4, def.name, {
-      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: '#1a1f1a'
-    }).setOrigin(0.5, 0);
-    container.add([title, name]);
-    this.registerInAllUiCams(container);
     sfx.dialogOpen();
-    // S-POLISH Run-2: Entrance-Animation (Scale + Alpha-In) dann Fade-Out
-    container.setScale(0.85);
-    container.setAlpha(0);
-    this.tweens.add({
-      targets: container,
-      scale: 1,
-      alpha: 1,
-      duration: 280,
-      ease: 'Back.Out'
-    });
-    this.tweens.add({
-      targets: container,
-      alpha: 0,
-      delay: 3200,
-      duration: 600,
-      ease: 'Cubic.Out',
-      onComplete: () => container.destroy()
+    // B6-R2: Upgrade auf AchievementToast-UI mit Slide-In + Bronze/Silber/Gold-Rank
+    const rank: AchievementRank = def.rewardCoins && def.rewardCoins >= 200
+      ? 'gold'
+      : def.rewardCoins && def.rewardCoins >= 100
+        ? 'silver'
+        : 'bronze';
+    showAchievementToastUI(this, {
+      name: def.name,
+      description: def.description ?? undefined,
+      rank,
+      dismissMs: 4000,
     });
   }
 
