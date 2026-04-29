@@ -17,7 +17,7 @@
   "settings.localeDe": "DE",
   "settings.localeEn": "EN",
   "battle.attack": "Attack",
-  "battle.flee": "Flee (70%)",
+  "battle.flee": "You flee from the battle.",
   "battle.win": "Victory!",
   "battle.lose": "Defeat",
   "garden.water": "Water",
@@ -49,10 +49,10 @@
   "garden.btnCross": "Cross",
   "garden.btnCrossActive": "Active",
   "garden.btnCrossConfirm": "Cross!",
-  "garden.crossModeOn": "Cross mode active â select first plant",
+  "garden.crossModeOn": "Cross mode active Ã¢ÂÂ select first plant",
   "garden.hintFirstPlant": "Cross mode: click first plant to select",
   "garden.hintSecondPlant": "Select second plant (Cross btn to cancel)",
-  "garden.samePlant": "Same plant â select a different one",
+  "garden.samePlant": "Same plant Ã¢ÂÂ select a different one",
   "garden.crossPreviewTitle": "Crossing Preview",
   "garden.crossFailed": "Crossing failed",
   "garden.crossSuccess": "Crossing successful",
@@ -101,5 +101,9 @@
   "score.highscores": "Leaderboard",
   "score.dailyChallenge": "Daily Challenge",
   "score.points": "{{n}} Points",
-  "score.multiplier": "x{{n}} Multiplier"
+  "score.multiplier": "x{{n}} Multiplier",
+  "battle.caught": "{{name}} was caught!",
+  "battle.catchFail": "Catch attempt failed.",
+  "battle.rootsTrap": "You are trapped by roots and cannot flee.",
+  "battle.fleeFail": "Failed to flee!"
 }
