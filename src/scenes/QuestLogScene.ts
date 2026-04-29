@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { QUESTS } from '../data/quests';
 import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { t } from '../i18n/index';
 
 /**
  * Quest-Log: zeigt aktive und abgeschlossene Quests.
@@ -26,7 +27,7 @@ export class QuestLogScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1a2820');
 
-    this.add.text(width / 2, 24, 'Tagebuch', {
+    this.add.text(width / 2, 24, t('qls.title'), {
       fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
 
@@ -42,7 +43,7 @@ export class QuestLogScene extends Phaser.Scene {
     const bg = this.add.rectangle(width / 2, backY, 160, 32, 0x000000, 0.7)
       .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, backY, 'Zurück (B)', {
+    this.add.text(width / 2, backY, t('qls.back'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');
@@ -57,9 +58,9 @@ export class QuestLogScene extends Phaser.Scene {
 
   private _buildFilterTabs(width: number): void {
     const filters: { key: QuestFilter; label: string }[] = [
-      { key: 'all',       label: 'Alle' },
-      { key: 'active',    label: 'Aktiv' },
-      { key: 'completed', label: 'Abgeschlossen' },
+      { key: 'all',       label: t('qls.filterAll') },
+      { key: 'active',    label: t('qls.filterActive') },
+      { key: 'completed', label: t('qls.filterCompleted') },
     ];
     const tabW = 110;
     const tabH = 24;
