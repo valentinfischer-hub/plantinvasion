@@ -11,7 +11,7 @@
  */
 import Phaser from 'phaser';
 import type { DailyChallenge } from '../systems/scoreSystem';
-import { FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_TITLE, FONT_SIZE_SMALL, COLOR_SUCCESS, COLOR_REWARD, MODAL_BORDER_COLOR } from './uiTheme';
+import { FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_TITLE, FONT_SIZE_SMALL, COLOR_SUCCESS, COLOR_REWARD } from './uiTheme';
 import { sfx } from '../audio/sfxGenerator';
 
 export interface DailyChallengeModalData {
@@ -22,7 +22,6 @@ export interface DailyChallengeModalData {
   isCompleted: boolean;
 }
 
-const MS_PER_HOUR = 3600 * 1000;
 
 /** Berechnet verbleibende Zeit bis Mitternacht (naechste Challenge). */
 export function msUntilMidnight(now = Date.now()): number {
