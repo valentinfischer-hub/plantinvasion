@@ -259,7 +259,7 @@ export class MenuScene extends Phaser.Scene {
     by += 60;
     const _helpBtn = this.makeButton(cx, by, t('menu.help'), '#fcd95c', () => {
       sfx.dialogAdvance();
-      this.scene.start('HelpScene');
+      this.scene.start('HelpScene', { fromScene: 'MenuScene' });
     });
     by += 60;
 
