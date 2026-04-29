@@ -49,10 +49,10 @@
   "garden.btnCross": "Cross",
   "garden.btnCrossActive": "Active",
   "garden.btnCrossConfirm": "Cross!",
-  "garden.crossModeOn": "Cross mode active — select first plant",
+  "garden.crossModeOn": "Cross mode active â select first plant",
   "garden.hintFirstPlant": "Cross mode: click first plant to select",
   "garden.hintSecondPlant": "Select second plant (Cross btn to cancel)",
-  "garden.samePlant": "Same plant — select a different one",
+  "garden.samePlant": "Same plant â select a different one",
   "garden.crossPreviewTitle": "Crossing Preview",
   "garden.crossFailed": "Crossing failed",
   "garden.crossSuccess": "Crossing successful",
@@ -64,5 +64,12 @@
   "battle.captureFailed": "Catch attempt failed.",
   "battle.rooted": "You are rooted and cannot flee.",
   "battle.fleeSuccess": "You flee from battle.",
-  "battle.fleeFailed": "Escape failed!"
+  "battle.fleeFailed": "Escape failed!",
+  "garden.btnWaterCare": "Water (+5 XP, +Care)",
+  "garden.btnWaterXp": "Water (+5 XP)",
+  "garden.btnBooster": "Apply Booster",
+  "garden.btnSoilUpgrade": "Upgrade Soil",
+  "garden.genGrowth": "Gene: Growth Gene active (+Growth)",
+  "garden.genDefense": "Gene: Defense Gene active (+Defense)",
+  "garden.genNone": ""
 }
