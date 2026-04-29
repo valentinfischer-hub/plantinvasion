@@ -140,7 +140,6 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
-    void stem; void leaf1; void leaf2; void flower; void flowerCenter;
     }
 
     // Spezies-Showcase: 6 Spezies als kleine Bloom-Sprites unten als Footer-Decoration
@@ -391,7 +390,6 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    void _hint; void _settingsBtn; void _helpBtn; void newGameBtn; void title; void subtitle;
   }
 
   private showWelcomeModal(): void {
