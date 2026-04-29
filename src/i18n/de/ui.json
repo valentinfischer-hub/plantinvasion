@@ -155,11 +155,12 @@
   "ow.save.indicator": "* gespeichert",
   "ow.dailyLogin.toast": "Tagesbelohnung: {{label}}"
 ,
-  "ccs.title": "Charakter erstellen",
-  "ccs.subtitle": "Gib deinem Botaniker einen Namen und wähle ein Aussehen.",
-  "ccs.nameLabel": "Dein Name:",
-  "ccs.avatarLabel": "Aussehen waehlen:",
-  "ccs.startBtn": "Spiel starten",
-  "ccs.skipBtn": "Ueberspringen",
-  "ccs.skipHint": "Standard: Botaniker + Avatar 1"
+  "qls.title": "Tagebuch",
+  "qls.back": "Zurueck (B)",
+  "qls.filterAll": "Alle",
+  "qls.filterActive": "Aktiv",
+  "qls.filterCompleted": "Abgeschlossen",
+  "inv.title": "Inventar",
+  "inv.back": "Zurueck (I)",
+  "inv.hint": "Klick auf Item fuer Details   Scrollen   I/Esc zurueck"
 }
