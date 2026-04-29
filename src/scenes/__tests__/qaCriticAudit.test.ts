@@ -1,7 +1,8 @@
+import { describe, test, it, expect, beforeEach, vi } from 'vitest';
 /**
  * QA-Critic-Audit Tests [b4-run12/15]
  * Validiert die 3 Top-Kritikpunkte aus brain/agents/qa-critic/stardew_audit_2026-04-29.md:
- * 1. BattleScene Biom-spezifische Hintergründe
+ * 1. BattleScene Biom-spezifische HintergrÃ¼nde
  * 2. BattleScene Pokemon-Style Positioning (wild links, player rechts)
  * 3. GardenScene Booster-Glow-Farben korrekt
  */
@@ -46,8 +47,8 @@ function getPlayerSpriteX(width: number): number {
   return width * 0.7; // rechts
 }
 
-describe('QA-Critic: BattleScene Biom-Hintergründe', () => {
-  test('Kaktoria = Wüsten-Tint (gold/braun)', () => {
+describe('QA-Critic: BattleScene Biom-HintergrÃ¼nde', () => {
+  test('Kaktoria = WÃ¼sten-Tint (gold/braun)', () => {
     const tints = getBiomTints('kaktoria-tallgrass');
     expect(tints.top).toBe(0xd4a855);
     expect(tints.bot).toBe(0xa87820);
