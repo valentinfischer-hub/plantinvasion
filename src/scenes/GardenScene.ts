@@ -252,7 +252,7 @@ export class GardenScene extends Phaser.Scene {
     }
 
     // Header-Button "Pflanze einsaeen"
-    const seedBtn = this.add.text(width - 70, 14, 'Saeen', {
+    const seedBtn = this.add.text(width - 70, 14, 'Säen', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#1a1f1a',
@@ -470,7 +470,7 @@ export class GardenScene extends Phaser.Scene {
     container.add(bg);
     // S-POLISH Run1: Slide-in von unten
     this.tweens.add({ targets: container, y: height / 2, duration: 280, ease: 'Cubic.Out' });
-    const title = this.add.text(0, -panelH / 2 + 12, `Pflanze einsaeen (${freeSlots} frei)`, {
+    const title = this.add.text(0, -panelH / 2 + 12, `Pflanze einsäen (${freeSlots} frei)`, {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
     }).setOrigin(0.5, 0);
     container.add(title);
@@ -839,7 +839,7 @@ export class GardenScene extends Phaser.Scene {
   private refreshHeader(): void {
     const state = gameStore.get();
     this.headerText.setText(
-      `Plantinvasion Â· ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS} Â· Coins ${state.coins}`
+      `Plantinvasion · ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS} · Coins ${state.coins}`
     );
     // R14: Coin-Counter Bounce bei Ãnderung
     if (state.coins !== this._lastCoinCount) {
