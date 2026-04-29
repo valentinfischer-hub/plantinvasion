@@ -38,6 +38,7 @@ import { debugLog } from '../utils/debugLog';
 import { t } from '../i18n/index';
 import { showToast } from '../ui/Toast';
 import { showAchievementToast as showAchievementToastUI, type AchievementRank } from '../ui/AchievementToast';
+import { SoundManager } from '../audio/SoundManager';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
 import { evaluateAct2Progress, autoSetAct2Flags } from '../data/storyAct2';
@@ -340,6 +341,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Farm-Button: persistent oben rechts, fuehrt zur GardenScene (alias "Farm")
     this.makeFarmButton();
+    this.makeMuteButton();
     if (this.input.keyboard) {
       const farmKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
       farmKey.on('down', () => this.gotoFarm());
@@ -432,6 +434,49 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     bg.on('pointerout', () => {
       this.tweens.add({ targets: c, scale: 1.0, duration: 100, ease: 'Cubic.Out' });
     });
+    if (this.miniMap) this.miniMap.ignoreInUICam(c);
+  }
+
+  /**
+   * B6-R9: Mute-Toggle-Button oben links im HUD.
+   * Zeigt 🔊 (laut) oder 🔇 (stumm) als Text-Icon.
+   */
+  private _muteBtnTxt?: Phaser.GameObjects.Text;
+
+  private makeMuteButton(): void {
+    const { width } = this.scale;
+    // Links vom Farm-Button platzieren
+    const btnX = width - 60 - 92 - 8;
+    const btnY = 22;
+    const c = this.add.container(btnX, btnY).setScrollFactor(0).setDepth(1900);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x1a2418, 0.85);
+    bg.fillRoundedRect(-20, -14, 40, 28, 6);
+    bg.lineStyle(1, 0x4a8228, 0.8);
+    bg.strokeRoundedRect(-20, -14, 40, 28, 6);
+
+    const icon = SoundManager.muted ? '🔇' : '🔊';
+    const txt = this.add.text(0, 0, icon, {
+      fontFamily: 'monospace', fontSize: '16px'
+    }).setOrigin(0.5);
+    this._muteBtnTxt = txt;
+
+    c.add([bg, txt]);
+    bg.setInteractive(new Phaser.Geom.Rectangle(-20, -14, 40, 28), Phaser.Geom.Rectangle.Contains);
+    bg.on('pointerdown', () => {
+      SoundManager.toggleMute();
+      if (this._muteBtnTxt) {
+        this._muteBtnTxt.setText(SoundManager.muted ? '🔇' : '🔊');
+      }
+    });
+    bg.on('pointerover', () => {
+      this.tweens.add({ targets: c, scale: 1.1, duration: 100, ease: 'Back.Out' });
+    });
+    bg.on('pointerout', () => {
+      this.tweens.add({ targets: c, scale: 1.0, duration: 100, ease: 'Cubic.Out' });
+    });
+
     if (this.miniMap) this.miniMap.ignoreInUICam(c);
   }
 
