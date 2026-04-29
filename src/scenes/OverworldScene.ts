@@ -517,6 +517,15 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private showZoneToast(zone: string): void {
+    // D-041 R39: Biome-Color-Flash beim Betreten neuer Zone
+    const BIOME_COLORS: Record<string, number> = {
+      wurzelheim: 0x4a7a4a, verdanto: 0x2d6b2d, kaktoria: 0xb87a2d,
+      frostkamm: 0x5588bb, salzbucht: 0x2d6888, mordwald: 0x4a3a2d,
+      glaciara: 0x88aacc, magmabluete: 0xbb4422
+    };
+    const bColor = BIOME_COLORS[zone] ?? 0x335533;
+    const cam = this.cameras.main;
+    cam.flash(400, (bColor >> 16) & 0xff, (bColor >> 8) & 0xff, bColor & 0xff, true);
     // D-041 R24: Zone-Toast mit Emoji + deutschen Namen
     const ZONE_LABELS: Record<string, string> = {
       wurzelheim: 'ð¿ Wurzelheim',

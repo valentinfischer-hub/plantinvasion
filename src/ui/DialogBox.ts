@@ -35,6 +35,7 @@ export class DialogBox {
   private typewriterIdx = 0;
   private boxW: number;
   private boxH: number;
+  private speakerLabel: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -65,7 +66,12 @@ export class DialogBox {
       color: '#9be36e'
     });
 
-    this.container.add([this.bg, this.text, this.hint]);
+    // D-041 R36: Speaker-Name-Label oben links im Dialog
+    this.speakerLabel = scene.add.text(-this.boxW / 2 + 12, -this.boxH / 2 - 18, '', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#fcd95c',
+      stroke: '#000000', strokeThickness: 2
+    });
+    this.container.add([this.bg, this.speakerLabel, this.text, this.hint]);
     this.container.setVisible(false);
   }
 
@@ -114,6 +120,15 @@ export class DialogBox {
   /** S-POLISH Run8: Typewriter mit Pause bei . und , */
   private startTypewriter(fullText: string): void {
     if (this.typewriterTimer) { this.typewriterTimer.destroy(); this.typewriterTimer = undefined; }
+    // D-041 R36: Speaker-Name aus 'Name: Text' extrahieren und als Header zeigen
+    const speakerMatch = fullText.match(/^([A-Za-z\u00C0-\u024F\s-]{2,20}):/);
+    if (speakerMatch) {
+      this.speakerLabel.setText(speakerMatch[1].trim());
+      this.speakerLabel.setVisible(true);
+      fullText = fullText.slice(speakerMatch[0].length).trimStart();
+    } else {
+      this.speakerLabel.setVisible(false);
+    }
     this.typewriterFull = fullText;
     this.typewriterIdx = 0;
     this.text.setText('');

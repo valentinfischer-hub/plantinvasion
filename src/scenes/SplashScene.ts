@@ -96,9 +96,33 @@ export class SplashScene extends Phaser.Scene {
     }
 
     const title = this.add.text(cx, cy + 70, 'Plantinvasion', {
-      fontFamily: 'monospace', fontSize: '32px', color: '#9be36e'
+      fontFamily: 'monospace', fontSize: '32px', color: '#9be36e',
+      stroke: '#1a3a1a', strokeThickness: 2
     }).setOrigin(0.5).setAlpha(0);
-    this.tweens.add({ targets: title, alpha: 1, duration: 500, delay: 300 });
+    this.tweens.add({ targets: title, alpha: 1, duration: 500, delay: 300,
+      onComplete: () => {
+        // D-041 R37: Sanftes Scale-Breathing auf Titel + Sparkle-Dots
+        this.tweens.add({
+          targets: title, scale: { from: 1, to: 1.03 },
+          duration: 2400, ease: 'Sine.InOut', yoyo: true, repeat: -1
+        });
+        // 8 Sparkle-Dots rund um den Titel
+        for (let si = 0; si < 8; si++) {
+          const angle = (Math.PI * 2 * si) / 8;
+          const r = 90 + Math.random() * 30;
+          const sx = cx + Math.cos(angle) * r;
+          const sy = (cy + 70) + Math.sin(angle) * 22;
+          const spark = this.add.circle(sx, sy, 2, 0xfcd95c, 0)
+            .setDepth(2);
+          this.tweens.add({
+            targets: spark, alpha: { from: 0, to: 0.85 },
+            duration: 500 + si * 80, ease: 'Cubic.Out',
+            yoyo: true, repeat: -1,
+            delay: 200 + si * 100
+          });
+        }
+      }
+    });
 
     // D-041 R21: Animierte Dots statt statischer Hint
     const hint = this.add.text(cx, cy + 120, 'Lädt', {

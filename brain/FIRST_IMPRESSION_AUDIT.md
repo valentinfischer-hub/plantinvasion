@@ -13,9 +13,9 @@ Alles was der Spieler in den **ersten 5 Minuten** sieht, hört, anklickt oder sp
 | Browser-Tab-Title plus Favicon | 0-2s | Art-UI plus Tech-Code | 3 | 1 | 2026-04-29 | Art-UI plus Tech-Code |
 | Boot-Time bis Title-Screen | 0-3s | Tech-Code | 4 | 3 | 2026-04-29 | Tech-Code |
 | Loading-Indicator-Animation | 0-3s | Art-UI | 4 | 2 | 2026-04-29 | Art-UI plus Tech-Code |
-| Title-Screen-Logo | 3-5s | Art-UI | 2 | 0 | n/a | Art-UI |
+| Title-Screen-Logo | 3-5s | Art-UI | 3 | 1 | 2026-04-29 | Art-UI plus Tech-Code |
 | Title-BGM (erste 10s) | 3-15s | Narrative-Sound | 1 | 0 | n/a | Narrative-Sound |
-| MenuScene-Layout | 5-15s | Art-UI plus Tech-Code | 4 | 4 | 2026-04-29 | Art-UI plus Tech-Code |
+| MenuScene-Layout | 5-15s | Art-UI plus Tech-Code | 5 | 5 | 2026-04-29 | Art-UI plus Tech-Code |
 | New-Game-Button-Hover plus Press | 10-15s | Art-UI | 3 | 2 | 2026-04-29 | Art-UI plus Tech-Code |
 | MenuScene-zu-GameScene-Transition | 15-20s | Art-UI plus Tech-Code | 3 | 2 | 2026-04-29 | Art-UI plus Tech-Code |
 | FTUE-Schritt 1 (Begrüssung) | 20-40s | Narrative-Sound plus Design-Balance | 3 | 2 | 2026-04-29 | Design-Balance plus Tech-Code |
@@ -23,7 +23,7 @@ Alles was der Spieler in den **ersten 5 Minuten** sieht, hört, anklickt oder sp
 | FTUE-Schritt 3 (Garden-Slot) | 60-90s | Design-Balance | 3 | 2 | 2026-04-29 | Design-Balance plus Tech-Code |
 | FTUE-Schritt 4 (Pflanze setzen) | 90-120s | Design-Balance plus Tech-Code | 3 | 2 | 2026-04-29 | Design-Balance plus Tech-Code |
 | FTUE-Schritt 5 (Wachstum) | 120-150s | Design-Balance plus Art-UI | 3 | 2 | 2026-04-29 | Design-Balance plus Tech-Code |
-| Tilda-Welcome-Dialog (3 Sätze) | 30-60s | Narrative-Sound | 2 | 1 | 2026-04-25 | Narrative-Sound |
+| Tilda-Welcome-Dialog (3 Sätze) | 30-60s | Narrative-Sound | 3 | 2 | 2026-04-29 | Narrative-Sound plus Tech-Code |
 | Tilda-Sprite-Idle | 30-300s | Art-UI | 2 | 1 | 2026-04-26 | Art-UI |
 | GardenScene-Initial-Render | 60-120s | Art-UI plus Tech-Code | 4 | 4 | 2026-04-29 | Art-UI plus Tech-Code |
 | Erste Bestäubungs-Animation | 120-180s | Art-UI plus Tech-Code | 4 | 3 | 2026-04-29 | Art-UI plus Tech-Code |

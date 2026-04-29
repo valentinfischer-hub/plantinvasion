@@ -364,6 +364,27 @@ export class MenuScene extends Phaser.Scene {
           });
         }
       });
+      // D-041 R38: Spiegel-Pflanze rechts fuer Tiefe + Symmetrie
+      const mirrorStages = ['steinblatt_stage_0_seed.webp', 'steinblatt_stage_1_sprout.webp', 'steinblatt_stage_2_juvenile.webp', 'steinblatt_stage_3_adult.webp'];
+      const mirrorPlant = this.add.image(width - 60, height - 80, 'plants_sprint_0', mirrorStages[0])
+        .setOrigin(0.5, 1).setScale(0.6).setAlpha(0.55).setFlipX(true);
+      this.tweens.add({
+        targets: mirrorPlant, scaleY: 0.63, scaleX: 0.57,
+        duration: 2100, ease: 'Sine.InOut', yoyo: true, repeat: -1, delay: 600
+      });
+      let mIdx = 0;
+      this.time.addEvent({
+        delay: 3800, loop: true,
+        callback: () => {
+          mIdx = (mIdx + 1) % mirrorStages.length;
+          this.tweens.add({ targets: mirrorPlant, alpha: 0.1, duration: 300, ease: 'Cubic.Out',
+            onComplete: () => {
+              mirrorPlant.setFrame(mirrorStages[mIdx]);
+              this.tweens.add({ targets: mirrorPlant, alpha: 0.55, duration: 300, ease: 'Cubic.Out' });
+            }
+          });
+        }
+      });
     }
 
     void _hint; void _settingsBtn; void _helpBtn; void newGameBtn; void title; void subtitle;
