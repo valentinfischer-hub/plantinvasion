@@ -38,7 +38,7 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
       {
         title: '⌨ Hotkeys Garten',
         lines: [
-          'S  — Pflanze einsaeen Modal',
+          'S  — Pflanze einsäen Modal',
           'X  — Erste 2 Pflanzen kreuzen',
           'O  — Zurück zur Welt',
           'Klick  — Detail-Panel mit Stats'
