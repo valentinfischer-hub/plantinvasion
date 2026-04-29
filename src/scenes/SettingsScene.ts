@@ -12,7 +12,7 @@ import { COLOR_ERROR, COLOR_INFO, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, F
 export class SettingsScene extends Phaser.Scene {
   private volumeBarFill!: Phaser.GameObjects.Rectangle;
   private volumeText!: Phaser.GameObjects.Text;
-  // S-POLISH-B2-R14: SFX + Music separate LautstÃ¤rke
+  // S-POLISH-B2-R14: SFX + Music separate Lautstärke
   private sfxBarFill!: Phaser.GameObjects.Rectangle;
   private sfxText!: Phaser.GameObjects.Text;
   private musicBarFill!: Phaser.GameObjects.Rectangle;
@@ -77,7 +77,7 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     by += 50;
-    // S-POLISH-B2-R14: SFX-LautstÃ¤rke-Slider
+    // S-POLISH-B2-R14: SFX-Lautstärke-Slider
     this.add.text(width / 2 - 150, by, t('settings.labelSfxVolume'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
     });
@@ -95,7 +95,7 @@ export class SettingsScene extends Phaser.Scene {
     sfxBarBg.on('pointermove', (p: Phaser.Input.Pointer) => { if (!p.isDown) return; this.setSfxVol(Math.max(0, Math.min(1, (p.x - sfxBarX) / sfxBarW))); });
 
     by += 44;
-    // S-POLISH-B2-R14: Musik-LautstÃ¤rke-Slider
+    // S-POLISH-B2-R14: Musik-Lautstärke-Slider
     this.add.text(width / 2 - 150, by, t('settings.labelMusicVolume'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD
     });
@@ -193,7 +193,7 @@ export class SettingsScene extends Phaser.Scene {
       sfx.click();
     });
     this.makeButton(width / 2 + 90, by, 'JSON importieren', COLOR_INFO, () => {
-      const json = prompt('Spielstand-JSON einfÃ¼gen:');
+      const json = prompt(t('settings.importPrompt'));
       if (!json) return;
       const r = gameStore.importSaveJSON(json);
       if (r.ok) {
@@ -213,7 +213,7 @@ export class SettingsScene extends Phaser.Scene {
 
     // Back
     const backY = height - 30;
-    this.makeButton(width / 2, backY, 'ZurÃ¼ck (Esc)', COLOR_SUCCESS, () => this.back());
+    this.makeButton(width / 2, backY, t('settings.back'), COLOR_SUCCESS, () => this.back());
     if (this.input.keyboard) {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => this.back());
     }
