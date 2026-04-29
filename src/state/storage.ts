@@ -90,6 +90,8 @@ export interface GameState {
   // S-POLISH-B2-R12: Login-Streak
   loginStreak?: number;                        // aufeinanderfolgende Tage mit Daily-Login
   loginDaysTotal?: number;                     // Gesamtzahl der Login-Tage
+  // B4-R7: Foraging-Journal (welche Items in welchem Biom gefunden)
+  forageJournal?: Record<string, string[]>;     // zone -> [itemSlug, ...] (dedupliziert)
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';

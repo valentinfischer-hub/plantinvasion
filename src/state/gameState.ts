@@ -547,7 +547,11 @@ class GameStore {
   // =========================================================
 
   /** Forage-Tile-Loot. Cooldown gilt pro Tile via Key "zone:x:y". */
-  forageTile(zone: string, tileX: number, tileY: number, now = Date.now()): { ok: boolean; reason?: string; itemSlug?: string; toast?: string } {
+  /**
+   * B4-R7: forageTile mit Journal-Tracking und Rare-Drop-Flag.
+   * isRareDrop = true wenn Drop aus einer seltenen Kategorie.
+   */
+  forageTile(zone: string, tileX: number, tileY: number, now = Date.now()): { ok: boolean; reason?: string; itemSlug?: string; toast?: string; isRareDrop?: boolean } {
     if (!this.state.forageTilesCooldown) this.state.forageTilesCooldown = {};
     const key = `${zone}:${tileX}:${tileY}`;
     const lastAt = this.state.forageTilesCooldown[key] ?? 0;
@@ -558,8 +562,22 @@ class GameStore {
     const drop = rollForagePool(zone);
     this.addItem(drop.itemSlug, 1);
     this.state.forageTilesCooldown[key] = now;
+    // B4-R7: Journal-Update (dedupliciert)
+    if (!this.state.forageJournal) this.state.forageJournal = {};
+    if (!this.state.forageJournal[zone]) this.state.forageJournal[zone] = [];
+    if (!this.state.forageJournal[zone].includes(drop.itemSlug)) {
+      this.state.forageJournal[zone].push(drop.itemSlug);
+    }
+    // B4-R7: Rare-Drop-Erkennung (Pristine-Pollen, Booster-Items < 5% Chance)
+    const rareItems = ['pristine-pollen', 'volcano-ash', 'swamp-pollen', 'hybrid-booster'];
+    const isRareDrop = rareItems.includes(drop.itemSlug);
     this.notify();
-    return { ok: true, itemSlug: drop.itemSlug, toast: drop.toastLabel };
+    return { ok: true, itemSlug: drop.itemSlug, toast: drop.toastLabel, isRareDrop };
+  }
+
+  /** B4-R7: Foraging-Journal fuer alle Biome. */
+  getForageJournal(): Record<string, string[]> {
+    return this.state.forageJournal ?? {};
   }
 
   /** Hidden-Spot-Loot. One-shot pro Save. */
