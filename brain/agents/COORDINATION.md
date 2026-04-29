@@ -1,12 +1,8 @@
 # Agent Coordination
 
 ## Tech-Code-Run idle
-- Run-ID: 2026-04-29_08-20
+- Letzter Run: 2026-04-29 R16-R40 (D-041 Batch 2)
 - Branch: main
-- Letzter Push: pending (GitHub-API-Push läuft)
-- Tier-Fokus: 1 (Boot), 2 (Garden/Battle), 3 (UI/UX Konsistenz)
-- Status: 15x Runs abgeschlossen
-
-## Letzte Runs
-- 2026-04-29: 15 Runs, D-041 FI-Lock eingehalten
-- FI-Items hochgezogen: Boot-Time 3->4, 60-FPS-Lock 3->4, MenuScene 3->4, GardenScene 3->4
+- Commits: 05057a52, e7680479, 3175d7b3
+- Tier-Fokus war: 1, 3, 5
+- Status: GRUEN — alle 25 Runs abgeschlossen
