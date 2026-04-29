@@ -53,7 +53,7 @@ export class BattleScene extends Phaser.Scene {
   private poolKey: string = 'wurzelheim-tallgrass';
   private bossId?: string;
   private bossDef?: BossDef;
-  private uiCam!: Phaser.Cameras.Scene2D.Camera;
+
 
   constructor() {
     super('BattleScene');
@@ -76,8 +76,8 @@ export class BattleScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1f3327');
-    this.uiCam = this.cameras.add(0, 0, width, height);
-    this.uiCam.setZoom(1);
+    const uiCam = this.cameras.add(0, 0, width, height);
+    uiCam.setZoom(1);
 
     // Setup Player-Plant
     const state = gameStore.get();
@@ -144,15 +144,13 @@ export class BattleScene extends Phaser.Scene {
     const bgTileKey = this.getBgTileKey();
     const biomTints = this.getBiomTints();
     if (this.textures.exists(bgTileKey)) {
-      const bgTop = this.add.tileSprite(0, 0, width, height / 2, bgTileKey)
+      this.add.tileSprite(0, 0, width, height / 2, bgTileKey)
         .setOrigin(0, 0).setAlpha(0.72).setTint(biomTints.top);
-      const bgBot = this.add.tileSprite(0, height / 2, width, height / 2, bgTileKey)
+      this.add.tileSprite(0, height / 2, width, height / 2, bgTileKey)
         .setOrigin(0, 0).setAlpha(0.55).setTint(biomTints.bot);
-      void bgTop; void bgBot;
     } else {
-      const bgTop = this.add.rectangle(width / 2, height / 4, width, height / 2, biomTints.top, 0.4).setOrigin(0.5);
-      const bgBot = this.add.rectangle(width / 2, height * 3 / 4, width, height / 2, biomTints.bot, 0.5).setOrigin(0.5);
-      void bgTop; void bgBot;
+      this.add.rectangle(width / 2, height / 4, width, height / 2, biomTints.top, 0.4).setOrigin(0.5);
+      this.add.rectangle(width / 2, height * 3 / 4, width, height / 2, biomTints.bot, 0.5).setOrigin(0.5);
     }
     // Trennlinie Gegner/Spieler-Zone
     this.add.rectangle(width / 2, height / 2, width, 3, 0x1a2a10, 0.9).setOrigin(0.5);
@@ -239,7 +237,6 @@ export class BattleScene extends Phaser.Scene {
     }
 
     // Camera-Routing fuer UI: keine zoom Probleme da Battle-Cam zoom 1 ist
-    void this.uiCam;
 
     (globalThis as { __battle?: BattleScene }).__battle = this;
   }
@@ -516,7 +513,7 @@ if (this.bossDef && outcome.winner === this.player) {
     // Hit-Sprite-Tint-Flash (rot fuer ~200ms, dann clear)
     if (hit && 'setTint' in hit) {
       (hit as Phaser.GameObjects.Image).setTint(0xff3c3c);
-      this.time.delayedCall(200, () => { try { (hit as Phaser.GameObjects.Image).clearTint?.(); } catch (e) { void e; } });
+      this.time.delayedCall(200, () => { try { (hit as Phaser.GameObjects.Image).clearTint?.(); } catch { } });
     }
   }
 
@@ -617,9 +614,8 @@ if (this.bossDef && outcome.winner === this.player) {
       const wildMoveSlug = pickWildMove(this.wild);
       const wildMove = getMove(wildMoveSlug);
       if (wildMove) {
-        const r = runMoveRound(this.player, this.wild, 'tackle', wildMoveSlug);  // dummy player move
+        runMoveRound(this.player, this.wild, 'tackle', wildMoveSlug);  // dummy player move
         // actually nur wild attacks - hier vereinfacht
-        void r;
       }
       this.time.delayedCall(1200, () => {
         this.statusText.setText(t('battle.action'));
