@@ -67,6 +67,17 @@ export class MenuScene extends Phaser.Scene {
 
   public create(): void {
     const { width, height } = this.scale;
+    // FI-D-041: title-visible mark + boot_time_ms PostHog event
+    performance.mark('title-visible');
+    try {
+      performance.measure('boot-time', 'boot-start', 'title-visible');
+      const bootMs = Math.round(performance.getEntriesByName('boot-time')[0]?.duration ?? 0);
+      if (bootMs > 0) {
+        const ph = (window as Window & { __posthog?: { capture: (e: string, p: Record<string, unknown>) => void } }).__posthog;
+        ph?.capture('boot_time_ms', { duration_ms: bootMs, layout: (globalThis as { __layout?: string }).__layout ?? 'unknown' });
+      }
+    } catch (_) { /* PerformanceMeasure nicht verfuegbar */ }
+
     this.cameras.main.setBackgroundColor('#1a2820');
 
     // Tile-Background mit ground_erdig-Variationen (Sprint 1 Atlas).
@@ -153,6 +164,7 @@ export class MenuScene extends Phaser.Scene {
     const title = this.add.text(cx, plantY + 75, 'Plantinvasion', {
       fontFamily: 'monospace', fontSize: '36px', color: '#9be36e'
     }).setOrigin(0.5);
+    this.tweens.killTweensOf(title);
     title.setAlpha(0);
     title.setScale(0.7);
     this.tweens.add({
@@ -207,29 +219,21 @@ export class MenuScene extends Phaser.Scene {
 
     const save = loadGame();
 
+    // D-041 Run9: Staggered Button Entrance – alle Buttons starten bei alpha=0, y+20 (slide up)
+    const menuBtns: Phaser.GameObjects.Container[] = [];
     let by = plantY + 170;
     if (save) {
-      // S-POLISH-B3-R4: Stardew-Stil — Save-Stats unter Continue-Button
-      const seasons = ['Fruehling', 'Sommer', 'Herbst', 'Winter'];
-      const saveTime = save.time ?? { minute: 360, day: 1, season: 0, year: 1 };
-      const seasonLabel = seasons[saveTime.season ?? 0];
-      const dayLabel = saveTime.day ?? 1;
-      const plantCount = (save.plants ?? []).length;
-      const coinCount = save.coins ?? 0;
-      const saveStats = `${seasonLabel}, Tag ${dayLabel}  ·  ${plantCount} Pflanzen  ·  ${coinCount} Coins`;
-
-      void this.makeButton(cx, by, t('menu.continue'), '#9be36e', () => {
+      const contBtn = this.makeButton(cx, by, t('menu.continue'), '#9be36e', () => {
         sfx.dialogAdvance();
         startAmbientBGM();
         // Garten ist Herzstueck: Default auf GardenScene
         const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
         this.scene.start(target);
       });
-      // Save-Stats darunter (dezent, Stardew-Stil)
-      this.add.text(cx, by + 26, saveStats, {
-        fontFamily: 'monospace', fontSize: '9px', color: '#6a8a5a', align: 'center'
-      }).setOrigin(0.5).setAlpha(0.85);
-      by += 68;
+      contBtn.setAlpha(0);
+      (contBtn as Phaser.GameObjects.Container).setY(by + 20);
+      menuBtns.push(contBtn);
+      by += 60;
     }
     const newGameBtn = this.makeButton(cx, by, save ? t('menu.newGame') : t('menu.startGame'), '#fcd95c', () => {
       // V0.2 (Critic-Review-Fix): Bei Neues-Spiel direkt in OverworldScene
@@ -241,6 +245,38 @@ export class MenuScene extends Phaser.Scene {
       startAmbientBGM();
       this.scene.start('OverworldScene');
     });
+    newGameBtn.setAlpha(0);
+    (newGameBtn as Phaser.GameObjects.Container).setY(by + 20);
+    menuBtns.push(newGameBtn);
+    by += 60;
+    const _settingsBtn = this.makeButton(cx, by, t('menu.settings'), '#8eaedd', () => {
+      sfx.dialogAdvance();
+      this.scene.start('SettingsScene');
+    });
+    _settingsBtn.setAlpha(0);
+    (_settingsBtn as Phaser.GameObjects.Container).setY(by + 20);
+    menuBtns.push(_settingsBtn);
+    by += 60;
+    const _helpBtn = this.makeButton(cx, by, t('menu.help'), '#fcd95c', () => {
+      sfx.dialogAdvance();
+      this.scene.start('HelpScene');
+    });
+    _helpBtn.setAlpha(0);
+    (_helpBtn as Phaser.GameObjects.Container).setY(by + 20);
+    menuBtns.push(_helpBtn);
+    by += 60;
+    // Staggered entrance: slide up + fade in, 80ms apart, starts after title reveal (delay 800ms)
+    menuBtns.forEach((btn, i) => {
+      const targetY = (btn as Phaser.GameObjects.Container & { staggerTargetY?: number }).staggerTargetY ?? btn.y - 20;
+      this.tweens.add({
+        targets: btn,
+        alpha: 1,
+        y: btn.y - 20,
+        duration: 320,
+        ease: 'Back.Out',
+        delay: 800 + i * 80
+      });
+    });
     // S-POLISH-START: Primary-CTA Pulse-Animation um neue Spieler zum Klick zu fuehren
     this.tweens.add({
       targets: newGameBtn,
@@ -251,17 +287,6 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       delay: 1400
     });
-    by += 60;
-    const _settingsBtn = this.makeButton(cx, by, t('menu.settings'), '#8eaedd', () => {
-      sfx.dialogAdvance();
-      this.scene.start('SettingsScene');
-    });
-    by += 60;
-    const _helpBtn = this.makeButton(cx, by, t('menu.help'), '#fcd95c', () => {
-      sfx.dialogAdvance();
-      this.scene.start('HelpScene');
-    });
-    by += 60;
 
     const _hint = this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
@@ -284,6 +309,17 @@ export class MenuScene extends Phaser.Scene {
       const plantY = height - 80;
       const stages = ['sonnenherz_stage_0_seed.webp', 'sonnenherz_stage_1_sprout.webp', 'sonnenherz_stage_2_juvenile.webp', 'sonnenherz_stage_3_adult.webp'];
       const ambientPlant = this.add.image(plantX, plantY, 'plants_sprint_0', stages[0]).setOrigin(0.5, 1).setScale(0.6).setAlpha(0.7);
+      // D-041 Run9: Idle-Breathing fuer Ambient-Plants
+      this.tweens.add({
+        targets: ambientPlant,
+        scaleY: 0.63,
+        scaleX: 0.57,
+        duration: 1800 + i * 300,
+        ease: 'Sine.InOut',
+        yoyo: true,
+        repeat: -1,
+        delay: i * 400
+      });
       let stageIdx = 0;
       this.time.addEvent({
         delay: 3000,

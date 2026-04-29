@@ -19,9 +19,7 @@ import {
   isBlooming,
   TIER_COLORS,
   TIER_THRESHOLDS,
-  tierForCareScore,
-  totalXpToReachLevel,
-  STAGE_LEVEL_THRESHOLDS
+  tierForCareScore
 } from '../data/leveling';
 import { GROWTH_STAGE_NAMES, QUALITY_TIERS, type Plant, type QualityTier } from '../types/plant';
 import { getSpecies } from '../data/species';
@@ -33,9 +31,7 @@ import { getAllele } from '../data/genes';
 import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
 import { showToast, type ToastType } from '../ui/Toast';
-import { t } from '../i18n';
 import { drawModalBox } from '../ui/uiTheme';
-import { sfx } from '../audio/sfxGenerator';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -60,12 +56,9 @@ export class GardenScene extends Phaser.Scene {
   private gridOriginX = 0;
   private gridOriginY = 0;
   private cards: Map<string, PlantCard> = new Map();
-  // S-POLISH Run16: Subscribe-Throttle â renderPlants() max 1x alle 500ms aus der store-Subscription
+  // S-POLISH Run16: Subscribe-Throttle — renderPlants() max 1x alle 500ms aus der store-Subscription
   private _renderPending = false;
   private crossMode = false;
-  private companionLineGraphics?: Phaser.GameObjects.Graphics;
-  // S-POLISH-B2-R13: Bonsai-Aura-Ring Graphics
-  private bonsaiAuraGraphics?: Phaser.GameObjects.Graphics;
   private crossFirstPlantId: string | null = null;
   private crossModeHint?: Phaser.GameObjects.Text;
   private crossBtnBg?: Phaser.GameObjects.Rectangle;
@@ -74,7 +67,6 @@ export class GardenScene extends Phaser.Scene {
   private detailPanel?: Phaser.GameObjects.Container;
   private slotHotspots: Array<{ gridX: number; gridY: number; hotspot: Phaser.GameObjects.Rectangle }> = [];
   private dragSource?: { plantId: string; startX: number; startY: number };
-  private _unloadHandler?: () => void;
 
   constructor() {
     super('GardenScene');
@@ -149,7 +141,7 @@ export class GardenScene extends Phaser.Scene {
         const sx = this.gridOriginX + x * (TILE + TILE_PAD);
         const sy = this.gridOriginY + y * (TILE + TILE_PAD);
         const slot = this.add.graphics();
-        // QW-14: Slot-Farbvariation per Position â leicht unterschiedliche Erdtoene
+        // QW-14: Slot-Farbvariation per Position – leicht unterschiedliche Erdtoene
         const hash = (x * 3 + y * 7) % 6;
         const slotColors = [0x223520, 0x1e3018, 0x27391e, 0x1c2e16, 0x243822, 0x1a2c14];
         const borderColors = [0x44603f, 0x3a5234, 0x4e6a47, 0x3c5838, 0x486244, 0x405a3a];
@@ -195,16 +187,6 @@ export class GardenScene extends Phaser.Scene {
           this.tweens.add({ targets: hotspot, scaleX: 1.0, scaleY: 1.0, duration: 100, ease: 'Cubic.Out' });
         });
         this.slotHotspots.push({ gridX: x, gridY: y, hotspot });
-
-        // S-POLISH-B3-R1: Slot-Nummerierung A1âD3 (dezenter Stardew-Inventory-Stil)
-        const colLabel = String.fromCharCode(65 + x); // A, B, C, D
-        const rowLabel = (y + 1).toString();           // 1, 2, 3
-        this.add.text(sx + 4, sy + 2, `${colLabel}${rowLabel}`, {
-          fontFamily: 'monospace',
-          fontSize: '8px',
-          color: '#5a7050',
-          alpha: 0.7
-        }).setDepth(-2);
       }
     }
 
@@ -224,7 +206,7 @@ export class GardenScene extends Phaser.Scene {
     });
 
     gameStore.subscribe(() => {
-      // S-POLISH Run16: Throttle â verzoegert renderPlants() via rAF-Debounce (max 1x pro Frame)
+      // S-POLISH Run16: Throttle — verzoegert renderPlants() via rAF-Debounce (max 1x pro Frame)
       if (!this._renderPending) {
         this._renderPending = true;
         this.time.delayedCall(500, () => {
@@ -259,7 +241,7 @@ export class GardenScene extends Phaser.Scene {
     }
 
     // Header-Button "Pflanze einsaeen"
-    const seedBtn = this.add.text(width - 70, 14, t('garden.btnSeed'), {
+    const seedBtn = this.add.text(width - 70, 14, 'Saeen', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#1a1f1a',
@@ -269,7 +251,7 @@ export class GardenScene extends Phaser.Scene {
     seedBtn.on('pointerdown', () => this.openSeedPlantModal());
 
     // Welt-Erkunden-Button: prominent oben links, fuehrt zur OverworldScene
-    const worldBtn = this.add.text(70, 14, t('garden.btnWorld'), {
+    const worldBtn = this.add.text(70, 14, 'Welt (W)', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#1a1f1a',
@@ -283,7 +265,7 @@ export class GardenScene extends Phaser.Scene {
       .setStrokeStyle(1, 0xb86ee3)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    this.crossBtnTxt = this.add.text(width - 140, 22, t('garden.btnCross'), {
+    this.crossBtnTxt = this.add.text(width - 140, 22, 'Kreuzen', {
       fontFamily: 'monospace', fontSize: '11px', color: '#b86ee3'
     }).setOrigin(0.5);
     this.crossBtnBg.on('pointerdown', () => this.toggleCrossMode());
@@ -291,17 +273,6 @@ export class GardenScene extends Phaser.Scene {
     this.crossModeHint = this.add.text(width / 2, 50, '', {
       fontFamily: 'monospace', fontSize: '10px', color: '#b86ee3', backgroundColor: '#1a1f1a', padding: { x: 6, y: 2 }
     }).setOrigin(0.5).setVisible(false);
-    // B-020: Vor Page-Unload State sichern (verhindert Pre-Crossing-Rollback bei F5)
-    this._unloadHandler = () => gameStore.save();
-    window.addEventListener('beforeunload', this._unloadHandler);
-  }
-
-  shutdown(): void {
-    if (this._unloadHandler) {
-      window.removeEventListener('beforeunload', this._unloadHandler);
-      this._unloadHandler = undefined;
-    }
-    gameStore.save();
   }
 
   private toggleCrossMode(): void {
@@ -309,6 +280,40 @@ export class GardenScene extends Phaser.Scene {
     this.crossFirstPlantId = null;
     this.refreshCrossUI();
     this.renderPlants();
+
+    // P0 Fix 3 (D-041): Cross-Mode Affordance — Pulse + Shake + Toast
+    if (this.crossBtnBg && this.crossBtnTxt) {
+      if (this.crossMode) {
+        // Aktivierung: Gold-Pulse auf Button + Shake-Feedback
+        this.tweens.add({
+          targets: this.crossBtnBg,
+          scaleX: 1.12, scaleY: 1.12,
+          duration: 100,
+          ease: 'Cubic.Out',
+          yoyo: true,
+          onComplete: () => {
+            // Kontinuierlicher Glow-Puls solange aktiv
+            if (this.crossMode) {
+              this.tweens.add({
+                targets: this.crossBtnTxt,
+                alpha: 0.55,
+                duration: 600,
+                ease: 'Sine.InOut',
+                yoyo: true,
+                repeat: -1
+              });
+            }
+          }
+        });
+        this.showFlash('Cross-Mode aktiv — wähle erste Pflanze', '#fcd95c');
+      } else {
+        // Deaktivierung: alle Pulse-Tweens stoppen, zurücksetzen
+        this.tweens.killTweensOf(this.crossBtnTxt);
+        this.tweens.killTweensOf(this.crossBtnBg);
+        this.crossBtnTxt?.setAlpha(1);
+        this.crossBtnBg?.setScale(1);
+      }
+    }
   }
 
   private refreshCrossUI(): void {
@@ -317,13 +322,13 @@ export class GardenScene extends Phaser.Scene {
     }
     if (this.crossBtnTxt) {
       this.crossBtnTxt.setColor(this.crossMode ? '#fcd95c' : '#b86ee3');
-      this.crossBtnTxt.setText(this.crossMode ? t('garden.btnCrossActive') : t('garden.btnCross'));
+      this.crossBtnTxt.setText(this.crossMode ? 'Aktiv' : 'Kreuzen');
     }
     if (this.crossModeHint) {
       if (this.crossMode) {
         const txt = this.crossFirstPlantId
-          ? t('garden.hintSecondPlant')
-          : t('garden.hintFirstPlant');
+          ? 'Waehle zweite Pflanze (Kreuzen-Btn fuer Abbruch)'
+          : 'Cross-Mode: klicke erste Pflanze zum Auswaehlen';
         this.crossModeHint.setText(txt);
         this.crossModeHint.setVisible(true);
       } else {
@@ -340,7 +345,7 @@ export class GardenScene extends Phaser.Scene {
       return;
     }
     if (this.crossFirstPlantId === plantId) {
-      this.showFlash(t('garden.samePlant'), '#ff7e7e');
+      this.showFlash('Selbe Pflanze - waehle eine andere', '#ff7e7e');
       return;
     }
     // Preview-Modal vor Bestaetigung
@@ -354,7 +359,7 @@ export class GardenScene extends Phaser.Scene {
     }
     const preview = gameStore.previewCross(parentAId, parentBId);
     if (!preview.ok) {
-      this.showFlash(preview.reason ?? t('garden.crossFailed'), '#ff7e7e');
+      this.showFlash(preview.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
       this.crossMode = false;
       this.crossFirstPlantId = null;
       this.refreshCrossUI();
@@ -368,7 +373,7 @@ export class GardenScene extends Phaser.Scene {
     const bg = this.add.graphics();
     drawModalBox(bg, { width: panelW, height: panelH, borderColor: 0xb86ee3, borderAlpha: 0.9 });
     c.add(bg);
-    const title = this.add.text(0, -panelH / 2 + 12, t('garden.crossPreviewTitle'), {
+    const title = this.add.text(0, -panelH / 2 + 12, 'Kreuzungs-Vorschau', {
       fontFamily: 'monospace', fontSize: '14px', color: '#b86ee3'
     }).setOrigin(0.5, 0);
     c.add(title);
@@ -389,7 +394,7 @@ export class GardenScene extends Phaser.Scene {
       ].join('\n'),
       { fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc' });
     c.add(stats);
-    const okBtn = this.add.text(-60, panelH / 2 - 30, t('garden.btnCrossConfirm'), {
+    const okBtn = this.add.text(-60, panelH / 2 - 30, 'Kreuzen!', {
       fontFamily: 'monospace', fontSize: '12px', color: '#1a1f1a',
       backgroundColor: '#b86ee3', padding: { left: 14, right: 14, top: 6, bottom: 6 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -404,7 +409,7 @@ export class GardenScene extends Phaser.Scene {
       void this.runCrossWithDrift(parentAId, parentBId, '#b86ee3');
     });
     c.add(okBtn);
-    const cancelBtn = this.add.text(60, panelH / 2 - 30, t('common.cancel'), {
+    const cancelBtn = this.add.text(60, panelH / 2 - 30, 'Abbruch', {
       fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc',
       backgroundColor: '#3a3a3a', padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -428,13 +433,13 @@ export class GardenScene extends Phaser.Scene {
     const inv = gameStore.getInventory();
     const seedSlugs = Object.keys(inv).filter((k) => isSeedItem(k) && (inv[k] ?? 0) > 0);
     if (seedSlugs.length === 0) {
-      this.showFlash(t('garden.noSeeds'), '#ff7e7e');
+      this.showFlash('Keine Samen im Inventar', '#ff7e7e');
       return;
     }
     // B-012: Vorab-Check Garten-voll, sonst landen wir im Modal mit deaktivierten Klicks und der Toast kommt erst danach
     const freeSlots = gameStore.getFreeSlotCount();
     if (freeSlots === 0) {
-      this.showFlash(t('garden.gardenFull'), '#ff7e7e');
+      this.showFlash('Garten voll. Ernte oder verschiebe Pflanzen.', '#ff7e7e');
       return;
     }
     const { width, height } = this.scale;
@@ -467,7 +472,7 @@ export class GardenScene extends Phaser.Scene {
           container.destroy();
           this.detailPanel = undefined;
         } else {
-          this.showFlash(result.reason ?? t('common.failed'), '#ff7e7e');
+          this.showFlash(result.reason ?? 'Fehlgeschlagen', '#ff7e7e');
         }
       });
       container.add(btn);
@@ -507,7 +512,7 @@ export class GardenScene extends Phaser.Scene {
     const inv = gameStore.getInventory();
     const seedSlugs = Object.keys(inv).filter((k) => isSeedItem(k) && (inv[k] ?? 0) > 0);
     if (seedSlugs.length === 0) {
-      this.showFlash(t('garden.noSeeds'), '#ff7e7e');
+      this.showFlash('Keine Samen im Inventar', '#ff7e7e');
       return;
     }
     const { width, height } = this.scale;
@@ -539,7 +544,7 @@ export class GardenScene extends Phaser.Scene {
           container.destroy();
           this.detailPanel = undefined;
         } else {
-          this.showFlash(result.reason ?? t('common.failed'), '#ff7e7e');
+          this.showFlash(result.reason ?? 'Fehlgeschlagen', '#ff7e7e');
         }
       });
       container.add(btn);
@@ -625,12 +630,12 @@ export class GardenScene extends Phaser.Scene {
     const drifted = await this.playParentDrift(parentAId, parentBId);
     const result = gameStore.crossPlants(parentAId, parentBId);
     if (!result.ok) {
-      this.showFlash(result.reason ?? t('garden.crossFailed'), '#ff7e7e');
+      this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
       return;
     }
     const isMutation = !!result.child?.isMutation;
     this.playHybridReveal(isMutation);
-    this.showFlash(isMutation ? t('garden.mutation') : t('garden.crossSuccess'), successColor);
+    this.showFlash(isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', successColor);
     // Scale-In der neuen Hybrid-Card sobald renderPlants sie erstellt hat
     if (result.child) {
       const hybridId = result.child.id;
@@ -748,101 +753,10 @@ export class GardenScene extends Phaser.Scene {
     }
   }
 
-  /** Booster-Partikel-Burst in Booster-spezifischer Farbe */
-  /**
-   * S-POLISH-B3-R1: Harvest-Floating-Text â "+X Coins" aufsteigend von Pflanze.
-   */
-  private spawnHarvestFloatingText(x: number, y: number, coins: number): void {
-    const label = this.add.text(x, y - 20, `+${coins} Coins`, {
-      fontFamily: 'monospace',
-      fontSize: '13px',
-      color: '#ffd166',
-      stroke: '#1a1f1a',
-      strokeThickness: 3
-    }).setOrigin(0.5).setDepth(2000);
-    this.tweens.add({
-      targets: label,
-      y: y - 70,
-      alpha: 0,
-      duration: 1400,
-      ease: 'Cubic.Out',
-      onComplete: () => label.destroy()
-    });
-  }
-
-  /**
-   * S-POLISH-B2-R18 (fix): Harvest-Burst â goldene Partikel-Explosion.
-   * War referenziert aber nie implementiert. Fix in B3-R4.
-   */
-  private spawnHarvestBurst(x: number, y: number): void {
-    const colors = [0xffd166, 0xfcd95c, 0xffeeaa];
-    for (let i = 0; i < 10; i++) {
-      const dot = this.add.circle(x, y, 4, colors[i % colors.length], 1).setDepth(1600);
-      const angle = (i / 10) * Math.PI * 2;
-      const dist = 28 + Math.random() * 20;
-      this.tweens.add({
-        targets: dot,
-        x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist,
-        alpha: 0,
-        scale: 0.2,
-        duration: 600,
-        ease: 'Power2',
-        onComplete: () => dot.destroy()
-      });
-    }
-    // Zentral-Flash
-    const flash = this.add.circle(x, y, 14, 0xffd166, 0.7).setDepth(1599);
-    this.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 350, onComplete: () => flash.destroy() });
-  }
-
-  private spawnBoosterBurst(x: number, y: number, color: number): void {
-    for (let i = 0; i < 12; i++) {
-      const dot = this.add.circle(x, y, 4, color, 1).setDepth(1500);
-      const angle = (i / 12) * Math.PI * 2;
-      const dist = 20 + Math.random() * 30;
-      this.tweens.add({
-        targets: dot,
-        x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist,
-        alpha: 0,
-        scale: 0.1,
-        duration: 600,
-        ease: 'Power2',
-        onComplete: () => dot.destroy()
-      });
-    }
-    // Zentral-Glow
-    const glow = this.add.circle(x, y, 12, color, 0.7).setDepth(1499);
-    this.tweens.add({ targets: glow, alpha: 0, scale: 2.5, duration: 400, onComplete: () => glow.destroy() });
-  }
-
-  /** Soil-Upgrade-Effekt: kurzes Pulsieren in lila */
-  private spawnSoilUpgradeEffect(x: number, y: number): void {
-    const ring = this.add.circle(x, y, 16, 0xb86ee3, 0.8).setDepth(1500);
-    this.tweens.add({ targets: ring, alpha: 0, scale: 3, duration: 500, ease: 'Power2', onComplete: () => ring.destroy() });
-    // Drei goldene Funken
-    for (let i = 0; i < 6; i++) {
-      const spark = this.add.circle(x, y, 3, 0xffd166, 1).setDepth(1501);
-      const angle = (i / 6) * Math.PI * 2;
-      this.tweens.add({
-        targets: spark, x: x + Math.cos(angle) * 24, y: y + Math.sin(angle) * 24,
-        alpha: 0, scale: 0.3, duration: 450, ease: 'Back.Out', onComplete: () => spark.destroy()
-      });
-    }
-  }
-
   private refreshHeader(): void {
-    if (!this.headerText?.active) return; // B-023: Guard gegen null-Canvas-Crash
     const state = gameStore.get();
-    // S-POLISH-B3-R4: Saison + Tag-Anzeige im Header (Stardew-Stil)
-    const seasons = ['Fruehling', 'Sommer', 'Herbst', 'Winter'];
-    const time = state.time ?? { minute: 360, day: 1, season: 0, year: 1 };
-    const seasonLabel = seasons[time.season ?? 0];
-    const dayLabel = time.day ?? 1;
-    const winterWarn = (time.season === 3) ? '  â Frost' : '';
     this.headerText.setText(
-      `${seasonLabel}, Tag ${dayLabel}${winterWarn}  Â·  ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS}  Â·  ${state.coins} Coins`
+      `Plantinvasion · ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS} · Coins ${state.coins}`
     );
   }
 
@@ -868,52 +782,7 @@ export class GardenScene extends Phaser.Scene {
         this.cards.delete(id);
       }
     });
-    // S-POLISH-B2-R3: Companion-Aura - grÃ¼ne Aura auf Karten bei aktiven Companion-Paaren
-    this.updateCompanionAuras(state.plants);
     this.refreshHeader();
-  }
-
-  private updateCompanionAuras(plants: Plant[]): void {
-    if (!this.companionLineGraphics) {
-      this.companionLineGraphics = this.add.graphics();
-      this.companionLineGraphics.setDepth(50);
-    }
-    const g = this.companionLineGraphics;
-    g.clear();
-    const drawn = new Set<string>();
-    for (const plant of plants) {
-      const { bonus } = companionBonus(plant, plants);
-      if (bonus <= 0) continue;
-      // Zeichne einen grÃ¼nen Glow-Ring um die Card
-      const card = this.cards.get(plant.id);
-      if (!card) continue;
-      const cx = card.container.x, cy = card.container.y;
-      const pairKey = `${plant.gridX},${plant.gridY}`;
-      if (drawn.has(pairKey)) continue;
-      drawn.add(pairKey);
-      g.lineStyle(2, 0x9be36e, 0.5);
-      g.strokeCircle(cx, cy, TILE * 0.52);
-    }
-
-    // S-POLISH-B2-R13: Bonsai-Aura â goldener Ring um Bonsai-Pflanzen
-    if (!this.bonsaiAuraGraphics) {
-      this.bonsaiAuraGraphics = this.add.graphics();
-      this.bonsaiAuraGraphics.setDepth(49);
-    }
-    const bg = this.bonsaiAuraGraphics;
-    bg.clear();
-    for (const plant of plants) {
-      if (!plant.bonsaiMode) continue;
-      const card = this.cards.get(plant.id);
-      if (!card) continue;
-      const cx = card.container.x, cy = card.container.y;
-      // Ãusserer goldener Ring
-      bg.lineStyle(3, 0xfcd95c, 0.55);
-      bg.strokeCircle(cx, cy, TILE * 0.56);
-      // Innerer Ring (dÃ¼nner)
-      bg.lineStyle(1, 0xffd700, 0.3);
-      bg.strokeCircle(cx, cy, TILE * 0.44);
-    }
   }
 
   /**
@@ -963,7 +832,7 @@ export class GardenScene extends Phaser.Scene {
 
     // Hint-Text oberhalb Garten-Grid
     const hint = this.add.text(this.scale.width / 2, this.gridOriginY - 28,
-      t('garden.tutorialFirstPlant'), {
+      'Klick hier um deine erste Pflanze zu setzen', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#fcd95c',
@@ -1165,32 +1034,36 @@ export class GardenScene extends Phaser.Scene {
       card.sprite.setTexture(key);
     }
 
-    // Stage-Up-Burst
+    // Stage-Up-Burst + P1 Bounce-Scale (Art-UI D-041)
     if (stage > card.lastSeenStage) {
       this.spawnStageUpBurst(card.container.x, card.container.y);
       card.lastSeenStage = stage;
+      // Scale-Bounce 1.0 -> 1.15 -> 1.0 mit Back.easeOut
+      const baseScaleX = card.sprite.scaleX;
+      const baseScaleY = card.sprite.scaleY;
+      this.tweens.add({
+        targets: card.sprite,
+        scaleX: baseScaleX * 1.15,
+        scaleY: baseScaleY * 1.15,
+        duration: 160,
+        ease: 'Back.Out',
+        yoyo: true,
+        onComplete: () => {
+          card.sprite.setScale(baseScaleX, baseScaleY);
+        }
+      });
     }
 
     const stageName = GROWTH_STAGE_NAMES[stage];
-    card.levelText.setText(`L${plant.level} Â· ${stageName}`);
+    card.levelText.setText(`Lv.${plant.level} | ${stageName}`);
 
     // S-POLISH Run13: Droop-Visual fuer dehydrierte Pflanzen (< 20% hydration)
-    // S-POLISH-B2-R2: Booster-Cooldown-Tint (Ã¼berschreibt Droop nur wenn kein Droop)
     if (plant.hydration < 20) {
+      // Gelblicher Tint und leichter y-Offset (welk)
       card.sprite.setTint(0xc8b860);
       if (card.sprite.y === 0) card.sprite.setY(2);
     } else {
-      // Booster-Tint: subtiler GrÃ¼n-Schimmer wenn ein Booster aktiv ist
-      const activeBoosters = plant.activeBoosters.filter(b => Date.now() - b.startedAt < b.durationMs);
-      if (activeBoosters.length > 0) {
-        // Subtiler Booster-Tint: leicht grÃ¼n fÃ¼r wachstumsbooster, gold fÃ¼r pristine, lila fÃ¼r hybrid
-        const hasHybrid = activeBoosters.some(b => b.type === 'hybrid');
-        const hasPristine = activeBoosters.some(b => b.type === 'xp');
-        const tintColor = hasHybrid ? 0xd0a0ff : hasPristine ? 0xffeeaa : 0xaaffaa;
-        card.sprite.setTint(tintColor);
-      } else {
-        card.sprite.clearTint();
-      }
+      card.sprite.clearTint();
       if (card.sprite.y !== 0) card.sprite.setY(0);
     }
 
@@ -1226,12 +1099,11 @@ export class GardenScene extends Phaser.Scene {
     if (hStatus === 'vertrocknet') {
       card.thirstIcon.setText('!!').setColor('#ff5555');
     } else if (hStatus === 'trocken') {
-      // S-POLISH-B3-R1: Tropfen-Icon fuer trockene Pflanzen (Stardew-Wasser-Indikator)
-      card.thirstIcon.setText('ð§').setColor('#ff8c42');
+      card.thirstIcon.setText('!').setColor('#ff8c42');
     } else if (hStatus === 'durstig') {
-      card.thirstIcon.setText('ð§').setColor('#ffd166');
+      card.thirstIcon.setText('~').setColor('#ffd166');
     } else if (ready) {
-      card.thirstIcon.setText('ð§').setColor('#4dafff');
+      card.thirstIcon.setText('*').setColor('#4dafff');
     } else {
       card.thirstIcon.setText('').setColor('#999999');
     }
@@ -1266,12 +1138,6 @@ export class GardenScene extends Phaser.Scene {
         card.bg.lineStyle(2, 0xffd166, 0.5);
         card.bg.strokeRoundedRect(-TILE / 2 + 2, -TILE / 2 + 2, TILE - 4, TILE - 4, 6);
       }
-    }
-
-    // S-POLISH-B2-R13: Bonsai-Badge â gold Punkt oben-rechts wenn bonsaiMode aktiv
-    if (plant.bonsaiMode) {
-      card.bg.fillStyle(0xfcd95c, 0.9);
-      card.bg.fillCircle(TILE / 2 - 6, -TILE / 2 + 6, 4);
     }
   }
 
@@ -1347,25 +1213,12 @@ export class GardenScene extends Phaser.Scene {
       biomeMatchMultiplier(plant.speciesSlug, zone) *
       hybridVigorMultiplier(plant) *
       timeOfDayMultiplier();
-    // S-POLISH-B3-R1: Stage-Fortschritt-Infos
-    const stageNames = GROWTH_STAGE_NAMES as unknown as string[];
-    const nextStageLvl = stage < 4 ? STAGE_LEVEL_THRESHOLDS[stage + 1] : null;
-    const xpNeededForStage = nextStageLvl ? (totalXpToReachLevel(nextStageLvl) - (plant.totalXp ?? 0)) : 0;
-    const daysToNextStage = (xpPerSec > 0 && nextStageLvl)
-      ? Math.ceil(xpNeededForStage / (xpPerSec * 86400 * 0.5))
-      : 0;
-    const stageInfo = nextStageLvl
-      ? `Stage ${stage + 1}/${stageNames.length - 1} â ${stageNames[stage + 1]} (~${daysToNextStage}d)`
-      : `Stage ${stage}/${stageNames.length - 1} (Max)`;
-    const estimatedCoins = Math.round((5 + 0 * 4) * 1); // rough estimate common tier
-    const harvestInfo = stage >= 4 ? `Ertrag ~${estimatedCoins}â${estimatedCoins + 16} Coins` : `Ertrag ab Stage Blooming`;
-
     const lines = [
-      `Stage: ${GROWTH_STAGE_NAMES[stage]}  (${stageInfo})`,
+      `Stage: ${GROWTH_STAGE_NAMES[stage]}`,
       `Level: ${plant.level} / 100`,
       `XP: ${Math.floor(plant.xp)} / ${xpToNextLevel(plant.level)}`,
       `Hydration: ${Math.floor(plant.hydration)}% (${hStatus})`,
-      `Wachstum: ${xpPerSec.toFixed(2)} XP/s  |  ${harvestInfo}`,
+      `Wachstum: ${xpPerSec.toFixed(2)} XP/s`,
       ``,
       `ATK ${plant.stats.atk}  DEF ${plant.stats.def}  SPD ${plant.stats.spd}`,
       `Generation: F${plant.generation}${plant.isMutation ? ' (Mutation' + (plant.mutationKind ? '-' + plant.mutationKind : '') + ')' : ''}`,
@@ -1473,17 +1326,11 @@ export class GardenScene extends Phaser.Scene {
 
     // Bonsai-Toggle
     const bonsaiY = soilY + 28;
-    // S-POLISH-B2-R13: Grow-Modus-Selector mit visueller Differenzierung
-    const modeIcon = plant.bonsaiMode ? 'ð¿' : 'ð±';
-    const modeColor = plant.bonsaiMode ? '#fcd95c' : '#9be36e';
-    const modeBg = plant.bonsaiMode ? '#2a2000' : '#1a2a1a';
-    const bonsaiLabel = plant.bonsaiMode
-      ? `${modeIcon} BONSAI  (Cap L44, +30% HP)`
-      : `${modeIcon} NORMAL  (unbegrenzt Level-Up)`;
-    const bonsaiBtn = this.add.text(-panelW / 2 + 14, bonsaiY, `${bonsaiLabel}  [Toggle]`, {
+    const bonsaiLabel = plant.bonsaiMode ? 'Bonsai aktiv (Cap L44)' : 'Normal (Stage-Up moeglich)';
+    const bonsaiBtn = this.add.text(-panelW / 2 + 14, bonsaiY, `${bonsaiLabel}  [Bonsai-Toggle]`, {
       fontFamily: 'monospace', fontSize: '9px',
-      color: modeColor,
-      backgroundColor: modeBg,
+      color: plant.bonsaiMode ? '#fcd95c' : '#bbbbbb',
+      backgroundColor: '#1a1f1a',
       padding: { x: 4, y: 2 }
     }).setInteractive({ useHandCursor: true });
     bonsaiBtn.on('pointerdown', () => {
@@ -1536,14 +1383,6 @@ export class GardenScene extends Phaser.Scene {
           if (result.seedSlug) parts.push(`+1 ${result.seedSlug} Samen`);
           if (result.pollen) parts.push(`+1 Pristine-Pollen`);
           this.showFlash(`Ernte: ${parts.join(', ')}`, '#ffd166');
-          // S-POLISH-B2-R18: Harvest-SFX + Gold-Partikel-Burst
-          sfx.harvest();
-          const card = this.cards.get(plant.id);
-          if (card) {
-            this.spawnHarvestBurst(card.container.x, card.container.y);
-            // S-POLISH-B3-R1: Floating-Zahl "+X Coins"
-            this.spawnHarvestFloatingText(card.container.x, card.container.y, result.coins);
-          }
           this.openDetailPanel(plant.id);
         } else {
           this.showFlash(result.reason ?? 'Ernte fehlgeschlagen', '#ff8c42');
@@ -1583,9 +1422,6 @@ export class GardenScene extends Phaser.Scene {
       const result = gameStore.upgradeSoil(plant.gridX, plant.gridY);
       if (result.ok) {
         this.showFlash(`Soil aufgeruestet zu ${result.newTier}`, '#b86ee3');
-        // S-POLISH-B2-R2: Soil-Upgrade-Animation
-        const card = this.cards.get(plant.id);
-        if (card) this.spawnSoilUpgradeEffect(card.container.x, card.container.y);
         this.openDetailPanel(plant.id);
       } else {
         this.showFlash(result.reason ?? 'Soil-Upgrade fehlgeschlagen', '#ff7e7e');
@@ -1650,16 +1486,6 @@ export class GardenScene extends Phaser.Scene {
         const r = gameStore.applyItemToPlant(plantId, slug);
         if (r.ok) {
           this.showFlash(r.message ?? 'Angewendet', '#ffd166');
-          // S-POLISH-B2-R2: Booster-Partikel-Burst in Booster-Farbe
-          const boosterColors: Record<string, number> = {
-            'compost-tea': 0x4caf50, 'compost-bag': 0x4caf50,
-            'volcano-ash': 0x4caf50, 'swamp-pollen': 0x4caf50,
-            'pristine-pollen': 0xffd700, 'growth-hormone': 0xffd700,
-            'hybrid-booster': 0x9c27b0, 'sun-lamp': 0xffa726, 'sprinkler': 0x2196f3
-          };
-          const burstColor = boosterColors[slug] ?? 0xffd166;
-          const plantCard = this.cards.get(plantId);
-          if (plantCard) this.spawnBoosterBurst(plantCard.container.x, plantCard.container.y, burstColor);
           container.destroy();
           this.detailPanel = undefined;
           this.openDetailPanel(plantId);
