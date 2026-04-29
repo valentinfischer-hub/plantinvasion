@@ -165,7 +165,7 @@ export class BattleScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
     }).setOrigin(0.5);
     const wildSpriteKey = this.bossDef?.spriteKey ?? this.pickWildSpriteKey(this.capturedEnc?.slug ?? 'common-daisy');
-    // R12: Pokemon-Style Positioning — Wild oben links (96px), zeigt nach rechts
+    // R12: Pokemon-Style Positioning â Wild oben links (96px), zeigt nach rechts
     this.wildSprite = this.add.sprite(width * 0.3, 110, wildSpriteKey);
     this.wildSprite.setDisplaySize(96, 96);
     this.wildSprite.setFlipX(true);
@@ -299,7 +299,7 @@ export class BattleScene extends Phaser.Scene {
     const slotW = (width - 40) / 2;
     // S-POLISH Run18: Move-Buttons auf 44px Touch-Target-Mindesthoehe
     const slotH = 44;
-    // D-041 R27: Family-Color-Map fuer Move-Buttons — jede Pflanzen-Familie hat eigene Akzentfarbe
+    // D-041 R27: Family-Color-Map fuer Move-Buttons â jede Pflanzen-Familie hat eigene Akzentfarbe
     const FAMILY_COLORS: Record<string, number> = {
       root: 0xa0785a, leaf: 0x5ba85b, flower: 0xe87db0,
       cactus: 0xd4a843, vine: 0x7abf5f, fern: 0x4aad7a,
@@ -323,7 +323,7 @@ export class BattleScene extends Phaser.Scene {
       const nameTxt = this.add.text(-slotW / 2 + 8, -10, m ? m.name : '-', {
         fontFamily: 'monospace', fontSize: '11px', color: m ? '#ffffff' : '#666666'
       });
-      const detailTxt = this.add.text(-slotW / 2 + 8, 4, m ? `${m.power > 0 ? `Stärke ${m.power}` : 'Status'} | ${Math.round(m.accuracy * 100)}%` : '', {
+      const detailTxt = this.add.text(-slotW / 2 + 8, 4, m ? `${m.power > 0 ? `StÃ¤rke ${m.power}` : 'Status'} | ${Math.round(m.accuracy * 100)}%` : '', {
         fontFamily: 'monospace', fontSize: '9px', color: mColorHex
       });
       if (m) {
@@ -394,7 +394,7 @@ export class BattleScene extends Phaser.Scene {
     this.updateBars();
     this.shakeSprites();
     sfx.bump();
-    // P1: Hitstop 50ms — kurzes Einfrieren fuer Impact-Feel
+    // P1: Hitstop 50ms â kurzes Einfrieren fuer Impact-Feel
     this.tweens.timeScale = 0;
     setTimeout(() => { if (this.tweens) this.tweens.timeScale = 1; }, 50);
     this.setMoveButtonsEnabled(false);
@@ -475,7 +475,7 @@ if (this.bossDef && outcome.winner === this.player) {
     const wildPct = this.wild.stats.hp / this.wild.stats.maxHp;
     const targetPlayerW = Math.max(0, w * playerPct);
     const targetWildW = Math.max(0, w * wildPct);
-    // P1: Ghost-Bar — zeigt vorherigen HP-Stand kurz als roter Balken
+    // P1: Ghost-Bar â zeigt vorherigen HP-Stand kurz als roter Balken
     if (this.playerHpGhost) {
       this.playerHpGhost.width = this.playerHpBar.width;
       this.tweens.add({ targets: this.playerHpGhost, width: targetPlayerW, duration: 600, delay: 250, ease: 'Cubic.Out' });
@@ -513,7 +513,7 @@ if (this.bossDef && outcome.winner === this.player) {
     }
   }
 
-  /** P0 Fix 4 (D-041): Farbkodierte Schadenszahlen mit Scale-Pop + Effektivitäts-Label */
+  /** P0 Fix 4 (D-041): Farbkodierte Schadenszahlen mit Scale-Pop + EffektivitÃ¤ts-Label */
   private getDamageColor(dmg: number, crit: boolean, effLabel: string): string {
     if (crit) return '#ff4444';
     if (effLabel === 'STARK') return '#ffa040';
@@ -599,12 +599,12 @@ if (this.bossDef && outcome.winner === this.player) {
     const success = Math.random() < baseRate;
     if (success && this.capturedEnc) {
       gameStore.capturePlant(this.capturedEnc.slug, this.capturedEnc.level, 0, 0, 0);
-      this.statusText.setText(`${this.wild.name} wurde gefangen!`);
+      this.statusText.setText(t('battle.caught', { name: this.wild.name }));
       sfx.pickup();
       this.over = true;
       this.time.delayedCall(1500, () => this.endBattle('Gefangen!'));
     } else {
-      this.statusText.setText('Fang-Versuch misslungen.');
+      this.statusText.setText(t('battle.catchFail'));
       sfx.bump();
       this.waitingForInput = false;
       const wildMoveSlug = pickWildMove(this.wild);
@@ -625,18 +625,18 @@ if (this.bossDef && outcome.winner === this.player) {
   private tryRun(): void {
     if (this.over) return;
     if (this.player.statuses.some((s) => s.effect === 'rooted')) {
-      this.statusText.setText('Du bist von Wurzeln gefangen und kannst nicht fliehen.');
+      this.statusText.setText(t('battle.rootsTrap'));
       sfx.bump();
       return;
     }
     const success = Math.random() < 0.7;
     if (success) {
-      this.statusText.setText('Du fliehst aus dem Kampf.');
+      this.statusText.setText(t('battle.flee'));
       sfx.dialogAdvance();
       this.over = true;
       this.time.delayedCall(800, () => this.endBattle('Geflohen.'));
     } else {
-      this.statusText.setText('Flucht misslungen!');
+      this.statusText.setText(t('battle.fleeFail'));
       sfx.bump();
     }
   }
