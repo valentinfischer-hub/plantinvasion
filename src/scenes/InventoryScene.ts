@@ -59,7 +59,7 @@ export class InventoryScene extends Phaser.Scene {
 
     // Hint
     this.add
-      .text(width / 2, this.viewportBottom + 4, 'Klick auf Item fuer Details   ↑↓ scrollen   I/Esc zurueck', {
+      .text(width / 2, this.viewportBottom + 4, 'Klick auf Item für Details   ↑↓ scrollen   I/Esc zurück', {
         fontFamily: 'monospace',
         fontSize: '10px',
         color: '#553e2d'
@@ -74,7 +74,7 @@ export class InventoryScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x9be36e)
       .setInteractive({ useHandCursor: true });
     this.add
-      .text(width / 2, backY, 'Zurueck (I)', {
+      .text(width / 2, backY, 'Zurück (I)', {
         fontFamily: 'monospace',
         fontSize: '12px',
         color: '#9be36e'
