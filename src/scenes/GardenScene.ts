@@ -60,7 +60,7 @@ export class GardenScene extends Phaser.Scene {
   private gridOriginX = 0;
   private gridOriginY = 0;
   private cards: Map<string, PlantCard> = new Map();
-  // S-POLISH Run16: Subscribe-Throttle — renderPlants() max 1x alle 500ms aus der store-Subscription
+  // S-POLISH Run16: Subscribe-Throttle â renderPlants() max 1x alle 500ms aus der store-Subscription
   private _renderPending = false;
   private crossMode = false;
   private companionLineGraphics?: Phaser.GameObjects.Graphics;
@@ -74,6 +74,7 @@ export class GardenScene extends Phaser.Scene {
   private detailPanel?: Phaser.GameObjects.Container;
   private slotHotspots: Array<{ gridX: number; gridY: number; hotspot: Phaser.GameObjects.Rectangle }> = [];
   private dragSource?: { plantId: string; startX: number; startY: number };
+  private _unloadHandler?: () => void;
 
   constructor() {
     super('GardenScene');
@@ -148,7 +149,7 @@ export class GardenScene extends Phaser.Scene {
         const sx = this.gridOriginX + x * (TILE + TILE_PAD);
         const sy = this.gridOriginY + y * (TILE + TILE_PAD);
         const slot = this.add.graphics();
-        // QW-14: Slot-Farbvariation per Position – leicht unterschiedliche Erdtoene
+        // QW-14: Slot-Farbvariation per Position â leicht unterschiedliche Erdtoene
         const hash = (x * 3 + y * 7) % 6;
         const slotColors = [0x223520, 0x1e3018, 0x27391e, 0x1c2e16, 0x243822, 0x1a2c14];
         const borderColors = [0x44603f, 0x3a5234, 0x4e6a47, 0x3c5838, 0x486244, 0x405a3a];
@@ -195,7 +196,7 @@ export class GardenScene extends Phaser.Scene {
         });
         this.slotHotspots.push({ gridX: x, gridY: y, hotspot });
 
-        // S-POLISH-B3-R1: Slot-Nummerierung A1–D3 (dezenter Stardew-Inventory-Stil)
+        // S-POLISH-B3-R1: Slot-Nummerierung A1âD3 (dezenter Stardew-Inventory-Stil)
         const colLabel = String.fromCharCode(65 + x); // A, B, C, D
         const rowLabel = (y + 1).toString();           // 1, 2, 3
         this.add.text(sx + 4, sy + 2, `${colLabel}${rowLabel}`, {
@@ -223,7 +224,7 @@ export class GardenScene extends Phaser.Scene {
     });
 
     gameStore.subscribe(() => {
-      // S-POLISH Run16: Throttle — verzoegert renderPlants() via rAF-Debounce (max 1x pro Frame)
+      // S-POLISH Run16: Throttle â verzoegert renderPlants() via rAF-Debounce (max 1x pro Frame)
       if (!this._renderPending) {
         this._renderPending = true;
         this.time.delayedCall(500, () => {
@@ -290,6 +291,17 @@ export class GardenScene extends Phaser.Scene {
     this.crossModeHint = this.add.text(width / 2, 50, '', {
       fontFamily: 'monospace', fontSize: '10px', color: '#b86ee3', backgroundColor: '#1a1f1a', padding: { x: 6, y: 2 }
     }).setOrigin(0.5).setVisible(false);
+    // B-020: Vor Page-Unload State sichern (verhindert Pre-Crossing-Rollback bei F5)
+    this._unloadHandler = () => gameStore.save();
+    window.addEventListener('beforeunload', this._unloadHandler);
+  }
+
+  shutdown(): void {
+    if (this._unloadHandler) {
+      window.removeEventListener('beforeunload', this._unloadHandler);
+      this._unloadHandler = undefined;
+    }
+    gameStore.save();
   }
 
   private toggleCrossMode(): void {
@@ -738,7 +750,7 @@ export class GardenScene extends Phaser.Scene {
 
   /** Booster-Partikel-Burst in Booster-spezifischer Farbe */
   /**
-   * S-POLISH-B3-R1: Harvest-Floating-Text — "+X Coins" aufsteigend von Pflanze.
+   * S-POLISH-B3-R1: Harvest-Floating-Text â "+X Coins" aufsteigend von Pflanze.
    */
   private spawnHarvestFloatingText(x: number, y: number, coins: number): void {
     const label = this.add.text(x, y - 20, `+${coins} Coins`, {
@@ -759,7 +771,7 @@ export class GardenScene extends Phaser.Scene {
   }
 
   /**
-   * S-POLISH-B2-R18 (fix): Harvest-Burst — goldene Partikel-Explosion.
+   * S-POLISH-B2-R18 (fix): Harvest-Burst â goldene Partikel-Explosion.
    * War referenziert aber nie implementiert. Fix in B3-R4.
    */
   private spawnHarvestBurst(x: number, y: number): void {
@@ -821,15 +833,16 @@ export class GardenScene extends Phaser.Scene {
   }
 
   private refreshHeader(): void {
+    if (!this.headerText?.active) return; // B-023: Guard gegen null-Canvas-Crash
     const state = gameStore.get();
     // S-POLISH-B3-R4: Saison + Tag-Anzeige im Header (Stardew-Stil)
     const seasons = ['Fruehling', 'Sommer', 'Herbst', 'Winter'];
     const time = state.time ?? { minute: 360, day: 1, season: 0, year: 1 };
     const seasonLabel = seasons[time.season ?? 0];
     const dayLabel = time.day ?? 1;
-    const winterWarn = (time.season === 3) ? '  ⚠Frost' : '';
+    const winterWarn = (time.season === 3) ? '  â Frost' : '';
     this.headerText.setText(
-      `${seasonLabel}, Tag ${dayLabel}${winterWarn}  ·  ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS}  ·  ${state.coins} Coins`
+      `${seasonLabel}, Tag ${dayLabel}${winterWarn}  Â·  ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS}  Â·  ${state.coins} Coins`
     );
   }
 
@@ -855,7 +868,7 @@ export class GardenScene extends Phaser.Scene {
         this.cards.delete(id);
       }
     });
-    // S-POLISH-B2-R3: Companion-Aura - grüne Aura auf Karten bei aktiven Companion-Paaren
+    // S-POLISH-B2-R3: Companion-Aura - grÃ¼ne Aura auf Karten bei aktiven Companion-Paaren
     this.updateCompanionAuras(state.plants);
     this.refreshHeader();
   }
@@ -871,7 +884,7 @@ export class GardenScene extends Phaser.Scene {
     for (const plant of plants) {
       const { bonus } = companionBonus(plant, plants);
       if (bonus <= 0) continue;
-      // Zeichne einen grünen Glow-Ring um die Card
+      // Zeichne einen grÃ¼nen Glow-Ring um die Card
       const card = this.cards.get(plant.id);
       if (!card) continue;
       const cx = card.container.x, cy = card.container.y;
@@ -882,7 +895,7 @@ export class GardenScene extends Phaser.Scene {
       g.strokeCircle(cx, cy, TILE * 0.52);
     }
 
-    // S-POLISH-B2-R13: Bonsai-Aura — goldener Ring um Bonsai-Pflanzen
+    // S-POLISH-B2-R13: Bonsai-Aura â goldener Ring um Bonsai-Pflanzen
     if (!this.bonsaiAuraGraphics) {
       this.bonsaiAuraGraphics = this.add.graphics();
       this.bonsaiAuraGraphics.setDepth(49);
@@ -894,10 +907,10 @@ export class GardenScene extends Phaser.Scene {
       const card = this.cards.get(plant.id);
       if (!card) continue;
       const cx = card.container.x, cy = card.container.y;
-      // Äusserer goldener Ring
+      // Ãusserer goldener Ring
       bg.lineStyle(3, 0xfcd95c, 0.55);
       bg.strokeCircle(cx, cy, TILE * 0.56);
-      // Innerer Ring (dünner)
+      // Innerer Ring (dÃ¼nner)
       bg.lineStyle(1, 0xffd700, 0.3);
       bg.strokeCircle(cx, cy, TILE * 0.44);
     }
@@ -1159,18 +1172,18 @@ export class GardenScene extends Phaser.Scene {
     }
 
     const stageName = GROWTH_STAGE_NAMES[stage];
-    card.levelText.setText(`L${plant.level} · ${stageName}`);
+    card.levelText.setText(`L${plant.level} Â· ${stageName}`);
 
     // S-POLISH Run13: Droop-Visual fuer dehydrierte Pflanzen (< 20% hydration)
-    // S-POLISH-B2-R2: Booster-Cooldown-Tint (überschreibt Droop nur wenn kein Droop)
+    // S-POLISH-B2-R2: Booster-Cooldown-Tint (Ã¼berschreibt Droop nur wenn kein Droop)
     if (plant.hydration < 20) {
       card.sprite.setTint(0xc8b860);
       if (card.sprite.y === 0) card.sprite.setY(2);
     } else {
-      // Booster-Tint: subtiler Grün-Schimmer wenn ein Booster aktiv ist
+      // Booster-Tint: subtiler GrÃ¼n-Schimmer wenn ein Booster aktiv ist
       const activeBoosters = plant.activeBoosters.filter(b => Date.now() - b.startedAt < b.durationMs);
       if (activeBoosters.length > 0) {
-        // Subtiler Booster-Tint: leicht grün für wachstumsbooster, gold für pristine, lila für hybrid
+        // Subtiler Booster-Tint: leicht grÃ¼n fÃ¼r wachstumsbooster, gold fÃ¼r pristine, lila fÃ¼r hybrid
         const hasHybrid = activeBoosters.some(b => b.type === 'hybrid');
         const hasPristine = activeBoosters.some(b => b.type === 'xp');
         const tintColor = hasHybrid ? 0xd0a0ff : hasPristine ? 0xffeeaa : 0xaaffaa;
@@ -1214,11 +1227,11 @@ export class GardenScene extends Phaser.Scene {
       card.thirstIcon.setText('!!').setColor('#ff5555');
     } else if (hStatus === 'trocken') {
       // S-POLISH-B3-R1: Tropfen-Icon fuer trockene Pflanzen (Stardew-Wasser-Indikator)
-      card.thirstIcon.setText('💧').setColor('#ff8c42');
+      card.thirstIcon.setText('ð§').setColor('#ff8c42');
     } else if (hStatus === 'durstig') {
-      card.thirstIcon.setText('💧').setColor('#ffd166');
+      card.thirstIcon.setText('ð§').setColor('#ffd166');
     } else if (ready) {
-      card.thirstIcon.setText('💧').setColor('#4dafff');
+      card.thirstIcon.setText('ð§').setColor('#4dafff');
     } else {
       card.thirstIcon.setText('').setColor('#999999');
     }
@@ -1255,7 +1268,7 @@ export class GardenScene extends Phaser.Scene {
       }
     }
 
-    // S-POLISH-B2-R13: Bonsai-Badge — gold Punkt oben-rechts wenn bonsaiMode aktiv
+    // S-POLISH-B2-R13: Bonsai-Badge â gold Punkt oben-rechts wenn bonsaiMode aktiv
     if (plant.bonsaiMode) {
       card.bg.fillStyle(0xfcd95c, 0.9);
       card.bg.fillCircle(TILE / 2 - 6, -TILE / 2 + 6, 4);
@@ -1342,10 +1355,10 @@ export class GardenScene extends Phaser.Scene {
       ? Math.ceil(xpNeededForStage / (xpPerSec * 86400 * 0.5))
       : 0;
     const stageInfo = nextStageLvl
-      ? `Stage ${stage + 1}/${stageNames.length - 1} → ${stageNames[stage + 1]} (~${daysToNextStage}d)`
+      ? `Stage ${stage + 1}/${stageNames.length - 1} â ${stageNames[stage + 1]} (~${daysToNextStage}d)`
       : `Stage ${stage}/${stageNames.length - 1} (Max)`;
     const estimatedCoins = Math.round((5 + 0 * 4) * 1); // rough estimate common tier
-    const harvestInfo = stage >= 4 ? `Ertrag ~${estimatedCoins}–${estimatedCoins + 16} Coins` : `Ertrag ab Stage Blooming`;
+    const harvestInfo = stage >= 4 ? `Ertrag ~${estimatedCoins}â${estimatedCoins + 16} Coins` : `Ertrag ab Stage Blooming`;
 
     const lines = [
       `Stage: ${GROWTH_STAGE_NAMES[stage]}  (${stageInfo})`,
@@ -1461,7 +1474,7 @@ export class GardenScene extends Phaser.Scene {
     // Bonsai-Toggle
     const bonsaiY = soilY + 28;
     // S-POLISH-B2-R13: Grow-Modus-Selector mit visueller Differenzierung
-    const modeIcon = plant.bonsaiMode ? '🌿' : '🌱';
+    const modeIcon = plant.bonsaiMode ? 'ð¿' : 'ð±';
     const modeColor = plant.bonsaiMode ? '#fcd95c' : '#9be36e';
     const modeBg = plant.bonsaiMode ? '#2a2000' : '#1a2a1a';
     const bonsaiLabel = plant.bonsaiMode
