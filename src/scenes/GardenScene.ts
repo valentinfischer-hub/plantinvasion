@@ -705,6 +705,43 @@ export class GardenScene extends Phaser.Scene {
       });
     }
 
+    // R65: Expandierende Konzentrische Ringe (3 Stueck, zeitversetzt)
+    for (let ri = 0; ri < 3; ri++) {
+      const ring = this.add.arc(cx, cy, 20, 0, 360, false, isMutation ? 0xb86ee3 : 0x9be36e, 0)
+        .setStrokeStyle(3, isMutation ? 0xff7eb8 : 0xfcd95c, 0.8)
+        .setDepth(9997);
+      this.tweens.add({
+        targets: ring,
+        scaleX: 5 + ri * 2,
+        scaleY: 5 + ri * 2,
+        alpha: 0,
+        duration: 800 + ri * 200,
+        ease: 'Cubic.Out',
+        delay: ri * 180,
+        onComplete: () => ring.destroy()
+      });
+    }
+    // R65: Hybrid-Text-Sticker der nach oben driftet
+    const stickerText = isMutation ? '✨ Mutation!' : '🌿 Hybrid!';
+    const sticker = this.add.text(cx, cy - 20, stickerText, {
+      fontFamily: 'monospace', fontSize: '18px', color: isMutation ? '#ff7eb8' : '#9be36e',
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10000).setAlpha(0);
+    this.tweens.add({
+      targets: sticker,
+      y: cy - 70,
+      alpha: { from: 0, to: 1 },
+      scale: { from: 0.5, to: 1.2 },
+      duration: 400,
+      ease: 'Back.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: sticker, alpha: 0, y: cy - 100, duration: 600, delay: 800, ease: 'Cubic.Out',
+          onComplete: () => sticker.destroy()
+        });
+      }
+    });
+
     // PostHog-Event fuer Telemetrie
     const posthog = (window as Window & { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog;
     if (posthog) {
