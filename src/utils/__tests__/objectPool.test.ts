@@ -1,7 +1,7 @@
 /**
  * ObjectPool Tests - S-POLISH Batch 5 Run 6
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { ObjectPool } from '../objectPool';
 
 // Mock-Objekt
