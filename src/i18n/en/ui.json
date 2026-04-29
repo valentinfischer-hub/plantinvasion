@@ -155,12 +155,6 @@
   "ow.save.indicator": "* saved",
   "ow.dailyLogin.toast": "Daily reward: {{label}}"
 ,
-  "qls.title": "Quest Log",
-  "qls.back": "Back (B)",
-  "qls.filterAll": "All",
-  "qls.filterActive": "Active",
-  "qls.filterCompleted": "Completed",
-  "inv.title": "Inventory",
-  "inv.back": "Back (I)",
-  "inv.hint": "Click item for details   Scroll   I/Esc back"
+  "diary.title": "Tilda's Diary",
+  "diary.back": "Back (B)"
 }
