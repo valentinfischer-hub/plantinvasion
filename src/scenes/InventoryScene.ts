@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { getItem } from '../data/items';
+import { t } from '../i18n/index';
 
 /**
  * Inventory-Scene V0.1 (2026-04-25).
@@ -30,7 +31,7 @@ export class InventoryScene extends Phaser.Scene {
     this.viewportBottom = height - 60;
 
     this.add
-      .text(width / 2, 30, 'Inventar', {
+      .text(width / 2, 30, t('inv.title'), {
         fontFamily: 'monospace',
         fontSize: '22px',
         color: '#9be36e'
@@ -60,7 +61,7 @@ export class InventoryScene extends Phaser.Scene {
 
     // Hint
     this.add
-      .text(width / 2, this.viewportBottom + 4, 'Klick auf Item für Details   ↑↓ scrollen   I/Esc zurück', {
+      .text(width / 2, this.viewportBottom + 4, t('inv.hint'), {
         fontFamily: 'monospace',
         fontSize: '10px',
         color: '#553e2d'
@@ -75,7 +76,7 @@ export class InventoryScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x9be36e)
       .setInteractive({ useHandCursor: true });
     this.add
-      .text(width / 2, backY, 'Zurück (I)', {
+      .text(width / 2, backY, t('inv.back'), {
         fontFamily: 'monospace',
         fontSize: '12px',
         color: '#9be36e'
