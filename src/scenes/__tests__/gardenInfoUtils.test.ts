@@ -37,6 +37,7 @@ function makePlant(overrides: Partial<Plant> = {}): Plant {
     gridY: 0,
     activeBoosters: [],
     mutationKind: undefined,
+    highestStageReached: 0,
     ...overrides
   };
 }

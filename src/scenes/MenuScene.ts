@@ -209,6 +209,15 @@ export class MenuScene extends Phaser.Scene {
 
     let by = plantY + 170;
     if (save) {
+      // S-POLISH-B3-R4: Stardew-Stil — Save-Stats unter Continue-Button
+      const seasons = ['Fruehling', 'Sommer', 'Herbst', 'Winter'];
+      const saveTime = save.time ?? { minute: 360, day: 1, season: 0, year: 1 };
+      const seasonLabel = seasons[saveTime.season ?? 0];
+      const dayLabel = saveTime.day ?? 1;
+      const plantCount = (save.plants ?? []).length;
+      const coinCount = save.coins ?? 0;
+      const saveStats = `${seasonLabel}, Tag ${dayLabel}  ·  ${plantCount} Pflanzen  ·  ${coinCount} Coins`;
+
       void this.makeButton(cx, by, t('menu.continue'), '#9be36e', () => {
         sfx.dialogAdvance();
         startAmbientBGM();
@@ -216,7 +225,11 @@ export class MenuScene extends Phaser.Scene {
         const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
         this.scene.start(target);
       });
-      by += 60;
+      // Save-Stats darunter (dezent, Stardew-Stil)
+      this.add.text(cx, by + 26, saveStats, {
+        fontFamily: 'monospace', fontSize: '9px', color: '#6a8a5a', align: 'center'
+      }).setOrigin(0.5).setAlpha(0.85);
+      by += 68;
     }
     const newGameBtn = this.makeButton(cx, by, save ? t('menu.newGame') : t('menu.startGame'), '#fcd95c', () => {
       // V0.2 (Critic-Review-Fix): Bei Neues-Spiel direkt in OverworldScene

@@ -757,6 +757,32 @@ export class GardenScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * S-POLISH-B2-R18 (fix): Harvest-Burst — goldene Partikel-Explosion.
+   * War referenziert aber nie implementiert. Fix in B3-R4.
+   */
+  private spawnHarvestBurst(x: number, y: number): void {
+    const colors = [0xffd166, 0xfcd95c, 0xffeeaa];
+    for (let i = 0; i < 10; i++) {
+      const dot = this.add.circle(x, y, 4, colors[i % colors.length], 1).setDepth(1600);
+      const angle = (i / 10) * Math.PI * 2;
+      const dist = 28 + Math.random() * 20;
+      this.tweens.add({
+        targets: dot,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist,
+        alpha: 0,
+        scale: 0.2,
+        duration: 600,
+        ease: 'Power2',
+        onComplete: () => dot.destroy()
+      });
+    }
+    // Zentral-Flash
+    const flash = this.add.circle(x, y, 14, 0xffd166, 0.7).setDepth(1599);
+    this.tweens.add({ targets: flash, alpha: 0, scale: 2.2, duration: 350, onComplete: () => flash.destroy() });
+  }
+
   private spawnBoosterBurst(x: number, y: number, color: number): void {
     for (let i = 0; i < 12; i++) {
       const dot = this.add.circle(x, y, 4, color, 1).setDepth(1500);
@@ -795,8 +821,14 @@ export class GardenScene extends Phaser.Scene {
 
   private refreshHeader(): void {
     const state = gameStore.get();
+    // S-POLISH-B3-R4: Saison + Tag-Anzeige im Header (Stardew-Stil)
+    const seasons = ['Fruehling', 'Sommer', 'Herbst', 'Winter'];
+    const time = state.time ?? { minute: 360, day: 1, season: 0, year: 1 };
+    const seasonLabel = seasons[time.season ?? 0];
+    const dayLabel = time.day ?? 1;
+    const winterWarn = (time.season === 3) ? '  ⚠Frost' : '';
     this.headerText.setText(
-      `Plantinvasion · ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS} · Coins ${state.coins}`
+      `${seasonLabel}, Tag ${dayLabel}${winterWarn}  ·  ${state.plants.length}/${GRID_COLUMNS * GRID_ROWS}  ·  ${state.coins} Coins`
     );
   }
 

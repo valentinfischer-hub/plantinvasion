@@ -156,14 +156,37 @@ export class MarketScene extends Phaser.Scene {
         gameStore.recordMarketRosterBought(item.slug);
       }
       sfx.pickup();
+      // S-POLISH-B3-R4: Coin-Floater bei Kauf
+      this.spawnCoinFloater(`-${item.buyPrice} Coins`, '#ff8c42');
     } else {
       const has = gameStore.consumeItem(item.slug);
       if (!has) return;
       gameStore.addCoins(item.sellPrice);
       sfx.dialogAdvance();
+      // S-POLISH-B3-R4: Coin-Floater bei Verkauf
+      this.spawnCoinFloater(`+${item.sellPrice} Coins`, '#9be36e');
     }
     this.updateCoinsText();
     this.refreshList();
+  }
+
+  /**
+   * S-POLISH-B3-R4: Coin-Floater Animation — Zahl steigt von Coins-Display auf und verfliegt.
+   */
+  private spawnCoinFloater(label: string, color: string): void {
+    const { width } = this.scale;
+    const t = this.add.text(width / 2, 56, label, {
+      fontFamily: 'monospace', fontSize: '16px', color,
+      stroke: '#000000', strokeThickness: 2
+    }).setOrigin(0.5).setDepth(2000);
+    this.tweens.add({
+      targets: t,
+      y: 20,
+      alpha: 0,
+      duration: 900,
+      ease: 'Cubic.Out',
+      onComplete: () => t.destroy()
+    });
   }
 
   private makeButton(x: number, y: number, label: string, color: string, onClick: () => void): Phaser.GameObjects.Container {
