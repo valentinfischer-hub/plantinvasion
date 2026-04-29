@@ -8,7 +8,7 @@ import {
   stageOf,
   totalXpToReachLevel,
   STAGE_LEVEL_THRESHOLDS,
-  xpToNextLevel,
+  
   isHarvestReady,
   canBeWatered
 } from '../../data/leveling';
