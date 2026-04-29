@@ -17,7 +17,8 @@ export class InventoryScene extends Phaser.Scene {
   private viewportTop = 90;
   private viewportBottom = 0;
   // selectedSlug not currently displayed elsewhere, kept for future
-  // private selectedSlug: string | null = null;
+  private selectedSlug: string | null = null;
+  private cardBgMap: Map<string, Phaser.GameObjects.Rectangle> = new Map();
 
   constructor() {
     super('InventoryScene');
@@ -100,6 +101,7 @@ export class InventoryScene extends Phaser.Scene {
    * leere Slots als gestrichelte Platzhalter.
    */
   private renderList(): void {
+    this.cardBgMap = new Map();
     this.listContainer.removeAll(true);
     const inv = gameStore.getInventory();
     const slugs = Object.keys(inv).filter((s) => (inv[s] ?? 0) > 0);
@@ -208,6 +210,7 @@ export class InventoryScene extends Phaser.Scene {
       cardBg.setFillStyle(0x1a3525, 0.85);
       nameTxt.setColor('#dddddd');
     });
+    this.cardBgMap.set(slug, cardBg);
     cardBg.on('pointerup', () => this.selectItem(slug));
 
     [cardBg, stripe, nameTxt, badgeBg, badgeTxt].forEach((o) => this.listContainer.add(o));
@@ -288,7 +291,13 @@ export class InventoryScene extends Phaser.Scene {
   }
 
   private selectItem(slug: string): void {
-    // this.selectedSlug = slug;
+    if (this.selectedSlug && this.cardBgMap.has(this.selectedSlug)) {
+      const prev = this.cardBgMap.get(this.selectedSlug)!;
+      prev.setStrokeStyle(1, 0x3a5a3a); prev.setFillStyle(0x1a3525, 0.85);
+    }
+    this.selectedSlug = slug;
+    const cur = this.cardBgMap.get(slug);
+    if (cur) { cur.setStrokeStyle(2, 0xfcd95c); cur.setFillStyle(0x2a4535, 0.95); }
     this.renderDetail(slug);
   }
 
