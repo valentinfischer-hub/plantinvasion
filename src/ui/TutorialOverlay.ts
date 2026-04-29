@@ -54,6 +54,8 @@ export class TutorialOverlay {
   private uiCam!: Phaser.Cameras.Scene2D.Camera;
   private progressDots: Phaser.GameObjects.Arc[] = [];
   public lastInteract: string | undefined;
+  private arrowHint?: Phaser.GameObjects.Text;
+  private arrowTween?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -186,6 +188,24 @@ export class TutorialOverlay {
     if (this.currentStep !== t.step) {
       sfx.dialogOpen();
       this.currentStep = t.step;
+    }
+    // R56: Arrow bei Step 3 (Garten) einblenden + bouncing Tween
+    if (this.arrowHint) {
+      if (t.step === 3) {
+        this.arrowHint.setAlpha(1);
+        if (this.arrowTween) this.arrowTween.stop();
+        this.arrowTween = this.scene.tweens.add({
+          targets: this.arrowHint,
+          y: this.arrowHint.y + 6,
+          duration: 600,
+          ease: 'Sine.InOut',
+          yoyo: true,
+          repeat: -1
+        });
+      } else {
+        this.arrowHint.setAlpha(0);
+        if (this.arrowTween) { this.arrowTween.stop(); this.arrowTween = undefined; }
+      }
     }
   }
 
