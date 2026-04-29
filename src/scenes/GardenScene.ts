@@ -33,6 +33,7 @@ import { getAllele } from '../data/genes';
 import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
 import { showToast, type ToastType } from '../ui/Toast';
+import { t } from '../i18n';
 import { drawModalBox } from '../ui/uiTheme';
 import { sfx } from '../audio/sfxGenerator';
 
@@ -257,7 +258,7 @@ export class GardenScene extends Phaser.Scene {
     }
 
     // Header-Button "Pflanze einsaeen"
-    const seedBtn = this.add.text(width - 70, 14, 'Saeen', {
+    const seedBtn = this.add.text(width - 70, 14, t('garden.btnSeed'), {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#1a1f1a',
@@ -267,7 +268,7 @@ export class GardenScene extends Phaser.Scene {
     seedBtn.on('pointerdown', () => this.openSeedPlantModal());
 
     // Welt-Erkunden-Button: prominent oben links, fuehrt zur OverworldScene
-    const worldBtn = this.add.text(70, 14, 'Welt (W)', {
+    const worldBtn = this.add.text(70, 14, t('garden.btnWorld'), {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#1a1f1a',
@@ -281,7 +282,7 @@ export class GardenScene extends Phaser.Scene {
       .setStrokeStyle(1, 0xb86ee3)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
-    this.crossBtnTxt = this.add.text(width - 140, 22, 'Kreuzen', {
+    this.crossBtnTxt = this.add.text(width - 140, 22, t('garden.btnCross'), {
       fontFamily: 'monospace', fontSize: '11px', color: '#b86ee3'
     }).setOrigin(0.5);
     this.crossBtnBg.on('pointerdown', () => this.toggleCrossMode());
@@ -304,13 +305,13 @@ export class GardenScene extends Phaser.Scene {
     }
     if (this.crossBtnTxt) {
       this.crossBtnTxt.setColor(this.crossMode ? '#fcd95c' : '#b86ee3');
-      this.crossBtnTxt.setText(this.crossMode ? 'Aktiv' : 'Kreuzen');
+      this.crossBtnTxt.setText(this.crossMode ? t('garden.btnCrossActive') : t('garden.btnCross'));
     }
     if (this.crossModeHint) {
       if (this.crossMode) {
         const txt = this.crossFirstPlantId
-          ? 'Waehle zweite Pflanze (Kreuzen-Btn fuer Abbruch)'
-          : 'Cross-Mode: klicke erste Pflanze zum Auswaehlen';
+          ? t('garden.hintSecondPlant')
+          : t('garden.hintFirstPlant');
         this.crossModeHint.setText(txt);
         this.crossModeHint.setVisible(true);
       } else {
@@ -327,7 +328,7 @@ export class GardenScene extends Phaser.Scene {
       return;
     }
     if (this.crossFirstPlantId === plantId) {
-      this.showFlash('Selbe Pflanze - waehle eine andere', '#ff7e7e');
+      this.showFlash(t('garden.samePlant'), '#ff7e7e');
       return;
     }
     // Preview-Modal vor Bestaetigung
@@ -341,7 +342,7 @@ export class GardenScene extends Phaser.Scene {
     }
     const preview = gameStore.previewCross(parentAId, parentBId);
     if (!preview.ok) {
-      this.showFlash(preview.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      this.showFlash(preview.reason ?? t('garden.crossFailed'), '#ff7e7e');
       this.crossMode = false;
       this.crossFirstPlantId = null;
       this.refreshCrossUI();
@@ -355,7 +356,7 @@ export class GardenScene extends Phaser.Scene {
     const bg = this.add.graphics();
     drawModalBox(bg, { width: panelW, height: panelH, borderColor: 0xb86ee3, borderAlpha: 0.9 });
     c.add(bg);
-    const title = this.add.text(0, -panelH / 2 + 12, 'Kreuzungs-Vorschau', {
+    const title = this.add.text(0, -panelH / 2 + 12, t('garden.crossPreviewTitle'), {
       fontFamily: 'monospace', fontSize: '14px', color: '#b86ee3'
     }).setOrigin(0.5, 0);
     c.add(title);
@@ -376,7 +377,7 @@ export class GardenScene extends Phaser.Scene {
       ].join('\n'),
       { fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc' });
     c.add(stats);
-    const okBtn = this.add.text(-60, panelH / 2 - 30, 'Kreuzen!', {
+    const okBtn = this.add.text(-60, panelH / 2 - 30, t('garden.btnCrossConfirm'), {
       fontFamily: 'monospace', fontSize: '12px', color: '#1a1f1a',
       backgroundColor: '#b86ee3', padding: { left: 14, right: 14, top: 6, bottom: 6 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -391,7 +392,7 @@ export class GardenScene extends Phaser.Scene {
       void this.runCrossWithDrift(parentAId, parentBId, '#b86ee3');
     });
     c.add(okBtn);
-    const cancelBtn = this.add.text(60, panelH / 2 - 30, 'Abbruch', {
+    const cancelBtn = this.add.text(60, panelH / 2 - 30, t('common.cancel'), {
       fontFamily: 'monospace', fontSize: '11px', color: '#dcdcdc',
       backgroundColor: '#3a3a3a', padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -415,13 +416,13 @@ export class GardenScene extends Phaser.Scene {
     const inv = gameStore.getInventory();
     const seedSlugs = Object.keys(inv).filter((k) => isSeedItem(k) && (inv[k] ?? 0) > 0);
     if (seedSlugs.length === 0) {
-      this.showFlash('Keine Samen im Inventar', '#ff7e7e');
+      this.showFlash(t('garden.noSeeds'), '#ff7e7e');
       return;
     }
     // B-012: Vorab-Check Garten-voll, sonst landen wir im Modal mit deaktivierten Klicks und der Toast kommt erst danach
     const freeSlots = gameStore.getFreeSlotCount();
     if (freeSlots === 0) {
-      this.showFlash('Garten voll. Ernte oder verschiebe Pflanzen.', '#ff7e7e');
+      this.showFlash(t('garden.gardenFull'), '#ff7e7e');
       return;
     }
     const { width, height } = this.scale;
@@ -454,7 +455,7 @@ export class GardenScene extends Phaser.Scene {
           container.destroy();
           this.detailPanel = undefined;
         } else {
-          this.showFlash(result.reason ?? 'Fehlgeschlagen', '#ff7e7e');
+          this.showFlash(result.reason ?? t('common.failed'), '#ff7e7e');
         }
       });
       container.add(btn);
@@ -494,7 +495,7 @@ export class GardenScene extends Phaser.Scene {
     const inv = gameStore.getInventory();
     const seedSlugs = Object.keys(inv).filter((k) => isSeedItem(k) && (inv[k] ?? 0) > 0);
     if (seedSlugs.length === 0) {
-      this.showFlash('Keine Samen im Inventar', '#ff7e7e');
+      this.showFlash(t('garden.noSeeds'), '#ff7e7e');
       return;
     }
     const { width, height } = this.scale;
@@ -526,7 +527,7 @@ export class GardenScene extends Phaser.Scene {
           container.destroy();
           this.detailPanel = undefined;
         } else {
-          this.showFlash(result.reason ?? 'Fehlgeschlagen', '#ff7e7e');
+          this.showFlash(result.reason ?? t('common.failed'), '#ff7e7e');
         }
       });
       container.add(btn);
@@ -612,12 +613,12 @@ export class GardenScene extends Phaser.Scene {
     const drifted = await this.playParentDrift(parentAId, parentBId);
     const result = gameStore.crossPlants(parentAId, parentBId);
     if (!result.ok) {
-      this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
+      this.showFlash(result.reason ?? t('garden.crossFailed'), '#ff7e7e');
       return;
     }
     const isMutation = !!result.child?.isMutation;
     this.playHybridReveal(isMutation);
-    this.showFlash(isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', successColor);
+    this.showFlash(isMutation ? t('garden.mutation') : t('garden.crossSuccess'), successColor);
     // Scale-In der neuen Hybrid-Card sobald renderPlants sie erstellt hat
     if (result.child) {
       const hybridId = result.child.id;
@@ -949,7 +950,7 @@ export class GardenScene extends Phaser.Scene {
 
     // Hint-Text oberhalb Garten-Grid
     const hint = this.add.text(this.scale.width / 2, this.gridOriginY - 28,
-      'Klick hier um deine erste Pflanze zu setzen', {
+      t('garden.tutorialFirstPlant'), {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#fcd95c',
