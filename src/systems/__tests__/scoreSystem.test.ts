@@ -1,3 +1,4 @@
+import { describe, test, it, expect, beforeEach, vi } from 'vitest';
 /**
  * Score-System Tests [b4-run10/15]
  */
@@ -35,7 +36,7 @@ describe('Score-System: calcPoints', () => {
 });
 
 describe('Score-System: Multiplikator', () => {
-  test('Erhöhung um 1 Step = +0.1', () => {
+  test('ErhÃ¶hung um 1 Step = +0.1', () => {
     expect(increaseMultiplier(1.0)).toBe(1.1);
   });
 
