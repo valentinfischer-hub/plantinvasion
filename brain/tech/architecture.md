@@ -1,4 +1,4 @@
-# Plantinvasion Architektur (V1.2, Stand 2026-04-29)
+# Plantinvasion Architektur (V1.3, Stand 2026-04-29)
 
 Single-Source-of-Truth fuer Code-Layout, Modul-Grenzen, Daten-Fluss und Engine-Choices. Bei jeder strukturellen Aenderung erweitern.
 
@@ -153,3 +153,4 @@ Producer-Release-Decision noetig bei: Engine-Wechsel, Backend-Wahl, Library > 10
 - **2026-04-25:** Save-V10 mit PlantGenome-Field. Crossing V2 mit Allele-Mendel-Genetik live.
 - **2026-04-23 bis 2026-04-25:** Save v2 bis v10 Schritt-fuer-Schritt Migrationen.
 - **2026-04-29:** Architektur-Doc V1.2. B-019 (scheduleAutoSave Debounce), B-020 (beforeunload Guard), B-023 (refreshHeader null-guard) gefixed + 11 Vitest-Regression-Tests. i18n-Modul eingefuehrt (src/i18n/, t() Funktion, DE+EN, 73 UI-Keys). GardenScene Phase-2: 7 hardcoded Strings auf t() migriert. NPC-Wander V0.2 bestaetigt live (pickWanderTarget + setNpcTarget in OverworldScene). Bundle: ~2.2 MB decoded, 730 KB Index + 1444 KB Phaser. ESLint 0 Warnings. 268+ Tests gesamt.
+- **2026-04-29 b5 Polish-Session:** ESLint void-Hack Sweep abgeschlossen. 22 void-Hacks aus 8 Scenes entfernt (QuestLogScene, GardenScene, OverworldScene, SplashScene, BattleScene, SettingsScene, MenuScene). BattleScene uiCam-Property zu lokalem const konvertiert. OverworldScene 2 dead imports bereinigt. Alle Scenes geprüft — 0 verbleibende void-Hacks. Architecture.md V1.3. tier_status.md b5 aktualisiert.
