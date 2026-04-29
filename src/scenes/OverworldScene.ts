@@ -504,37 +504,20 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       frostkamm: 0x5588bb, salzbucht: 0x2d6888, mordwald: 0x4a3a2d,
       glaciara: 0x88aacc, magmabluete: 0xbb4422
     };
-    // R66: Zonen-Banner — Slide-in von rechts mit Background-Box + Subtitle
+    // R47: Slide-in Zonen-Banner von rechts
     const cam47 = this.cameras.main;
     const W47 = cam47.width; const H47 = cam47.height;
     const zoneNameKey = `ow.zone.${zone}`; const zoneName = t(zoneNameKey) || (zone.charAt(0).toUpperCase() + zone.slice(1));
-    const BIOME_SUBTITLES: Record<string, string> = {
-      wurzelheim: 'Heimatdorf', verdanto: 'Regenwald-Biom',
-      kaktoria: 'Wüsten-Biom', frostkamm: 'Eis-Biom',
-      salzbucht: 'Küsten-Biom', mordwald: 'Sumpf-Biom',
-      magmabluete: 'Vulkan-Biom', glaciara: 'Gletscher-Biom'
-    };
-    const subtitle = BIOME_SUBTITLES[zone] ?? '';
-    const bannerContainer = this.add.container(W47 + 160, H47 / 2 - 20)
-      .setScrollFactor(0).setDepth(800);
-    const bannerBg = this.add.rectangle(0, 0, 200, 56, 0x000000, 0.72)
-      .setStrokeStyle(2, BIOME_COLORS[zone] ?? 0x335533, 0.9)
-      .setOrigin(0.5);
-    const bannerTitle = this.add.text(0, -10, zoneName, {
-      fontFamily: 'monospace', fontSize: '16px', color: '#ffffff',
-      stroke: '#000000', strokeThickness: 2
-    }).setOrigin(0.5);
-    const bannerSub = this.add.text(0, 10, subtitle, {
-      fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
-    }).setOrigin(0.5);
-    bannerContainer.add([bannerBg, bannerTitle, bannerSub]);
-    bannerContainer.setAlpha(0.94);
+    const banner = this.add.text(W47 + 100, H47 / 2 - 24, zoneName, {
+      fontFamily: 'monospace', fontSize: '20px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3
+    }).setScrollFactor(0).setDepth(800).setAlpha(0.92);
     this.tweens.add({
-      targets: bannerContainer, x: W47 / 2, duration: 350, ease: 'Back.Out',
+      targets: banner, x: W47 / 2, duration: 380, ease: 'Cubic.Out',
       onComplete: () => {
         this.tweens.add({
-          targets: bannerContainer, alpha: 0, x: W47 / 2 - 30, duration: 400, delay: 1500, ease: 'Cubic.In',
-          onComplete: () => bannerContainer.destroy()
+          targets: banner, alpha: 0, duration: 450, delay: 1300, ease: 'Cubic.In',
+          onComplete: () => banner.destroy()
         });
       }
     });
@@ -564,8 +547,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   public update(time: number, delta: number): void {
-    // R64: Delta-Cap 50ms — verhindert spiral-of-death bei Tab-Wechsel oder langen Frames
-    const cappedDelta = Math.min(delta, 50);
     // S-09 V0.1: NPC-Auto-Walking. Pure-Function pro NPC, walls-Set leer (V0.1).
     // Performance: Max 5-10 NPCs, jeweils ein Funktions-Call alle Frames mit fruehem Return wenn Idle. Vernachlaessigbar bei 60fps.
     if (this.npcs && this.npcs.length > 0) {
@@ -637,7 +618,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
 
     // S-10 V0.1: Story-Akt-2-Auto-Tracking ("Verdanto erkundet").
-    // LÃ¤uft nur wenn currentAct >= 1 (Akt-1 abgeschlossen) UND doStoryCheck.
+    // Läuft nur wenn currentAct >= 1 (Akt-1 abgeschlossen) UND doStoryCheck.
     if (doStoryCheck && gameStore.getCurrentAct() >= 1) {
       const state = gameStore.get();
       const flags = state.story?.flags ?? {};
@@ -683,14 +664,14 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       return;
     }
 
-    this.player.update(time, cappedDelta);
+    this.player.update(time, delta);
 
     // Update Interact-Hint
     this.updateInteractHint();
 
     // Tageszeit ticken
-    this.timeOverlay?.tick(cappedDelta);
-    this.weatherOverlay?.tick(cappedDelta);
+    this.timeOverlay?.tick(delta);
+    this.weatherOverlay?.tick(delta);
     this.seasonTint?.refresh();
     this.particles?.update(this.weatherOverlay?.getCurrentWeather?.() ?? 'clear');
 
