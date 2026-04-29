@@ -19,7 +19,9 @@ import {
   isBlooming,
   TIER_COLORS,
   TIER_THRESHOLDS,
-  tierForCareScore
+  tierForCareScore,
+  totalXpToReachLevel,
+  STAGE_LEVEL_THRESHOLDS
 } from '../data/leveling';
 import { GROWTH_STAGE_NAMES, QUALITY_TIERS, type Plant, type QualityTier } from '../types/plant';
 import { getSpecies } from '../data/species';
@@ -191,6 +193,16 @@ export class GardenScene extends Phaser.Scene {
           this.tweens.add({ targets: hotspot, scaleX: 1.0, scaleY: 1.0, duration: 100, ease: 'Cubic.Out' });
         });
         this.slotHotspots.push({ gridX: x, gridY: y, hotspot });
+
+        // S-POLISH-B3-R1: Slot-Nummerierung A1–D3 (dezenter Stardew-Inventory-Stil)
+        const colLabel = String.fromCharCode(65 + x); // A, B, C, D
+        const rowLabel = (y + 1).toString();           // 1, 2, 3
+        this.add.text(sx + 4, sy + 2, `${colLabel}${rowLabel}`, {
+          fontFamily: 'monospace',
+          fontSize: '8px',
+          color: '#5a7050',
+          alpha: 0.7
+        }).setDepth(-2);
       }
     }
 
@@ -724,6 +736,27 @@ export class GardenScene extends Phaser.Scene {
   }
 
   /** Booster-Partikel-Burst in Booster-spezifischer Farbe */
+  /**
+   * S-POLISH-B3-R1: Harvest-Floating-Text — "+X Coins" aufsteigend von Pflanze.
+   */
+  private spawnHarvestFloatingText(x: number, y: number, coins: number): void {
+    const label = this.add.text(x, y - 20, `+${coins} Coins`, {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#ffd166',
+      stroke: '#1a1f1a',
+      strokeThickness: 3
+    }).setOrigin(0.5).setDepth(2000);
+    this.tweens.add({
+      targets: label,
+      y: y - 70,
+      alpha: 0,
+      duration: 1400,
+      ease: 'Cubic.Out',
+      onComplete: () => label.destroy()
+    });
+  }
+
   private spawnBoosterBurst(x: number, y: number, color: number): void {
     for (let i = 0; i < 12; i++) {
       const dot = this.add.circle(x, y, 4, color, 1).setDepth(1500);
@@ -1147,11 +1180,12 @@ export class GardenScene extends Phaser.Scene {
     if (hStatus === 'vertrocknet') {
       card.thirstIcon.setText('!!').setColor('#ff5555');
     } else if (hStatus === 'trocken') {
-      card.thirstIcon.setText('!').setColor('#ff8c42');
+      // S-POLISH-B3-R1: Tropfen-Icon fuer trockene Pflanzen (Stardew-Wasser-Indikator)
+      card.thirstIcon.setText('💧').setColor('#ff8c42');
     } else if (hStatus === 'durstig') {
-      card.thirstIcon.setText('~').setColor('#ffd166');
+      card.thirstIcon.setText('💧').setColor('#ffd166');
     } else if (ready) {
-      card.thirstIcon.setText('*').setColor('#4dafff');
+      card.thirstIcon.setText('💧').setColor('#4dafff');
     } else {
       card.thirstIcon.setText('').setColor('#999999');
     }
@@ -1267,12 +1301,25 @@ export class GardenScene extends Phaser.Scene {
       biomeMatchMultiplier(plant.speciesSlug, zone) *
       hybridVigorMultiplier(plant) *
       timeOfDayMultiplier();
+    // S-POLISH-B3-R1: Stage-Fortschritt-Infos
+    const stageNames = GROWTH_STAGE_NAMES as unknown as string[];
+    const nextStageLvl = stage < 4 ? STAGE_LEVEL_THRESHOLDS[stage + 1] : null;
+    const xpNeededForStage = nextStageLvl ? (totalXpToReachLevel(nextStageLvl) - (plant.totalXp ?? 0)) : 0;
+    const daysToNextStage = (xpPerSec > 0 && nextStageLvl)
+      ? Math.ceil(xpNeededForStage / (xpPerSec * 86400 * 0.5))
+      : 0;
+    const stageInfo = nextStageLvl
+      ? `Stage ${stage + 1}/${stageNames.length - 1} → ${stageNames[stage + 1]} (~${daysToNextStage}d)`
+      : `Stage ${stage}/${stageNames.length - 1} (Max)`;
+    const estimatedCoins = Math.round((5 + 0 * 4) * 1); // rough estimate common tier
+    const harvestInfo = stage >= 4 ? `Ertrag ~${estimatedCoins}–${estimatedCoins + 16} Coins` : `Ertrag ab Stage Blooming`;
+
     const lines = [
-      `Stage: ${GROWTH_STAGE_NAMES[stage]}`,
+      `Stage: ${GROWTH_STAGE_NAMES[stage]}  (${stageInfo})`,
       `Level: ${plant.level} / 100`,
       `XP: ${Math.floor(plant.xp)} / ${xpToNextLevel(plant.level)}`,
       `Hydration: ${Math.floor(plant.hydration)}% (${hStatus})`,
-      `Wachstum: ${xpPerSec.toFixed(2)} XP/s`,
+      `Wachstum: ${xpPerSec.toFixed(2)} XP/s  |  ${harvestInfo}`,
       ``,
       `ATK ${plant.stats.atk}  DEF ${plant.stats.def}  SPD ${plant.stats.spd}`,
       `Generation: F${plant.generation}${plant.isMutation ? ' (Mutation' + (plant.mutationKind ? '-' + plant.mutationKind : '') + ')' : ''}`,
@@ -1446,7 +1493,11 @@ export class GardenScene extends Phaser.Scene {
           // S-POLISH-B2-R18: Harvest-SFX + Gold-Partikel-Burst
           sfx.harvest();
           const card = this.cards.get(plant.id);
-          if (card) this.spawnHarvestBurst(card.container.x, card.container.y);
+          if (card) {
+            this.spawnHarvestBurst(card.container.x, card.container.y);
+            // S-POLISH-B3-R1: Floating-Zahl "+X Coins"
+            this.spawnHarvestFloatingText(card.container.x, card.container.y, result.coins);
+          }
           this.openDetailPanel(plant.id);
         } else {
           this.showFlash(result.reason ?? 'Ernte fehlgeschlagen', '#ff8c42');

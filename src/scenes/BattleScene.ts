@@ -219,8 +219,6 @@ export class BattleScene extends Phaser.Scene {
     // Camera-Routing fuer UI: keine zoom Probleme da Battle-Cam zoom 1 ist
     void this.uiCam;
 
-    // PostHog: battle started
-    (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('battle_started', { pool_key: this.poolKey, boss: !!this.bossId, player_level: this.player.level });
     (globalThis as { __battle?: BattleScene }).__battle = this;
   }
 
@@ -370,8 +368,6 @@ if (this.bossDef && outcome.winner === this.player) {
         }
         this.statusText.setText(this.bossDef.defeatText.join('\n') + `\n+${this.bossDef.rewardCoins} Gold!`);
         sfx.pickup();
-        // PostHog: boss battle won
-        (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('battle_won', { pool_key: this.poolKey, boss: true, boss_id: this.bossId });
         this.time.delayedCall(3500, () => this.endBattle(`Boss besiegt: ${this.bossDef!.name}`));
       } else {
         this.time.delayedCall(2000, () => {
@@ -385,12 +381,8 @@ if (this.bossDef && outcome.winner === this.player) {
               if (drop.itemSlug) dropMsg += ` +1 ${drop.itemSlug}`;
               if (drop.coins) dropMsg += ` +${drop.coins} Coins`;
             }
-            // PostHog: battle won
-            (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('battle_won', { pool_key: this.poolKey, boss: false, xp: this.xpReward });
             this.endBattle(`Sieg! +${this.xpReward} XP${dropMsg}`);
           } else {
-            // PostHog: battle lost
-            (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('battle_lost', { pool_key: this.poolKey, boss: !!this.bossId });
             this.endBattle(t('battle.exhausted'));
           }
         });
