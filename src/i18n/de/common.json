@@ -10,5 +10,6 @@
   "error": "Fehler",
   "save": "Speichern",
   "delete": "Löschen",
-  "reset": "Zurücksetzen"
+  "reset": "Zurücksetzen",
+  "failed": "Fehlgeschlagen"
 }
