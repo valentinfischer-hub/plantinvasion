@@ -83,13 +83,24 @@ export class TutorialOverlay {
 
     const bg = this.scene.add.rectangle(0, 0, w, h, 0x000000, 0.92)
       .setStrokeStyle(2, 0xfcd95c);
-    this.titleText = this.scene.add.text(-w / 2 + 12, -h / 2 + 10, '', {
+    // R55: Tilda-Avatar-Icon links oben (gruener Kreis mit Blatt-Symbol)
+    const avatarCircle = this.scene.add.circle(-w / 2 + 22, -h / 2 + 22, 14, 0x2a4a2a, 1)
+      .setStrokeStyle(2, 0x9be36e);
+    const avatarLeaf = this.scene.add.text(-w / 2 + 22, -h / 2 + 22, '🌿', {
+      fontFamily: 'monospace', fontSize: '14px'
+    }).setOrigin(0.5);
+    this.titleText = this.scene.add.text(-w / 2 + 44, -h / 2 + 10, '', {
       fontFamily: 'monospace', fontSize: '13px', color: '#fcd95c', fontStyle: 'bold'
     });
-    this.bodyText = this.scene.add.text(-w / 2 + 12, -h / 2 + 32, '', {
+    this.bodyText = this.scene.add.text(-w / 2 + 12, -h / 2 + 36, '', {
       fontFamily: 'monospace', fontSize: '11px', color: '#ffffff',
       wordWrap: { width: w - 24 }
     });
+    // R56: Bounce-Arrow fuer Step 3 (Garten-Tuer), unsichtbar bis Step 3
+    this.arrowHint = this.scene.add.text(0, -h / 2 - 28, '⬇ Garten-Eingang', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#9be36e',
+      backgroundColor: '#0a1a0a', padding: { x: 6, y: 3 }
+    }).setOrigin(0.5).setAlpha(0);
 
     const nextBtn = this.makeButton(w / 2 - 60, h / 2 - 18, 'Weiter', '#9be36e', () => this.handleNext());
     const skipBtn = this.makeButton(-w / 2 + 50, h / 2 - 18, 'Skip', '#ff7e7e', () => this.handleSkip());
@@ -102,7 +113,7 @@ export class TutorialOverlay {
       this.container.add(dot);
     }
 
-    this.container.add([bg, this.titleText, this.bodyText, nextBtn, skipBtn]);
+    this.container.add([bg, avatarCircle, avatarLeaf, this.arrowHint!, this.titleText, this.bodyText, nextBtn, skipBtn]);
 
     // Camera-Routing: Main-Cam ignoriert Tutorial, UI-Cam ignoriert World
     cam.ignore(this.container);
