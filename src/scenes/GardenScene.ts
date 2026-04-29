@@ -614,6 +614,13 @@ export class GardenScene extends Phaser.Scene {
    */
   private async runCrossWithDrift(parentAId: string, parentBId: string, successColor: string): Promise<void> {
     const drifted = await this.playParentDrift(parentAId, parentBId);
+    // B6-R8: Pollen-Arc zwischen den Eltern-Positionen nach Drift
+    if (drifted) {
+      const cam = this.cameras.main;
+      const cx = cam.scrollX + cam.width / 2;
+      const cy = cam.scrollY + cam.height / 2;
+      this.spawnPollenArc(cx - 36, cy, cx + 36, cy);
+    }
     const result = gameStore.crossPlants(parentAId, parentBId);
     if (!result.ok) {
       this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
@@ -754,6 +761,40 @@ export class GardenScene extends Phaser.Scene {
   private showFlash(message: string, color: string): void {
     const t: ToastType = mapLegacyColor(color);
     showToast(this, message, t);
+  }
+
+  /**
+   * B6-R8: Pollen-Partikel-Arc zwischen zwei Karten-Positionen.
+   * Erzeugt kleine gelbe Punkte entlang eines quadratischen Bezier-Bogens.
+   * @param x1,y1 Startpunkt (Pflanze A)
+   * @param x2,y2 Endpunkt (Pflanze B)
+   */
+  private spawnPollenArc(x1: number, y1: number, x2: number, y2: number): void {
+    const MX = (x1 + x2) / 2;
+    const MY = Math.min(y1, y2) - 80; // Kontrollpunkt oben (Bogen nach oben)
+    const STEPS = 12;
+    const colors = [0xffd700, 0xffee88, 0xffc830];
+
+    for (let i = 0; i <= STEPS; i++) {
+      const t = i / STEPS;
+      // Quadratischer Bezier: B(t) = (1-t)^2 * P0 + 2*(1-t)*t * PM + t^2 * P1
+      const nt = 1 - t;
+      const bx = nt * nt * x1 + 2 * nt * t * MX + t * t * x2;
+      const by = nt * nt * y1 + 2 * nt * t * MY + t * t * y2;
+      const delay = i * 60;
+      const color = colors[i % colors.length];
+      const dot = this.add.circle(bx, by, 3 + Math.random() * 2, color, 1).setDepth(1800);
+      this.tweens.add({
+        targets: dot,
+        alpha: 0,
+        scale: 0.1,
+        y: by - 8,
+        duration: 500,
+        delay,
+        ease: 'Cubic.Out',
+        onComplete: () => dot.destroy()
+      });
+    }
   }
 
   private spawnStageUpBurst(x: number, y: number): void {
