@@ -299,32 +299,41 @@ export class BattleScene extends Phaser.Scene {
     const slotW = (width - 40) / 2;
     // S-POLISH Run18: Move-Buttons auf 44px Touch-Target-Mindesthoehe
     const slotH = 44;
+    // D-041 R27: Family-Color-Map fuer Move-Buttons — jede Pflanzen-Familie hat eigene Akzentfarbe
+    const FAMILY_COLORS: Record<string, number> = {
+      root: 0xa0785a, leaf: 0x5ba85b, flower: 0xe87db0,
+      cactus: 0xd4a843, vine: 0x7abf5f, fern: 0x4aad7a,
+      aquatic: 0x5b8de8, fungi: 0xbf7ae8, desert: 0xe8b45b,
+      alpine: 0xa0d4f4, tropical: 0xe8614a
+    };
     for (let i = 0; i < 4; i++) {
       const m = moves[i];
       const col = i % 2;
       const row = Math.floor(i / 2);
       const x = 20 + col * slotW + slotW / 2;
       const y = height - 50 + row * (slotH + 4);
+      const mColor = m ? (FAMILY_COLORS[m.family ?? ''] ?? 0x9be36e) : 0x444444;
+      const mColorHex = '#' + mColor.toString(16).padStart(6, '0');
 
       const c = this.add.container(x, y);
       const bg = this.add.rectangle(0, 0, slotW - 4, slotH, 0x000000, 0.85)
-        .setStrokeStyle(2, m ? 0x9be36e : 0x444444)
+        .setStrokeStyle(2, mColor)
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: !!m });
       const nameTxt = this.add.text(-slotW / 2 + 8, -10, m ? m.name : '-', {
         fontFamily: 'monospace', fontSize: '11px', color: m ? '#ffffff' : '#666666'
       });
-      const detailTxt = this.add.text(-slotW / 2 + 8, 4, m ? `${m.power > 0 ? `Power ${m.power}` : 'Status'} | ${Math.round(m.accuracy * 100)}%` : '', {
-        fontFamily: 'monospace', fontSize: '9px', color: '#9be36e'
+      const detailTxt = this.add.text(-slotW / 2 + 8, 4, m ? `${m.power > 0 ? `Stärke ${m.power}` : 'Status'} | ${Math.round(m.accuracy * 100)}%` : '', {
+        fontFamily: 'monospace', fontSize: '9px', color: mColorHex
       });
       if (m) {
         bg.on('pointerover', () => {
-          // S-POLISH-09b: Hover-State Move-Buttons
           this.tweens.add({ targets: c, scale: 1.04, duration: 100, ease: 'Cubic.Out' });
-          bg.setStrokeStyle(3, 0x9be36e);
+          bg.setStrokeStyle(3, mColor);
+          bg.setFillStyle(mColor, 0.08);
         });
         bg.on('pointerdown', () => {
-          bg.setFillStyle(0x9be36e, 0.3);
+          bg.setFillStyle(mColor, 0.3);
         });
         bg.on('pointerup', () => {
           bg.setFillStyle(0x000000, 0.85);
@@ -332,7 +341,7 @@ export class BattleScene extends Phaser.Scene {
         });
         bg.on('pointerout', () => {
           this.tweens.add({ targets: c, scale: 1.0, duration: 100, ease: 'Cubic.Out' });
-          bg.setStrokeStyle(2, 0x9be36e);
+          bg.setStrokeStyle(2, mColor);
           bg.setFillStyle(0x000000, 0.85);
         });
       }

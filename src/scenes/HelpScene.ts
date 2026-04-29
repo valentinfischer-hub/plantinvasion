@@ -180,12 +180,14 @@ export class HelpScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1a2820');
+    // D-041 R30: FadeIn fuer konsistente Scene-Transitions
+    this.cameras.main.fadeIn(250, 0, 0, 0);
     this.viewportBottom = height - 54;
     this.tabBtns = [];
     this.tabBgs = [];
 
     // Titel
-    this.add.text(width / 2, 20, 'Hilfe & Hotkeys', {
+    this.add.text(width / 2, 20, '❓ Hilfe & Hotkeys', {
       fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
 

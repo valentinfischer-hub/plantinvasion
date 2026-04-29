@@ -33,9 +33,11 @@ export class SettingsScene extends Phaser.Scene {
     setSfxVolume(getPersistedSfxVolume());
     setMusicVolume(getPersistedMusicVolume());
     this.cameras.main.setBackgroundColor('#1a2820');
+    // D-041 R29: Sanftes FadeIn fuer konsistente Scene-Transitions
+    this.cameras.main.fadeIn(250, 0, 0, 0);
 
     this.add
-      .text(width / 2, 40, 'Einstellungen', {
+      .text(width / 2, 40, '⚙️ Einstellungen', {
         fontFamily: FONT_FAMILY,
         fontSize: '22px',
         color: COLOR_SUCCESS

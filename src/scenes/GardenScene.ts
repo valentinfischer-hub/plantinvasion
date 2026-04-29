@@ -1457,6 +1457,28 @@ export class GardenScene extends Phaser.Scene {
         const { plant: updated } = waterPlant(p);
         return updated;
       });
+      // D-041 R28: Wasser-Ripple-Animation — 3 konzentrische Ringe expandieren
+      const card = this.cards.get(plant.id);
+      if (card) {
+        const cx = card.container.x;
+        const cy = card.container.y;
+        for (let ri = 0; ri < 3; ri++) {
+          const ring = this.add.circle(cx, cy, 8, 0x5b8de8, 0)
+            .setStrokeStyle(2, 0x5b8de8, 0.8 - ri * 0.2)
+            .setDepth(200);
+          this.tweens.add({
+            targets: ring,
+            scaleX: 3 + ri * 1.5,
+            scaleY: 3 + ri * 1.5,
+            alpha: 0,
+            duration: 500 + ri * 150,
+            delay: ri * 100,
+            ease: 'Cubic.Out',
+            onComplete: () => ring.destroy()
+          });
+        }
+      }
+      this.showToast('💧 Gegossen!');
       this.openDetailPanel(plant.id);
     });
     container.add(waterBtn);
