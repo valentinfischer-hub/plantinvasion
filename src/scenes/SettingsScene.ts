@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { setMasterVolume, getMasterVolume, sfx, stopAmbientBGM, startAmbientBGM, setPersistedVolume, getPersistedVolume, setSfxVolume, getSfxVolume, setMusicVolume, getMusicVolume, getPersistedSfxVolume, setPersistedSfxVolume, getPersistedMusicVolume, setPersistedMusicVolume } from '../audio/sfxGenerator';
 import { getLocale, setLocale } from '../i18n/index';
-import { COLOR_ERROR, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR, getColorblindMode, setColorblindMode, type ColorblindMode } from '../ui/uiTheme';
+import { COLOR_ERROR, COLOR_INFO, COLOR_REWARD, COLOR_SUCCESS, COLOR_TEXT_DIM, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR, getColorblindMode, setColorblindMode, type ColorblindMode } from '../ui/uiTheme';
 
 /**
  * Settings-Scene V0.2 (2026-04-28).
@@ -167,8 +167,11 @@ export class SettingsScene extends Phaser.Scene {
     by += 42;
 
     // Save-Reset (mit Bestaetigung)
-    const _resetBtn = this.makeButton(width / 2, by, 'Spielstand loeschen', COLOR_ERROR, () => this.confirmReset());
+    const _resetBtn = this.makeButton(width / 2 - 100, by, 'Spielstand loeschen', COLOR_ERROR, () => this.confirmReset());
     void _resetBtn;
+    // B4-R4: Credits-Button
+    const _creditsBtn = this.makeButton(width / 2 + 100, by, 'Credits', COLOR_REWARD, () => this.showCredits());
+    void _creditsBtn;
 
     by += 60;
     // S-POLISH-B2-R17: Export + Import Spielstand
@@ -308,32 +311,121 @@ export class SettingsScene extends Phaser.Scene {
     return c;
   }
 
+  /**
+   * B4-R4: Spielstand loeschen mit doppelter Bestaetigung.
+   * Schritt 1: Warnung-Modal. Schritt 2: Tippe "LOESCHEN" zur Bestaetigung.
+   */
   private confirmReset(): void {
-    // Zeige Bestaetigungs-Dialog inline
     const { width, height } = this.scale;
-    const overlay = this.add.rectangle(width / 2, height / 2, 360, 180, 0x000000, 0.95)
-      .setStrokeStyle(2, 0xff7e7e)
-      .setDepth(2000);
-    const text = this.add.text(width / 2, height / 2 - 30, 'Spielstand wirklich loeschen?\n\nAlle Pflanzen, Items, Achievements\nund Story-Fortschritt gehen verloren!', {
-      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#ffffff', align: 'center'
-    }).setOrigin(0.5).setDepth(2001);
-    const yesBtn = this.makeButton(width / 2 - 80, height / 2 + 50, 'Ja, loeschen', COLOR_ERROR, () => {
-      gameStore.resetToNewGame();
-      sfx.click();
-      overlay.destroy();
-      text.destroy();
-      yesBtn.destroy();
-      noBtn.destroy();
-      this.scene.start('MenuScene');
+    const DEPTH = 2000;
+    // Erster Dialog
+    const overlay1 = this.add.rectangle(width / 2, height / 2, 340, 200, 0x000000, 0.95)
+      .setStrokeStyle(2, 0xff7e7e).setDepth(DEPTH);
+    const warn = this.add.text(width / 2, height / 2 - 40,
+      'Spielstand loeschen?\n\nAlle Pflanzen, Items, Story-Fortschritt\nund Achievements gehen VERLOREN!', {
+        fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#ffffff', align: 'center'
+      }).setOrigin(0.5).setDepth(DEPTH + 1);
+    const destroyStep1 = () => { overlay1.destroy(); warn.destroy(); next1.destroy(); cancel1.destroy(); };
+    const next1 = this.makeButton(width / 2 - 80, height / 2 + 62, 'Weiter', COLOR_ERROR, () => {
+      destroyStep1();
+      this.showDeleteConfirmStep2();
     });
-    yesBtn.setDepth(2001);
-    const noBtn = this.makeButton(width / 2 + 80, height / 2 + 50, 'Abbrechen', COLOR_SUCCESS, () => {
-      overlay.destroy();
-      text.destroy();
-      yesBtn.destroy();
-      noBtn.destroy();
+    next1.setDepth(DEPTH + 1);
+    const cancel1 = this.makeButton(width / 2 + 80, height / 2 + 62, 'Abbrechen', COLOR_SUCCESS, destroyStep1);
+    cancel1.setDepth(DEPTH + 1);
+  }
+
+  private showDeleteConfirmStep2(): void {
+    const { width, height } = this.scale;
+    const DEPTH = 2100;
+    const overlay2 = this.add.rectangle(width / 2, height / 2, 340, 220, 0x000000, 0.95)
+      .setStrokeStyle(2, 0xff7e7e).setDepth(DEPTH);
+    this.add.text(width / 2, height / 2 - 60,
+      'Tippe LOESCHEN und bestatige:', {
+        fontFamily: FONT_FAMILY, fontSize: '12px', color: '#ff7e7e', align: 'center'
+      }).setOrigin(0.5).setDepth(DEPTH + 1);
+    // Eingabe-Feld (simuliert via Text + keyboard-capture)
+    let typed = '';
+    const inputDisplay = this.add.text(width / 2, height / 2 - 20, '_ _ _ _ _ _ _ _', {
+      fontFamily: FONT_FAMILY, fontSize: '16px', color: '#fcd95c',
+      backgroundColor: '#111', padding: { x: 10, y: 6 }
+    }).setOrigin(0.5).setDepth(DEPTH + 1);
+    const hint = this.add.text(width / 2, height / 2 + 14,
+      'Tastatur-Eingabe aktiv', {
+        fontFamily: FONT_FAMILY, fontSize: '10px', color: '#555555'
+      }).setOrigin(0.5).setDepth(DEPTH + 1);
+    const confirmBtn = this.makeButton(width / 2 - 80, height / 2 + 70, 'Bestaetigen', COLOR_ERROR, () => {
+      if (typed.toUpperCase() === 'LOESCHEN') {
+        gameStore.resetToNewGame();
+        sfx.click();
+        overlay2.destroy(); inputDisplay.destroy(); hint.destroy();
+        confirmBtn.destroy(); cancelBtn2.destroy();
+        this.showFlash('Spielstand geloescht.', COLOR_ERROR);
+        this.time.delayedCall(1200, () => { this.scene.start('MenuScene'); });
+      } else {
+        this.showFlash('Eingabe falsch — tippe LOESCHEN', COLOR_ERROR);
+      }
     });
-    noBtn.setDepth(2001);
+    confirmBtn.setDepth(DEPTH + 1);
+    const cancelBtn2 = this.makeButton(width / 2 + 80, height / 2 + 70, 'Abbrechen', COLOR_SUCCESS, () => {
+      overlay2.destroy(); inputDisplay.destroy(); hint.destroy();
+      confirmBtn.destroy(); cancelBtn2.destroy();
+    });
+    cancelBtn2.setDepth(DEPTH + 1);
+    // Keyboard-Capture fuer Text-Eingabe
+    if (this.input.keyboard) {
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          cancelBtn2.list[0] && (cancelBtn2.list[0] as Phaser.GameObjects.Rectangle).emit('pointerup');
+          this.input.keyboard?.off('keydown', onKey);
+          return;
+        }
+        if (e.key === 'Backspace') { typed = typed.slice(0, -1); }
+        else if (e.key.length === 1 && typed.length < 8) { typed += e.key.toUpperCase(); }
+        inputDisplay.setText(typed.padEnd(8, '_').split('').join(' '));
+      };
+      this.input.keyboard.on('keydown', onKey);
+    }
+    void overlay2; void hint;
+  }
+
+  /**
+   * B4-R4: Credits-Screen als kleines Modal.
+   */
+  private showCredits(): void {
+    const { width, height } = this.scale;
+    const DEPTH = 3000;
+    const overlay = this.add.rectangle(width / 2, height / 2, 360, 280, 0x000000, 0.95)
+      .setStrokeStyle(2, MODAL_BORDER_COLOR).setDepth(DEPTH);
+    this.add.text(width / 2, height / 2 - 110, 'Credits', {
+      fontFamily: FONT_FAMILY, fontSize: '16px', color: COLOR_REWARD
+    }).setOrigin(0.5).setDepth(DEPTH + 1);
+    const lines = [
+      'Plantinvasion v0.9-S-POLISH',
+      '(c) 2026 Valentin Fischer',
+      '',
+      'Engine: Phaser 3',
+      'Build: Vite + TypeScript',
+      'Audio: Web Audio API',
+      'i18n: i18next',
+      'Analytics: PostHog',
+      'Error: Sentry',
+      '',
+      'Botanic Advisor: Claude AI',
+    ];
+    lines.forEach((line, i) => {
+      this.add.text(width / 2, height / 2 - 80 + i * 16, line, {
+        fontFamily: FONT_FAMILY, fontSize: '11px', color: line.startsWith('(') ? '#fcd95c' : '#dddddd'
+      }).setOrigin(0.5).setDepth(DEPTH + 1);
+    });
+    const closeBtn = this.makeButton(width / 2, height / 2 + 108, 'Schliessen', COLOR_SUCCESS, () => {
+      overlay.destroy();
+      closeBtn.destroy();
+      // Alle Credits-Texte auch entfernen
+      this.children.getAll().filter((c) => (c as Phaser.GameObjects.GameObject & { depth?: number }).depth === DEPTH + 1).forEach((c) => c.destroy());
+    });
+    closeBtn.setDepth(DEPTH + 1);
+    void overlay;
   }
 
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
