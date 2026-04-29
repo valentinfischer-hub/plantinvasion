@@ -1,3 +1,4 @@
+import { describe, test, it, expect, beforeEach, vi } from 'vitest';
 /**
  * Tile-Animation System Tests [b4-run11/15]
  */
