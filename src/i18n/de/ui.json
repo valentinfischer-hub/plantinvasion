@@ -144,4 +144,14 @@
   "battle.status": "Status-Zug",
   "settings.importPrompt": "Spielstand-JSON einfügen:",
   "settings.back": "Zurück (Esc)"
+,
+  "ow.farmBtn.label": "FARM (G)",
+  "ow.farmBtn.hint": "giessen",
+  "ow.pause.continue": "Weiterspielen",
+  "ow.pause.inventory": "Inventar (I)",
+  "ow.pause.pokedex": "Pokedex (P)",
+  "ow.pause.quests": "Quests (Q)",
+  "ow.pause.mainmenu": "Hauptmenu",
+  "ow.save.indicator": "* gespeichert",
+  "ow.dailyLogin.toast": "Tagesbelohnung: {{label}}"
 }
