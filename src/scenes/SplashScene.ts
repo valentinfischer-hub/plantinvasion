@@ -25,6 +25,19 @@ export class SplashScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#0a0e0a');
+    // R54: Browser-Tab-Title + Favicon setzen
+    try {
+      document.title = 'Plantinvasion — Cozy Botanik-RPG';
+      let favicon = document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
+      if (!favicon) {
+        favicon = document.createElement('link');
+        favicon.rel = 'icon';
+        document.head.appendChild(favicon);
+      }
+      // Einfaches SVG-Favicon: gruenes Blatt
+      const svgFav = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#1a2820"/><text x="16" y="22" font-size="18" text-anchor="middle">🌿</text></svg>`;
+      favicon.href = 'data:image/svg+xml,' + encodeURIComponent(svgFav);
+    } catch { /* ignorieren falls nicht verfuegbar */ }
 
     const cx = width / 2;
     const cy = height / 2;
