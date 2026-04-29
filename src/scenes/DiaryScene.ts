@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { t } from '../i18n/index';
 
 /**
  * Tildas Tagebuch: zeigt alle gesammelten Eintraege der Story.
@@ -108,7 +109,7 @@ export class DiaryScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#1f2417');
 
     // Titel
-    this.add.text(width / 2, 24, 'Tildas Tagebuch', {
+    this.add.text(width / 2, 24, t('diary.title'), {
       fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_REWARD
     }).setOrigin(0.5);
 
@@ -160,7 +161,7 @@ export class DiaryScene extends Phaser.Scene {
     const backBg = this.add.rectangle(width / 2, height - 24, 160, 32, 0x000000, 0.7)
       .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, height - 24, 'Zurück (B)', {
+    this.add.text(width / 2, height - 24, t('diary.back'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');
