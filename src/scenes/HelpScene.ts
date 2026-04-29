@@ -15,7 +15,7 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
       {
         title: '⌨ Bewegung & Welt',
         lines: [
-          '⬆⬇⬅➡ / WASD  — bewege dich Tile-fuer-Tile',
+          '⬆⬇⬅➡ / WASD  — bewege dich Tile-für-Tile',
           'Shift halten  — rennen',
           'E / Space  — mit NPCs reden, Schilder lesen',
           'Karten-Rand  — wechselt automatisch ins Nachbar-Biom'
@@ -24,15 +24,15 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
       {
         title: '⌨ Hotkeys Overworld',
         lines: [
-          'W  — zurueck zur Weltkarte',
-          'G  — Garten oeffnen',
-          'I  — Inventar oeffnen',
-          'P  — Pokedex oeffnen',
-          'Q  — Quest-Log oeffnen',
-          'M  — Markt oeffnen',
-          'T  — Tagebuch oeffnen',
+          'W  — zurück zur Weltkarte',
+          'G  — Garten öffnen',
+          'I  — Inventar öffnen',
+          'P  — Pokedex öffnen',
+          'Q  — Quest-Log öffnen',
+          'M  — Markt öffnen',
+          'T  — Tagebuch öffnen',
           'H  — Hilfe (dieses Fenster)',
-          'Esc  — Pause-Menu / Zurueck'
+          'Esc  — Pause-Menu / Zurück'
         ]
       },
       {
@@ -40,7 +40,7 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
         lines: [
           'S  — Pflanze einsaeen Modal',
           'X  — Erste 2 Pflanzen kreuzen',
-          'O  — Zurueck zur Welt',
+          'O  — Zurück zur Welt',
           'Klick  — Detail-Panel mit Stats'
         ]
       }
@@ -52,8 +52,8 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
       {
         title: 'Pflanzen pflanzen',
         lines: [
-          'Druecke S um das Saeen-Modal zu oeffnen',
-          'Waehle einen Samen aus dem Inventar',
+          'Drücke S um das Säen-Modal zu öffnen',
+          'Wähle einen Samen aus dem Inventar',
           'Pflanzen wachsen durch Wasser und Zeit',
           'Level 10+ = erntebereit'
         ]
@@ -61,8 +61,8 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
       {
         title: 'Wasser & Boden',
         lines: [
-          'Helle Braun = trocken, Dunkel = feucht, Blau = uebergossen',
-          'Giesse taeglich fuer schnelles Wachstum',
+          'Helle Braun = trocken, Dunkel = feucht, Blau = übergossen',
+          'Gieße täglich für schnelles Wachstum',
           'Soil-Tier beeinflusst Mutations-Bonus',
           'Companion-Pflanzen geben Nachbar-Bonus'
         ]
@@ -72,7 +72,7 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
         lines: [
           'XP durch Ticks alle 30 Sek gesammelt',
           'Level-Up zeigt Funken-Animation',
-          'Booster-Items fuer schnelleres Wachstum',
+          'Booster-Items für schnelleres Wachstum',
           'Ernte gibt Coins basierend auf Level und Seltenheit'
         ]
       }
@@ -84,7 +84,7 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
       {
         title: 'Crossing Grundlagen',
         lines: [
-          'Klicke "Kreuzen" Button oder druecke X',
+          'Klicke "Kreuzen" Button oder drücke X',
           'Beide Eltern brauchen Level 5+',
           'Kind erhaelt gemittelte Stats (+/- 10%)',
           'Kosten: 50 Coins pro Crossing'
@@ -103,7 +103,7 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
         title: 'Punnett-Quadrat',
         lines: [
           'Im Vorschau-Modal: ATK / DEF / SPD Vergleich',
-          'Raute (◆) = dominantes Allel (hoeher)',
+          'Raute (◆) = dominantes Allel (höher)',
           'Kreis (◇) = rezessives Allel (tiefer)',
           'Kind nimmt Mittelwert beider Eltern'
         ]
@@ -126,7 +126,7 @@ const HELP_TABS: { label: string; sections: HelpSection[] }[] = [
         title: 'Damage & Bonus',
         lines: [
           'STAB: Move aus eigener Familie = +50% Schaden',
-          'Crit-Chance: 6.25% fuer 1.5x Schaden',
+          'Crit-Chance: 6.25% für 1.5x Schaden',
           'Accuracy: 100% / 95% / 85% je nach Move',
           'Miss-Animation wenn Angriff fehlschlaegt'
         ]
@@ -162,7 +162,7 @@ export class HelpScene extends Phaser.Scene {
   private maxScrollY = 0;
   private readonly viewportTop = 90;
   private viewportBottom = 0;
-  /** Von welcher Scene kommt der Spieler? (fuer "Zurueck"-Button) */
+  /** Von welcher Scene kommt der Spieler? (fuer "Zurück"-Button) */
   private fromScene = 'MenuScene';
 
   constructor() {
@@ -227,13 +227,13 @@ export class HelpScene extends Phaser.Scene {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT).on('down', () => this.switchTab(Math.min(HELP_TABS.length - 1, this.activeTab + 1)));
     }
 
-    // Zurueck-Button
+    // Zurück-Button
     const backY = height - 24;
     const backBg = this.add
       .rectangle(width / 2, backY, 180, 26, 0x000000, 0.7)
       .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, backY, `Zurueck (Esc)`, {
+    this.add.text(width / 2, backY, `Zurück (Esc)`, {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => { sfx.click(); this.scene.start(this.fromScene); };
