@@ -155,12 +155,6 @@
   "ow.save.indicator": "* gespeichert",
   "ow.dailyLogin.toast": "Tagesbelohnung: {{label}}"
 ,
-  "qls.title": "Tagebuch",
-  "qls.back": "Zurueck (B)",
-  "qls.filterAll": "Alle",
-  "qls.filterActive": "Aktiv",
-  "qls.filterCompleted": "Abgeschlossen",
-  "inv.title": "Inventar",
-  "inv.back": "Zurueck (I)",
-  "inv.hint": "Klick auf Item fuer Details   Scrollen   I/Esc zurueck"
+  "diary.title": "Tildas Tagebuch",
+  "diary.back": "Zurueck (B)"
 }
