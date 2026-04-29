@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
-import { QUESTS, getQuest } from '../data/quests';
+import { QUESTS } from '../data/quests';
 import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 /**
@@ -20,8 +20,6 @@ export class QuestLogScene extends Phaser.Scene {
       fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
 
-    const dex = gameStore.getPokedex();
-    void dex;
     const inv = gameStore.getInventory();
 
     let by = 80;
@@ -119,6 +117,5 @@ export class QuestLogScene extends Phaser.Scene {
       this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', back);
     }
 
-    void getQuest;
   }
 }
