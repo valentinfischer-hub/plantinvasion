@@ -1,4 +1,4 @@
-import { describe, test, it, expect, beforeEach, vi } from 'vitest';
+import { describe, test, expect } from 'vitest';
 /**
  * QA-Critic-Audit Tests [b4-run12/15]
  * Validiert die 3 Top-Kritikpunkte aus brain/agents/qa-critic/stardew_audit_2026-04-29.md:
