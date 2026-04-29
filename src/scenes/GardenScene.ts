@@ -46,6 +46,8 @@ interface PlantCard {
   hydrationBar: Phaser.GameObjects.Graphics;
   thirstIcon: Phaser.GameObjects.Text;
   bg: Phaser.GameObjects.Graphics;
+  soilRect: Phaser.GameObjects.Graphics;
+  boosterGlow?: Phaser.GameObjects.Graphics;
   harvestPulse?: Phaser.Tweens.Tween;
   mutationGlow?: Phaser.GameObjects.Graphics;
   mutationGlowTween?: Phaser.Tweens.Tween;
@@ -916,6 +918,10 @@ export class GardenScene extends Phaser.Scene {
     const bg = this.add.graphics();
     container.add(bg);
 
+    // R9: Soil-Rect unter der Pflanze (Feuchtigkeit-Tint)
+    const soilRect = this.add.graphics();
+    container.add(soilRect);
+
     const stage = stageOf(plant);
     const key = `${plant.speciesSlug}-${stage}`;
     const sprite = this.add.image(0, -8, key);
@@ -1042,6 +1048,7 @@ export class GardenScene extends Phaser.Scene {
       hydrationBar,
       thirstIcon,
       bg,
+      soilRect,
       mutationGlow,
       mutationGlowTween,
       lastSeenStage: stage
@@ -1058,22 +1065,32 @@ export class GardenScene extends Phaser.Scene {
       card.sprite.setTexture(key);
     }
 
-    // Stage-Up-Burst + P1 Bounce-Scale (Art-UI D-041)
+    // Stage-Up-Burst + R9 Morph-Animation (Art-UI D-041)
     if (stage > card.lastSeenStage) {
       this.spawnStageUpBurst(card.container.x, card.container.y);
       card.lastSeenStage = stage;
-      // Scale-Bounce 1.0 -> 1.15 -> 1.0 mit Back.easeOut
-      const baseScaleX = card.sprite.scaleX;
-      const baseScaleY = card.sprite.scaleY;
+      // R9: Morph — altes Sprite fade-out + scale 0.8, dann neue Textur + fade-in 0.8→1.0
       this.tweens.add({
         targets: card.sprite,
-        scaleX: baseScaleX * 1.15,
-        scaleY: baseScaleY * 1.15,
-        duration: 160,
-        ease: 'Back.Out',
-        yoyo: true,
+        alpha: 0,
+        scaleX: 0.8,
+        scaleY: 0.8,
+        duration: 180,
+        ease: 'Cubic.In',
         onComplete: () => {
-          card.sprite.setScale(baseScaleX, baseScaleY);
+          if (this.textures.exists(key)) {
+            card.sprite.setTexture(key);
+          }
+          card.sprite.setAlpha(0);
+          card.sprite.setScale(0.8);
+          this.tweens.add({
+            targets: card.sprite,
+            alpha: 1,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 280,
+            ease: 'Back.Out'
+          });
         }
       });
     }
@@ -1089,6 +1106,59 @@ export class GardenScene extends Phaser.Scene {
     } else {
       card.sprite.clearTint();
       if (card.sprite.y !== 0) card.sprite.setY(0);
+    }
+
+    // R9: Soil-Tint basierend auf lastWateredAt
+    {
+      const now = Date.now();
+      const msSinceWater = now - (plant.lastWateredAt ?? 0);
+      const hMin = msSinceWater / 60000;
+      card.soilRect.clear();
+      let soilColor: number;
+      let soilAlpha: number;
+      const hStatus2 = hydrationStatus(plant);
+      if (hStatus2 === 'saftig') {
+        // Überwässert: bläulich
+        soilColor = 0x5b9bd6; soilAlpha = 0.45;
+      } else if (hMin < 60) {
+        // Feucht (< 1h): dunkelbraun
+        soilColor = 0x5c3d1e; soilAlpha = 0.55;
+      } else if (hMin < 240) {
+        // Mittel (1-4h): mittelbraun
+        soilColor = 0x7a5230; soilAlpha = 0.45;
+      } else {
+        // Trocken (> 4h): hellbraun
+        soilColor = 0xad8c6a; soilAlpha = 0.4;
+      }
+      card.soilRect.fillStyle(soilColor, soilAlpha);
+      card.soilRect.fillEllipse(0, 6, TILE - 8, 10);
+    }
+
+    // R9: Booster-Glow auf dem Karten-Sprite (korrekte Farben je Booster-Typ)
+    {
+      const activeBoosters2 = listActiveBoosters(plant);
+      if (!card.boosterGlow) {
+        card.boosterGlow = this.add.graphics();
+        card.container.add(card.boosterGlow);
+        card.container.sendToBack(card.boosterGlow);
+      }
+      card.boosterGlow.clear();
+      if (activeBoosters2.length > 0) {
+        // Bestimme dominante Booster-Farbe (erste aktive)
+        const b = activeBoosters2[0];
+        let glowColor = 0x4caf50; // Grow = grün (default)
+        if (b.type === 'xp') {
+          glowColor = 0x4caf50;     // Grow-XP = grün
+        } else if (b.type === 'sun-lamp') {
+          glowColor = 0xffd700;    // Pristine = gold
+        } else if (b.type === 'sprinkler') {
+          glowColor = 0x00bcd4;    // Speed/Wasser = cyan
+        }
+        // Hybrid-Booster: lila (falls isMutation oder hybridBooster-Slug)
+        if (plant.isMutation) glowColor = 0xb86ee3;
+        card.boosterGlow.fillStyle(glowColor, 0.3);
+        card.boosterGlow.fillCircle(0, -8, TILE / 2 - 2);
+      }
     }
 
     // XP-Bar
