@@ -43,5 +43,20 @@
   "quest.completed": "Completed",
   "quest.active": "Active",
   "quest.pending": "Available",
-  "diary.firstDay": "Diary: My first day in Wurzelheim"
+  "diary.firstDay": "Diary: My first day in Wurzelheim",
+  "garden.btnSeed": "Plant",
+  "garden.btnWorld": "World (W)",
+  "garden.btnCross": "Cross",
+  "garden.btnCrossActive": "Active",
+  "garden.btnCrossConfirm": "Cross!",
+  "garden.crossModeOn": "Cross mode active — select first plant",
+  "garden.hintFirstPlant": "Cross mode: click first plant to select",
+  "garden.hintSecondPlant": "Select second plant (Cross btn to cancel)",
+  "garden.samePlant": "Same plant — select a different one",
+  "garden.crossPreviewTitle": "Crossing Preview",
+  "garden.crossFailed": "Crossing failed",
+  "garden.crossSuccess": "Crossing successful",
+  "garden.mutation": "Mutation! New plant",
+  "garden.gardenFull": "Garden full. Harvest or move plants.",
+  "garden.tutorialFirstPlant": "Click here to plant your first plant"
 }
