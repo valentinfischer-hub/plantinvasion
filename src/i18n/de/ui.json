@@ -126,5 +126,22 @@
   "menu.slide3Body": "X = Kreuzen, G = Garten, W = Welt\nKlick einen leeren Slot um zu pflanzen\nKlick eine Pflanze für Detail-Panel",
   "menu.next": "Weiter ->",
   "menu.start": "Los geht's!",
-  "menu.skip": "Überspringen"
+  "menu.skip": "Überspringen",
+  "tutorial.step0.title": "Willkommen, Tilda!",
+  "tutorial.step0.text": "Wurzelheim begrüsst dich. Du bist die reisende Botanikerin, die dieses Tal mit seltenen Pflanzen füllen wird. Drücke [Weiter] — dein Abenteuer beginnt jetzt.",
+  "tutorial.step1.title": "Erste Schritte",
+  "tutorial.step1.text": "Bewege dich mit W A S D oder den Pfeiltasten. Shift = Sprint. Probier es aus!",
+  "tutorial.step2.title": "Die Dorfbewohner",
+  "tutorial.step2.text": "Anya, Björn und Clara stehen an den Marktständen. Geh zu einem und drücke E — sie haben Tipps für dich.",
+  "tutorial.step3.title": "Dein Garten wartet",
+  "tutorial.step3.text": "Die goldene Tür am Spielerhaus führt in deinen Garten. Dein erster Sämling ist bereits gepflanzt. X = Kreuzen   O = Zurück",
+  "tutorial.step4.title": "Das grosse Bild",
+  "tutorial.step4.text": "M = Markt     P = Plantdex     Q = Quests\nE = Reden     Shift = Sprint\n\nViel Spass beim Züchten! 🌱",
+  "npc.met": "Ihr habt euch bereits getroffen.",
+  "overworld.forage.found": "Gefunden: {{item}}!",
+  "overworld.forage.empty": "Hier ist gerade nichts.",
+  "battle.detail": "Stärke {{power}} | {{accuracy}}% Treffer",
+  "battle.status": "Status-Zug",
+  "settings.importPrompt": "Spielstand-JSON einfügen:",
+  "settings.back": "Zurück (Esc)"
 }
