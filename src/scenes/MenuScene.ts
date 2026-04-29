@@ -317,6 +317,31 @@ export class MenuScene extends Phaser.Scene {
     spawnBeaconRing(2000);
     spawnBeaconRing(3200); // zweiter Ring versetzt
 
+    // R67: Fluester-Subtext unter newGameBtn (Tagline rotiert alle 5s)
+    const newGameSublines = [
+      'Dein Abenteuer beginnt hier',
+      '200 Pflanzen warten auf dich',
+      'Zuechte einzigartige Hybriden'
+    ];
+    let ngSubIdx = 0;
+    const ngSub = this.add.text(cx, newGameBtn.y + 34, newGameSublines[0], {
+      fontFamily: 'monospace', fontSize: '9px', color: '#9be36e'
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: ngSub, alpha: 0.7, duration: 500, delay: 1600 });
+    this.time.addEvent({
+      delay: 5000, loop: true,
+      callback: () => {
+        this.tweens.add({
+          targets: ngSub, alpha: 0, duration: 300, ease: 'Cubic.Out',
+          onComplete: () => {
+            ngSubIdx = (ngSubIdx + 1) % newGameSublines.length;
+            ngSub.setText(newGameSublines[ngSubIdx]);
+            this.tweens.add({ targets: ngSub, alpha: 0.7, duration: 300, ease: 'Cubic.Out' });
+          }
+        });
+      }
+    });
+
     this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
