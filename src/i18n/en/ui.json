@@ -105,5 +105,8 @@
   "battle.caught": "{{name}} was caught!",
   "battle.catchFail": "Catch attempt failed.",
   "battle.rootsTrap": "You are trapped by roots and cannot flee.",
-  "battle.fleeFail": "Failed to flee!"
+  "battle.fleeFail": "Failed to flee!",
+  "ow.achievement.verdanto": "Achievement: Verdanto explored!",
+  "ow.diary.verdanto": "Journal: Verdanto — Land of Bromeliads",
+  "ow.coins.label": "Coins: 0"
 }

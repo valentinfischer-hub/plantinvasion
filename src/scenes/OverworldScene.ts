@@ -350,7 +350,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.registerInAllUiCams(this.saveIcon);
 
     // Coin-HUD oben-links unter saveIcon
-    this.coinHud = this.add.text(8 / zS, 42 / zS, '', {
+    this.coinHud = this.add.text(8 / zS, 42 / zS, t('ow.coins.label'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: '#f4e8c1', stroke: '#000000', strokeThickness: 2, backgroundColor: '#1a1f1a', padding: { x: 6, y: 3 }
     }).setScrollFactor(0).setDepth(1850).setScale(1 / zS);
     this.registerInAllUiCams(this.coinHud);
@@ -645,7 +645,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         // Achievement "verdanto_erkundet" triggern wenn Flag frisch gesetzt
         if (updatedFlags['verdanto_erkundet'] && !flags['verdanto_erkundet']) {
           gameStore.unlockAchievementBySlug('verdanto_erkundet');
-          showToast(this, 'Achievement: Verdanto-Erkundet!', 'reward', { yOffset: -100 });
+          showToast(this, t('ow.achievement.verdanto'), 'reward', { yOffset: -100 });
         }
       }
       // Akt-Abschluss-Check
@@ -653,7 +653,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       if (status === 'completed' && gameStore.getCurrentAct() < 2) {
         gameStore.advanceAct(2);
         if (gameStore.collectDiaryEntry(5)) {
-          showToast(this, 'Tagebuch: Verdanto - Land der Bromelien', 'reward', { yOffset: -100 });
+          showToast(this, t('ow.diary.verdanto'), 'reward', { yOffset: -100 });
         }
       }
     }

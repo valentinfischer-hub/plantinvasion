@@ -105,5 +105,8 @@
   "battle.caught": "{{name}} wurde gefangen!",
   "battle.catchFail": "Fang-Versuch misslungen.",
   "battle.rootsTrap": "Du bist von Wurzeln gefangen und kannst nicht fliehen.",
-  "battle.fleeFail": "Flucht misslungen!"
+  "battle.fleeFail": "Flucht misslungen!",
+  "ow.achievement.verdanto": "Achievement: Verdanto erkundet!",
+  "ow.diary.verdanto": "Tagebuch: Verdanto — Land der Bromelien",
+  "ow.coins.label": "Coins: 0"
 }

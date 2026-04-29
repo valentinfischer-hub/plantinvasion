@@ -800,6 +800,16 @@ export class GardenScene extends Phaser.Scene {
     showToast(this, message, t);
   }
 
+  // R42: Memory-Leak Praevention — alle Tweens/Timer bei Scene-Stop raeumen
+  public shutdown(): void {
+    this.tweens.killAll();
+    this.time.removeAllEvents();
+    this.tutorialPulseTween?.stop();
+    this.tutorialHighlight?.destroy();
+    this.tutorialHint?.destroy();
+    this.tutorialArrow?.destroy();
+  }
+
   private spawnStageUpBurst(x: number, y: number): void {
     // Kleine Konfetti-Explosion mit Particles oder einfach mit kurzen Tween-Kreisen
     for (let i = 0; i < 8; i++) {

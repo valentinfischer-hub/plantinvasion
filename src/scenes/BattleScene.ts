@@ -666,6 +666,12 @@ if (this.bossDef && outcome.winner === this.player) {
     }
   }
 
+  // R41: Tween + Timer cleanup bei Scene-Stop (Memory-Leak Praevention)
+  public shutdown(): void {
+    this.tweens.killAll();
+    this.time.removeAllEvents();
+  }
+
   private endBattle(msg: string): void {
     debugLog('[BattleScene] end', msg);
     sfx.door();
