@@ -523,6 +523,23 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       frostkamm: 0x5588bb, salzbucht: 0x2d6888, mordwald: 0x4a3a2d,
       glaciara: 0x88aacc, magmabluete: 0xbb4422
     };
+    // R47: Slide-in Zonen-Banner von rechts
+    const cam47 = this.cameras.main;
+    const W47 = cam47.width; const H47 = cam47.height;
+    const zoneName = zone.charAt(0).toUpperCase() + zone.slice(1);
+    const banner = this.add.text(W47 + 100, H47 / 2 - 24, zoneName, {
+      fontFamily: 'monospace', fontSize: '20px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3
+    }).setScrollFactor(0).setDepth(800).setAlpha(0.92);
+    this.tweens.add({
+      targets: banner, x: W47 / 2, duration: 380, ease: 'Cubic.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: banner, alpha: 0, duration: 450, delay: 1300, ease: 'Cubic.In',
+          onComplete: () => banner.destroy()
+        });
+      }
+    });
     const bColor = BIOME_COLORS[zone] ?? 0x335533;
     const cam = this.cameras.main;
     cam.flash(400, (bColor >> 16) & 0xff, (bColor >> 8) & 0xff, bColor & 0xff, true);

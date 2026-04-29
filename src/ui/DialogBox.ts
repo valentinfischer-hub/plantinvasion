@@ -36,6 +36,7 @@ export class DialogBox {
   private boxW: number;
   private boxH: number;
   private speakerLabel: Phaser.GameObjects.Text;
+  private speakerBg!: Phaser.GameObjects.Rectangle; // R49: Hintergrund-Platte
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -67,6 +68,10 @@ export class DialogBox {
     });
 
     // D-041 R36: Speaker-Name-Label oben links im Dialog
+    // R49: Hintergrund-Platte hinter speaker-Label
+    this.speakerBg = scene.add.rectangle(-this.boxW / 2 + 1, -this.boxH / 2 - 18, 80, 20, 0x3a2800, 0.9)
+      .setStrokeStyle(1, 0xfcd95c).setOrigin(0, 0.5).setVisible(false);
+    this.container.add(this.speakerBg);
     this.speakerLabel = scene.add.text(-this.boxW / 2 + 12, -this.boxH / 2 - 18, '', {
       fontFamily: 'monospace', fontSize: '12px', color: '#fcd95c',
       stroke: '#000000', strokeThickness: 2
@@ -123,11 +128,15 @@ export class DialogBox {
     // D-041 R36: Speaker-Name aus 'Name: Text' extrahieren und als Header zeigen
     const speakerMatch = fullText.match(/^([A-Za-z\u00C0-\u024F\s-]{2,20}):/);
     if (speakerMatch) {
-      this.speakerLabel.setText(speakerMatch[1].trim());
+      const spkName = speakerMatch[1].trim();
+      this.speakerLabel.setText(spkName);
+      this.speakerBg.setSize(Math.max(spkName.length * 7 + 16, 60), 20);
       this.speakerLabel.setVisible(true);
+      this.speakerBg.setVisible(true);
       fullText = fullText.slice(speakerMatch[0].length).trimStart();
     } else {
       this.speakerLabel.setVisible(false);
+      this.speakerBg.setVisible(false);
     }
     this.typewriterFull = fullText;
     this.typewriterIdx = 0;

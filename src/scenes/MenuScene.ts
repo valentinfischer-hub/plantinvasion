@@ -67,6 +67,10 @@ export class MenuScene extends Phaser.Scene {
 
   public create(): void {
     const { width, height } = this.scale;
+    // R48: Version-Badge rechts unten
+    this.add.text(width - 8, height - 8, 'v0.3-alpha', {
+      fontFamily: 'monospace', fontSize: '9px', color: '#3a5a3a'
+    }).setOrigin(1, 1).setDepth(10);
     // FI-D-041: title-visible mark + boot_time_ms PostHog event
     performance.mark('title-visible');
     try {
