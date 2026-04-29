@@ -345,6 +345,8 @@ export function loadGame(): GameState | null {
     return migrate(parsed);
   } catch (e) {
     console.error('[storage] corrupt save detected, discarding (JSON.parse failed)', e);
+    // PostHog: save corrupted
+    (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('save_corrupted', { reason: 'json_parse_failed' });
     return null;
   }
 }
