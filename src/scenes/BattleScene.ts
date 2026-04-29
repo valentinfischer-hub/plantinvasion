@@ -331,20 +331,34 @@ export class BattleScene extends Phaser.Scene {
         fontFamily: 'monospace', fontSize: '9px', color: mColorHex
       });
       if (m) {
+        // R61: Hover Glow-Halo + Scale
+        const moveGlow = this.add.rectangle(0, 0, slotW, slotH + 10, mColor, 0)
+          .setOrigin(0.5);
+        c.add(moveGlow);
+        c.sendToBack(moveGlow);
         bg.on('pointerover', () => {
-          this.tweens.add({ targets: c, scale: 1.04, duration: 100, ease: 'Cubic.Out' });
+          this.tweens.killTweensOf(c);
+          this.tweens.killTweensOf(moveGlow);
+          this.tweens.add({ targets: c, scale: 1.05, duration: 110, ease: 'Back.Out' });
+          this.tweens.add({ targets: moveGlow, alpha: 0.15, duration: 140, ease: 'Cubic.Out' });
           bg.setStrokeStyle(3, mColor);
-          bg.setFillStyle(mColor, 0.08);
+          bg.setFillStyle(mColor, 0.1);
         });
         bg.on('pointerdown', () => {
-          bg.setFillStyle(mColor, 0.3);
+          this.tweens.killTweensOf(c);
+          this.tweens.add({ targets: c, scale: 0.96, duration: 60, ease: 'Cubic.Out' });
+          bg.setFillStyle(mColor, 0.35);
         });
         bg.on('pointerup', () => {
+          this.tweens.add({ targets: c, scale: 1.0, duration: 80, ease: 'Back.Out' });
           bg.setFillStyle(0x000000, 0.85);
           this.onMoveSelected(m);
         });
         bg.on('pointerout', () => {
+          this.tweens.killTweensOf(c);
+          this.tweens.killTweensOf(moveGlow);
           this.tweens.add({ targets: c, scale: 1.0, duration: 100, ease: 'Cubic.Out' });
+          this.tweens.add({ targets: moveGlow, alpha: 0, duration: 160, ease: 'Cubic.Out' });
           bg.setStrokeStyle(2, mColor);
           bg.setFillStyle(0x000000, 0.85);
         });
