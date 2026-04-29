@@ -1,5 +1,5 @@
 /**
- * Regression guards — B-020 (F5 mid-Cross-Mode state rollback)
+ * Regression guards â B-020 (F5 mid-Cross-Mode state rollback)
  * und B-023 (refreshHeader null-canvas crash).
  * Laufen in Vitest ohne Phaser/DOM-Abhaengigkeiten.
  */
@@ -26,7 +26,7 @@ describe('B-020 F5-mid-Cross-Mode state rollback', () => {
     Object.defineProperty(globalThis, 'localStorage', { value: ls, configurable: true });
   });
 
-  it('saveGame persists post-crossing state — kein Rollback auf pre-crossing', () => {
+  it('saveGame persists post-crossing state â kein Rollback auf pre-crossing', () => {
     const preCross = {
       version: 11, playerId: 'p1',
       plants: [{ id: 'a' }, { id: 'b' }], coins: 203, crossings: 0,
@@ -41,9 +41,9 @@ describe('B-020 F5-mid-Cross-Mode state rollback', () => {
     saveGame(postCross);
 
     const loaded = loadGame();
-    // Muss post-crossing State zeigen — Regression: rollte auf pre-crossing zurueck
+    // Muss post-crossing State zeigen â Regression: rollte auf pre-crossing zurueck
     expect(loaded?.coins).toBe(153);
-    expect(loaded?.crossings).toBe(1);
+    expect(loaded?["crossings"]).toBe(1);
     expect(loaded?.plants).toHaveLength(3);
   });
 
@@ -54,7 +54,7 @@ describe('B-020 F5-mid-Cross-Mode state rollback', () => {
     saveGame(s2);
     const loaded = loadGame();
     expect(loaded?.coins).toBe(50);
-    expect(loaded?.crossings).toBe(1);
+    expect(loaded?["crossings"]).toBe(1);
   });
 });
 
@@ -65,7 +65,7 @@ describe('B-023 refreshHeader null-guard', () => {
     const headerText = { active: false, setText: (_s: string) => { throw new Error('setText auf inactive aufgerufen'); } };
     const refreshHeader = (txt: { active: boolean; setText: (s: string) => void }) => {
       if (!txt?.active) return; // B-023 Guard
-      txt.setText('Fruehling, Tag 1  ·  0/12  ·  0 Coins');
+      txt.setText('Fruehling, Tag 1  Â·  0/12  Â·  0 Coins');
     };
     expect(() => refreshHeader(headerText)).not.toThrow();
   });
@@ -83,7 +83,7 @@ describe('B-023 refreshHeader null-guard', () => {
     const headerText = { active: true, setText: (_s: string) => { called = true; } };
     const refreshHeader = (txt: { active: boolean; setText: (s: string) => void }) => {
       if (!txt?.active) return;
-      txt.setText('Fruehling, Tag 1  ·  0/12  ·  0 Coins');
+      txt.setText('Fruehling, Tag 1  Â·  0/12  Â·  0 Coins');
     };
     refreshHeader(headerText);
     expect(called).toBe(true);
