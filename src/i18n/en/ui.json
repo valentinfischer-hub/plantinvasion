@@ -144,4 +144,14 @@
   "battle.status": "Status move",
   "settings.importPrompt": "Paste save-game JSON:",
   "settings.back": "Back (Esc)"
+,
+  "ow.farmBtn.label": "FARM (G)",
+  "ow.farmBtn.hint": "water",
+  "ow.pause.continue": "Continue",
+  "ow.pause.inventory": "Inventory (I)",
+  "ow.pause.pokedex": "Pokedex (P)",
+  "ow.pause.quests": "Quests (Q)",
+  "ow.pause.mainmenu": "Main Menu",
+  "ow.save.indicator": "* saved",
+  "ow.dailyLogin.toast": "Daily reward: {{label}}"
 }
