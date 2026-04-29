@@ -1,13 +1,14 @@
+import { describe, test, expect, it } from 'vitest';
 /**
- * i18n Vollständigkeits-Tests [b4-run13/15]
- * Prüft dass DE und EN dieselben Keys haben und keine leeren Werte
+ * i18n VollstÃ¤ndigkeits-Tests [b4-run13/15]
+ * PrÃ¼ft dass DE und EN dieselben Keys haben und keine leeren Werte
  */
 import deUi from '../de/ui.json';
 import enUi from '../en/ui.json';
 import deCommon from '../de/common.json';
 import enCommon from '../en/common.json';
 
-describe('i18n Vollständigkeit: ui.json', () => {
+describe('i18n VollstÃ¤ndigkeit: ui.json', () => {
   const deKeys = Object.keys(deUi).sort();
   const enKeys = Object.keys(enUi).sort();
 
@@ -40,7 +41,7 @@ describe('i18n Vollständigkeit: ui.json', () => {
   });
 });
 
-describe('i18n Vollständigkeit: common.json', () => {
+describe('i18n VollstÃ¤ndigkeit: common.json', () => {
   const deKeys = Object.keys(deCommon).sort();
   const enKeys = Object.keys(enCommon).sort();
 
