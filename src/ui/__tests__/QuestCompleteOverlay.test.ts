@@ -20,14 +20,14 @@ function computeRewardParts(quest: QuestDef): string[] {
 }
 
 const questWithCoins: QuestDef = {
-  id: 'q1', title: 'Test-Quest', description: 'Test',
+  id: 'q1', giverId: 'test', title: 'Test-Quest', description: 'Test',
   goal: { type: 'capture', speciesSlug: 'sunflower', count: 1 },
   reward: { coins: 100, items: { 'great-lure': 2 } }
 };
 
 const questNoReward: QuestDef = {
-  id: 'q2', title: 'Kein-Reward-Quest', description: 'Test',
-  goal: { type: 'capture', speciesSlug: 'lavender' },
+  id: 'q2', giverId: 'test', title: 'Kein-Reward-Quest', description: 'Test',
+  goal: { type: 'capture', speciesSlug: 'lavender', count: 1 },
   reward: {}
 };
 
