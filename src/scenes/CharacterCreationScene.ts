@@ -7,6 +7,7 @@ import {
   COLOR_REWARD,
   COLOR_TEXT_DIM,
 } from '../ui/uiTheme';
+import { t } from '../i18n/index';
 
 /**
  * S-POLISH-START-17: Charakter-Erstellungs-Scene.
@@ -49,18 +50,18 @@ export class CharacterCreationScene extends Phaser.Scene {
     this.add.rectangle(cx, 0, width, 4, 0x9be36e).setOrigin(0.5, 0);
 
     // Titel
-    this.add.text(cx, 26, 'Charakter erstellen', {
+    this.add.text(cx, 26, t('ccs.title'), {
       fontFamily: FONT_FAMILY, fontSize: '18px', color: COLOR_SUCCESS,
     }).setOrigin(0.5, 0);
 
-    this.add.text(cx, 52, 'Gib deinem Botaniker einen Namen und wähle ein Aussehen.', {
+    this.add.text(cx, 52, t('ccs.subtitle'), {
       fontFamily: FONT_FAMILY, fontSize: '10px', color: COLOR_TEXT_DIM,
       wordWrap: { width: width - 60 }, align: 'center',
     }).setOrigin(0.5, 0);
 
     // ── Name-Input ─────────────────────────────────────────────
     const inputTopY = 100;
-    this.add.text(cx, inputTopY, 'Dein Name:', {
+    this.add.text(cx, inputTopY, t('ccs.nameLabel'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: '#aaaaaa',
     }).setOrigin(0.5, 1);
 
@@ -87,7 +88,7 @@ export class CharacterCreationScene extends Phaser.Scene {
 
     // ── Avatar-Auswahl ──────────────────────────────────────────
     const avLabelY = boxCY + boxH / 2 + 24;
-    this.add.text(cx, avLabelY, 'Aussehen wählen:', {
+    this.add.text(cx, avLabelY, t('ccs.avatarLabel'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: '#aaaaaa',
     }).setOrigin(0.5, 0);
 
@@ -104,10 +105,10 @@ export class CharacterCreationScene extends Phaser.Scene {
 
     // ── Buttons ─────────────────────────────────────────────────
     const btnY = avCY + 82;
-    this.makeButton(cx, btnY,      '► Spiel starten', COLOR_REWARD,  () => this.confirm());
-    this.makeButton(cx, btnY + 52, 'Überspringen',    '#666666',     () => this.skip());
+    this.makeButton(cx, btnY,      t('ccs.startBtn'), COLOR_REWARD,  () => this.confirm());
+    this.makeButton(cx, btnY + 52, t('ccs.skipBtn'),    '#666666',     () => this.skip());
 
-    this.add.text(cx, btnY + 86, 'Standard: "Botaniker" + Avatar 1', {
+    this.add.text(cx, btnY + 86, t('ccs.skipHint'), {
       fontFamily: FONT_FAMILY, fontSize: '9px', color: '#555555',
     }).setOrigin(0.5);
 
