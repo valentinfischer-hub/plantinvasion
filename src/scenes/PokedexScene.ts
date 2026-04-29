@@ -135,7 +135,7 @@ export class PokedexScene extends Phaser.Scene {
 
     // Hint
     this.add
-      .text(width / 2, this.viewportBottom + 4, 'Tab wechseln   ↑↓ scrollen   B/Esc zurueck', {
+      .text(width / 2, this.viewportBottom + 4, 'Tab wechseln   ↑↓ scrollen   B/Esc zurück', {
         fontFamily: 'monospace',
         fontSize: '10px',
         color: '#553e2d'
@@ -149,7 +149,7 @@ export class PokedexScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x9be36e)
       .setInteractive({ useHandCursor: true });
     this.add
-      .text(width / 2, backY, 'Zurueck (B)', {
+      .text(width / 2, backY, 'Zurück (B)', {
         fontFamily: 'monospace',
         fontSize: '12px',
         color: '#9be36e'
