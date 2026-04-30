@@ -42,7 +42,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
 import { evaluateAct2Progress, autoSetAct2Flags } from '../data/storyAct2';
-import { COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -68,10 +68,6 @@ const SIGN_DIALOGS: Record<string, string[]> = {
   'glaciara:22:12': [t('sign.glaciara_22_12.title'), t('sign.glaciara_22_12.text')],
 };
 
-// SIGN_DIALOGS wird lazy evaluiert damit t() zum Zeitpunkt des Zugriffs die richtige Locale hat
-function getSignDialogs(): Record<string, string[]> {
-  return SIGN_DIALOGS;
-}
 
 // Building-Tueren bleiben collide, Dialog kommt via interact key (E/Space) wenn der Spieler davor steht
 const COLLIDE_TILES = new Set<number>([3, 4, 5, 6, 8, 9, 10, 14, 31, 32, 42, 43, 50, 51, 61, 62, 64]);
