@@ -27,7 +27,14 @@ export class SplashScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#0a0e0a');
     // R54: Browser-Tab-Title + Favicon setzen
     try {
-      document.title = 'Plantinvasion — Cozy Botanik-RPG';
+      // R78: Dynamischer Tab-Title mit Phase-Anzeige
+      document.title = 'Plantinvasion | Laedt...';
+      // Nach kurzer Verzoegerung auf finalen Namen
+      setTimeout(() => {
+        if (document.title === 'Plantinvasion | Laedt...') {
+          document.title = 'Plantinvasion — Cozy Botanik-RPG';
+        }
+      }, 2000);
       let favicon = document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
       if (!favicon) {
         favicon = document.createElement('link');
@@ -35,7 +42,13 @@ export class SplashScene extends Phaser.Scene {
         document.head.appendChild(favicon);
       }
       // Einfaches SVG-Favicon: gruenes Blatt
-      const svgFav = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#1a2820"/><text x="16" y="22" font-size="18" text-anchor="middle">🌿</text></svg>`;
+      // R78: Verbessertes SVG-Favicon mit Blatt-Form statt Emoji (bessere Browser-Compat)
+      const svgFav = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="16" fill="#1a2820"/>
+        <ellipse cx="16" cy="17" rx="7" ry="10" fill="#4a8228" transform="rotate(-20 16 17)"/>
+        <ellipse cx="16" cy="17" rx="7" ry="10" fill="#6abf3a" transform="rotate(-20 16 17)" opacity="0.7"/>
+        <line x1="16" y1="24" x2="14" y2="8" stroke="#2a5a14" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>`;
       favicon.href = 'data:image/svg+xml,' + encodeURIComponent(svgFav);
     } catch { /* ignorieren falls nicht verfuegbar */ }
 
