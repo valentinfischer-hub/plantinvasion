@@ -359,7 +359,6 @@ export class TutorialOverlay {
       this.scene.tweens.add({ targets: this.fullscreenDimmer, alpha: 0, duration: 300, ease: 'Cubic.Out' });
       // Box wieder nach unten
       const cam = this.scene.cameras.main;
-      const w = cam.width - 24;
       const h = 130;
       this.scene.tweens.add({
         targets: this.container,
