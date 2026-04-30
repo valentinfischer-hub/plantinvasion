@@ -97,8 +97,8 @@ export class DebugOverlay {
       const state = gameStore.get();
       const plants = state.plants.length;
       const coins = state.coins;
-      const day = state.gameTime?.day ?? '?';
-      const season = state.gameTime?.season ?? '?';
+      const day = state.time?.day ?? '?';
+      const season = state.time?.season ?? '?';
       const zone = state.overworld?.zone ?? '?';
       this.stateText.setText(
         `Plants: ${plants}  Coins: ${coins}  Day: ${day}  Season: ${season}\nZone: ${zone}  Achievements: ${(state.achievements ?? []).length}`
