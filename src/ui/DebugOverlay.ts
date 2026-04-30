@@ -108,8 +108,8 @@ export class DebugOverlay {
       const firstPlant = state.plants[0];
       if (firstPlant?.genes) {
         const genes = firstPlant.genes;
-        const gStr = Object.entries(genes).slice(0, 4)
-          .map(([k, v]) => `${k.slice(0, 6)}:${typeof v === 'number' ? v.toFixed(1) : v}`)
+        const gStr = (Object.entries(genes) as [string, unknown][]).slice(0, 4)
+          .map(([k, v]) => `${k.slice(0, 6)}:${typeof v === 'number' ? (v as number).toFixed(1) : v}`)
           .join('  ');
         this.genomeText.setText(`Genome[${firstPlant.speciesSlug}]: ${gStr}`);
       } else {
@@ -122,6 +122,12 @@ export class DebugOverlay {
     this.container?.destroy();
   }
 }
+
+/** Kompatibilitäts-Export für Vitest-Tests */
+export const isDebugMode = (): boolean => DebugOverlay.isEnabled();
+
+/** Kompatibilitäts-Export für Vitest-Tests — no-op ohne aktive Instanz */
+export const destroyDebugOverlay = (): void => { /* cleanup no-op */ };
 
 /**
  * P0-Fix Run9: initDebugOverlay() — wird von main.ts aufgerufen.
