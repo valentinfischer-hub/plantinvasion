@@ -48,6 +48,8 @@ export class PokedexScene extends Phaser.Scene {
   private sortMode: 'family' | 'rarity' | 'name' = 'family';
   private filterBtn!: Phaser.GameObjects.Text;
   private sortBtn!: Phaser.GameObjects.Text;
+  // B7-R5: Plant-Encyclopedia Detail-Modal
+  private detailModal?: Phaser.GameObjects.Container;
 
   constructor() {
     super('PokedexScene');
@@ -312,6 +314,13 @@ export class PokedexScene extends Phaser.Scene {
           color
         })
         .setOrigin(0.5, 0);
+      // B7-R5: Klick auf Eintrag öffnet Encyclopedia-Modal
+      if (isDiscovered) {
+        t.setInteractive({ useHandCursor: true });
+        t.on('pointerdown', () => this.openEncyclopediaModal(entry.slug));
+        t.on('pointerover', () => t.setColor('#ffffff'));
+        t.on('pointerout', () => t.setColor(color));
+      }
       // Glow-Pulse fuer gesehen-aber-nicht-gefangen
       if (isDiscovered && !isCaptured) {
         this.tweens.add({
@@ -348,6 +357,99 @@ export class PokedexScene extends Phaser.Scene {
     // Rahmen
     this.completenessBar.lineStyle(1, 0x556655, 1);
     this.completenessBar.strokeRect(x, y, w, h);
+  }
+
+  /**
+   * B7-R5: Plant-Encyclopedia Modal — zeigt botanischen Namen, Beschreibung, Stats, Unlock-Progress.
+   */
+  private openEncyclopediaModal(slug: string): void {
+    // Schliesse bestehendes Modal
+    if (this.detailModal) {
+      this.detailModal.destroy();
+      this.detailModal = undefined;
+    }
+
+    const allSp = [...STARTER_SPECIES, ...HYBRID_SPECIES];
+    const sp = allSp.find((s) => s.slug === slug);
+    if (!sp) return;
+
+    const { width, height } = this.scale;
+    const panelW = Math.min(360, width - 40);
+    const panelH = 210;
+    const c = this.add.container(width / 2, height / 2).setDepth(3000);
+
+    // Hintergrund
+    const bg = this.add.graphics();
+    bg.fillStyle(0x111a11, 0.97);
+    bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 10);
+    bg.lineStyle(2, 0x9be36e, 1);
+    bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 10);
+    c.add(bg);
+
+    // Botanischer Name (italic Style via font)
+    const sciName = this.add.text(0, -panelH / 2 + 14, sp.scientificName, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#9be36e', fontStyle: 'italic'
+    }).setOrigin(0.5, 0);
+    c.add(sciName);
+
+    // Gemeinsamer Name gross
+    const commonName = this.add.text(0, -panelH / 2 + 32, sp.commonName, {
+      fontFamily: 'monospace', fontSize: '15px', color: '#ffffff'
+    }).setOrigin(0.5, 0);
+    c.add(commonName);
+
+    // Beschreibung
+    const descWords = sp.description ?? '';
+    const desc = this.add.text(-panelW / 2 + 14, -panelH / 2 + 56, descWords, {
+      fontFamily: 'monospace', fontSize: '10px', color: '#bbbbbb',
+      wordWrap: { width: panelW - 28 }
+    });
+    c.add(desc);
+
+    // Stats: ATK/DEF/SPD Bias
+    const statsY = -panelH / 2 + 110;
+    const atkBias = sp.atkBias ?? 0;
+    const defBias = sp.defBias ?? 0;
+    const spdBias = sp.spdBias ?? 0;
+    const statsText = `ATK ${atkBias >= 0 ? '+' : ''}${atkBias}  DEF ${defBias >= 0 ? '+' : ''}${defBias}  SPD ${spdBias >= 0 ? '+' : ''}${spdBias}`;
+    const statsLabel = this.add.text(0, statsY, statsText, {
+      fontFamily: 'monospace', fontSize: '11px', color: '#fcd95c'
+    }).setOrigin(0.5, 0);
+    c.add(statsLabel);
+
+    // Unlock-Progress-Bar (basierend auf captured)
+    const dex = gameStore.getPokedex();
+    const discovered = (dex.discovered ?? []).length;
+    const captured = (dex.captured ?? []).length;
+    const total = this.entries.length || 1;
+    const pct = captured / total;
+    const barW = panelW - 40;
+    const barY = statsY + 24;
+    const barBg = this.add.graphics();
+    barBg.fillStyle(0x222222, 0.9);
+    barBg.fillRect(-barW / 2, barY, barW, 8);
+    const fillW = Math.max(2, Math.round(barW * pct));
+    barBg.fillStyle(pct >= 0.8 ? 0xfcd95c : 0x4ab84a, 1);
+    barBg.fillRect(-barW / 2 + 1, barY + 1, fillW - 2, 6);
+    barBg.lineStyle(1, 0x556655, 1);
+    barBg.strokeRect(-barW / 2, barY, barW, 8);
+    c.add(barBg);
+    const progText = this.add.text(0, barY + 11, `${captured}/${total} gefangen (${Math.round(pct * 100)}%) — ${discovered} gesehen`, {
+      fontFamily: 'monospace', fontSize: '9px', color: '#888888'
+    }).setOrigin(0.5, 0);
+    c.add(progText);
+
+    // Schliessenknopf
+    const closeBtn = this.add.text(panelW / 2 - 14, -panelH / 2 + 8, '×', {
+      fontFamily: 'monospace', fontSize: '18px', color: '#ff7e7e'
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerdown', () => {
+      this.detailModal?.destroy();
+      this.detailModal = undefined;
+    });
+    c.add(closeBtn);
+
+    this.detailModal = c;
   }
 
   private renderAchievements(): void {
