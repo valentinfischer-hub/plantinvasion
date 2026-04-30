@@ -181,5 +181,10 @@
   "market.action.repeat": "Again",
   "market.item.stock": "Stock: {{have}}  Price: {{price}}{{label}}",
   "market.item.bought": "  ({{count}}x bought)",
-  "market.empty": "No items available."
+  "market.empty": "No items available.",
+  "diary.empty": "No diary entries collected yet.\nComplete Story Quests to learn about Tilda's story.",
+  "diary.prev": "< Prev",
+  "diary.next": "Next >",
+  "inventory.item.type": "Type: {{kind}}",
+  "inventory.item.price": "Buy: {{buy}}c   Sell: {{sell}}c"
 }
