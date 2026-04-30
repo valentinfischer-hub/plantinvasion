@@ -188,6 +188,25 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       delay: 900
     });
+    // R75: Shimmer-Overlay auf Title-Text — weiss-transparentes Rechteck
+    // das ueber den Titel gleitet alle 3.5s (Shimmer-Effekt)
+    this.time.delayedCall(1800, () => {
+      const spawnShimmer = () => {
+        if (!this.scene.isActive()) return;
+        const sh = this.add.rectangle(title.x - 120, title.y, 60, 36, 0xffffff, 0.18)
+          .setOrigin(0.5).setDepth(title.depth + 1);
+        this.tweens.add({
+          targets: sh,
+          x: title.x + 120,
+          alpha: { from: 0.18, to: 0 },
+          duration: 600,
+          ease: 'Cubic.InOut',
+          onComplete: () => sh.destroy()
+        });
+        this.time.delayedCall(3500, spawnShimmer);
+      };
+      spawnShimmer();
+    });
 
     // S-POLISH-START: Subtitle-Rotation (3 Taglines im Loop, je 3.5s sichtbar plus 0.5s Cross-Fade)
     const taglines = ['Cozy Botanik-RPG', 'Pflanzen-Sammler-Hybrid', 'Stardew trifft Pokemon'];
@@ -231,9 +250,8 @@ export class MenuScene extends Phaser.Scene {
         startAmbientBGM();
         // Garten ist Herzstueck: Default auf GardenScene
         const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
-        // D-041 R16: Fade-Out Transition vor Scene-Wechsel
-        this.cameras.main.fadeOut(350, 0, 0, 0);
-        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(target));
+        // R77: Iris-Wipe Transition
+        this.irisWipeTo(target);
       });
       contBtn.setAlpha(0);
       (contBtn as Phaser.GameObjects.Container).setY(by + 20);
@@ -248,9 +266,8 @@ export class MenuScene extends Phaser.Scene {
       gameStore.advanceTutorial(0);
       sfx.dialogAdvance();
       startAmbientBGM();
-      // D-041 R16: Fade-Out Transition
-      this.cameras.main.fadeOut(350, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('OverworldScene'));
+      // R77: Iris-Wipe Transition
+      this.irisWipeTo('OverworldScene');
     });
     newGameBtn.setAlpha(0);
     (newGameBtn as Phaser.GameObjects.Container).setY(by + 20);
@@ -502,6 +519,29 @@ export class MenuScene extends Phaser.Scene {
     this.tweens.add({ targets: overlay, alpha: 1, duration: 400, ease: 'Cubic.Out' });
   }
 
+  /**
+   * R77: Iris-Wipe Transition — expandierender schwarzer Circle von Bildmitte.
+   * Wechselt zur targetScene nach Abschluss des Wipes.
+   */
+  private irisWipeTo(targetScene: string, fromX?: number, fromY?: number): void {
+    const { width, height } = this.scale;
+    const ox = fromX ?? width / 2;
+    const oy = fromY ?? height / 2;
+    const maxR = Math.sqrt(width * width + height * height) * 0.6;
+    // schwarzer Kreis expandiert von Button-Center nach aussen
+    const circle = this.add.arc(ox, oy, 4, 0, 360, false, 0x000000, 1)
+      .setDepth(99999).setOrigin(0.5);
+    this.tweens.add({
+      targets: circle,
+      radius: maxR,
+      duration: 480,
+      ease: 'Cubic.In',
+      onComplete: () => {
+        this.scene.start(targetScene);
+      }
+    });
+  }
+
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
     const w = 220;
@@ -532,11 +572,13 @@ export class MenuScene extends Phaser.Scene {
     });
     bg.on('pointerdown', () => {
       this.tweens.killTweensOf(c);
-      this.tweens.add({ targets: c, scale: 0.96, duration: 80, ease: 'Cubic.Out' });
+      // R76: Scale-Squish (X etwas schmaler, Y etwas hoeher = organisches Press-Feeling)
+      this.tweens.add({ targets: c, scaleX: 0.92, scaleY: 1.05, duration: 70, ease: 'Cubic.Out' });
       bg.setFillStyle(accentColor, 0.35);
     });
     bg.on('pointerup', () => {
-      this.tweens.add({ targets: c, scale: 1.0, duration: 100, ease: 'Back.Out' });
+      // R76: Bounce-Back nach Squish
+      this.tweens.add({ targets: c, scaleX: 1.0, scaleY: 1.0, duration: 110, ease: 'Back.Out' });
       bg.setFillStyle(0x000000, 0.65);
       onClick();
     });
