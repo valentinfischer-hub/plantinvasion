@@ -1,6 +1,7 @@
+import Phaser from 'phaser';
 /**
  * Micro-Interactions [b4-run14/15]
- * Wiederverwendbare Tween-Utilities für polished UX:
+ * Wiederverwendbare Tween-Utilities fÃ¼r polished UX:
  * - Keyboard-Feedback (Taste blinkt kurz)
  * - Coin-Counter Bounce
  * - Energy-Bar Shake
@@ -15,7 +16,7 @@ export interface MicroInteractionScene {
 }
 
 /**
- * Lässt ein Textobjekt kurz aufleuchten (Keyboard-Feedback)
+ * LÃ¤sst ein Textobjekt kurz aufleuchten (Keyboard-Feedback)
  * Genutzt bei: Tastatureingaben in SettingsScene/HelpScene
  */
 export function flashText(
@@ -33,8 +34,8 @@ export function flashText(
 }
 
 /**
- * Coin-Counter Bounce: Scale 1.0 → 1.25 → 1.0 mit Back.Out
- * Aufruf: bei jeder Coin-Änderung (harvest, sell, buy)
+ * Coin-Counter Bounce: Scale 1.0 â 1.25 â 1.0 mit Back.Out
+ * Aufruf: bei jeder Coin-Ãnderung (harvest, sell, buy)
  */
 export function bounceCoinCounter(
   scene: MicroInteractionScene,
@@ -55,7 +56,7 @@ export function bounceCoinCounter(
 
 /**
  * Energy-Bar Shake: Kurzes seitliches Wackeln wenn Energie zu niedrig
- * Aufruf: wenn energy < 10 oder Aktion nicht möglich wegen Energie
+ * Aufruf: wenn energy < 10 oder Aktion nicht mÃ¶glich wegen Energie
  */
 export function shakeEnergyBar(
   scene: MicroInteractionScene,
@@ -102,7 +103,7 @@ export function pulseSaveIndicator(
 }
 
 /**
- * Button-Pressdown: Scale 1.0 → 0.93 → 1.0 (taktiles Feedback)
+ * Button-Pressdown: Scale 1.0 â 0.93 â 1.0 (taktiles Feedback)
  * Aufruf: bei pointerdown auf wichtigen Buttons
  */
 export function pressdownButton(
@@ -150,7 +151,7 @@ export function hoverGlow(
 
 /**
  * Notification-Pop: Kleines Container/Text-Objekt poppt von unten rein
- * Aufruf: für Quest-Completed, Achievement-Unlocked etc.
+ * Aufruf: fÃ¼r Quest-Completed, Achievement-Unlocked etc.
  */
 export function popNotification(
   scene: MicroInteractionScene,
