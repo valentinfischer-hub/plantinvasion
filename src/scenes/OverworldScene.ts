@@ -43,7 +43,7 @@ import { showToast } from '../ui/Toast';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
 import { evaluateAct2Progress, autoSetAct2Flags } from '../data/storyAct2';
-import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -198,7 +198,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private timeOverlay!: TimeOverlay;
   private saveIcon!: Phaser.GameObjects.Text;
   private coinHud!: Phaser.GameObjects.Text;
-  private forageSparkleTimer?: Phaser.Time.TimerEvent;
   // S-POLISH-B3-R2: Hotspot-Glow-Graphics fuer interaktive Objekte in Naehe
   private hotspotGlowGraphics?: Phaser.GameObjects.Graphics;
   // B7-R6: Header-Mute-Toggle
@@ -461,8 +460,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }).setOrigin(0.5);
     // "Achievement freigeschaltet!" Header
     const header = this.add.text(10, -H / 2 + 14, 'Achievement freigeschaltet!', {
-      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#ffd700', alpha: 0.9
-    }).setOrigin(0.5, 0);
+      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#ffd700'
+    }).setOrigin(0.5, 0).setAlpha(0.9);
     // Achievement-Name gross
     const name = this.add.text(10, -H / 2 + 28, def.name, {
       fontFamily: FONT_FAMILY, fontSize: '14px', color: '#ffffff'
@@ -578,7 +577,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private makeMuteButton(): void {
-    const { width } = this.scale;
     const cam = this.cameras.main;
     const z = cam.zoom || 1;
     // B7-R6: Mute-Button oben links (neben saveIcon, unter coinHud)
@@ -1385,7 +1383,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       if (result.ok) {
         sfx.dialogOpen();
         // S-POLISH-B2-R4: Foraging-Find-Animation - Item-Pop
-        this.spawnForagePop(this.player.x, this.player.y - 24);
+        this.spawnForagePop(this.player.sprite.x, this.player.sprite.y - 24);
         this.dialog.open([result.toast ?? 'Du hast etwas gefunden!']);
       } else {
         this.dialog.open([result.reason ?? 'Hier ist gerade nichts.']);
