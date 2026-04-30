@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { sfx } from '../audio/sfxGenerator';
 import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
-
+import { t } from '../i18n/index';
 interface HelpSection {
   title: string;
   lines: string[];
@@ -187,7 +187,7 @@ export class HelpScene extends Phaser.Scene {
     this.tabBgs = [];
 
     // Titel
-    this.add.text(width / 2, 20, '❓ Hilfe & Hotkeys', {
+    this.add.text(width / 2, 20, t('help.title'), {
       fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
 
@@ -233,7 +233,7 @@ export class HelpScene extends Phaser.Scene {
       .rectangle(width / 2, backY, 180, 26, 0x000000, 0.7)
       .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, backY, `Zurück (Esc)`, {
+    this.add.text(width / 2, backY, t('help.back'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => { sfx.click(); this.scene.start(this.fromScene); };
