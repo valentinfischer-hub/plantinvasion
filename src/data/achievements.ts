@@ -14,18 +14,22 @@ export interface AchievementDef {
   rewardItem?: { slug: string; amount: number };
   /** Cosmetic-Flag fuer spaetere UI-Anzeige. */
   cosmetic?: string;
+  /** B7-R4: Schwierigkeits-Tier für Icon im Achievement-Toast. */
+  tier?: 'bronze' | 'silver' | 'gold';
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
   {
     slug: 'first-bloom',
     name: 'Erste Bluete',
+    tier: 'bronze' as const,
     description: 'Bringe deine erste Pflanze zur Blooming-Stage.',
     rewardCoins: 500
   },
   {
     slug: 'pristine-grower',
     name: 'Pristine-Pflueger',
+    tier: 'silver' as const,
     description: 'Erreiche Pristine-Tier auf einer Pflanze.',
     rewardItem: { slug: 'pristine-pollen', amount: 1 },
     cosmetic: 'border-pristine'

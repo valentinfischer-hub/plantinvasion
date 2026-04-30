@@ -406,10 +406,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (!def) return;
     const cam = this.cameras.main;
     const z = cam.zoom || 1;
-    // S-POLISH-B2-R6: Aufwändigerer Achievement-Toast
-    const W = 340, H = 80;
+    // B7-R4: Slide-In von oben rechts mit Bronze/Silber/Gold-Icon, Auto-Dismiss 4s
+    const W = 300, H = 76;
+    const targetX = (cam.width - W / 2 - 12) / z;
+    const startX = (cam.width + W) / z; // ausserhalb des Viewports rechts
+    const targetY = 80 / z;
     const container = this.add
-      .container(cam.width / 2 / z, 90 / z)
+      .container(startX, targetY)
       .setScrollFactor(0)
       .setDepth(2200)
       .setScale(1 / z);
@@ -422,9 +425,11 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     bg.lineStyle(1, 0xb8860b, 0.6);
     bg.strokeRoundedRect(-W / 2 + 4, -H / 2 + 4, W - 8, H - 8, 7);
     container.add(bg);
-    // Stern-Icon links
-    const icon = this.add.text(-W / 2 + 20, 0, '★', {
-      fontFamily: FONT_FAMILY, fontSize: '22px', color: '#ffd700'
+    // B7-R4: Tier-Icon links (Bronze=■, Silber=◆, Gold=★)
+    const tierIcon = def.tier === 'gold' ? '★' : def.tier === 'silver' ? '◆' : '■';
+    const tierColor = def.tier === 'gold' ? '#ffd700' : def.tier === 'silver' ? '#c0c0c0' : '#cd7f32';
+    const icon = this.add.text(-W / 2 + 20, 0, tierIcon, {
+      fontFamily: FONT_FAMILY, fontSize: '22px', color: tierColor
     }).setOrigin(0.5);
     // "Achievement freigeschaltet!" Header
     const header = this.add.text(10, -H / 2 + 14, 'Achievement freigeschaltet!', {
@@ -442,16 +447,22 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.registerInAllUiCams(container);
     // S-POLISH-B2-R6: Achievement-Jingle statt simples dialogOpen
     sfx.achievementJingle();
-    // Entrance: Scale + Alpha-In mit mehr Bounce
-    container.setScale(0.7);
-    container.setAlpha(0);
+    // B7-R4: Slide-In von oben rechts (350ms), dann Auto-Dismiss nach 4s (Fade-Out 600ms)
     this.tweens.add({
-      targets: container, scale: 1 / z, alpha: 1, duration: 350, ease: 'Back.Out'
+      targets: container,
+      x: targetX,
+      duration: 350,
+      ease: 'Back.Out',
     });
-    // 4s sichtbar (statt 3.2s)
+    // Auto-Dismiss: Slide-Out nach rechts
     this.tweens.add({
-      targets: container, alpha: 0, delay: 4000, duration: 700, ease: 'Cubic.Out',
-      onComplete: () => container.destroy()
+      targets: container,
+      x: startX,
+      alpha: 0,
+      delay: 4000,
+      duration: 600,
+      ease: 'Cubic.In',
+      onComplete: () => container.destroy(),
     });
     // Konfetti-Burst um den Toast
     for (let i = 0; i < 8; i++) {
