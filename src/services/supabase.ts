@@ -1,60 +1,115 @@
 /**
  * Supabase-Client-Lazy-Init hinter `MP_ENABLED`-Feature-Flag.
  *
- * Designziele:
- *  - Wenn `MP_ENABLED=false` (Default): kein Client wird angelegt, kein Netzwerk-Call,
- *    kein Bundle-Code aus `@supabase/supabase-js` wird importiert (Tree-Shaking).
- *  - Wenn `MP_ENABLED=true`: Lazy-Init beim ersten `getSupabase()`-Aufruf. Erfordert
- *    gesetzte `VITE_SUPABASE_URL` und `VITE_SUPABASE_ANON_KEY`. Fehlt eines davon,
- *    wirft die Funktion mit klarem Fehler.
- *
- * Hinweis: der echte Client wird per dynamischem `import('@supabase/supabase-js')`
- * geladen, damit der Bundle-Splitter den Multiplayer-Code in einen separaten Chunk
- * zieht. Dependency ist nicht in `package.json` gepinnt bis Sprint S-11 startet.
- *
- * Nutzung:
- *   import { getSupabase, isSupabaseEnabled } from '@/services/supabase';
- *   if (isSupabaseEnabled()) {
- *     const sb = await getSupabase();
- *     await sb.from('plants').insert(...);
- *   }
+ * B7-R9: Graceful Degradation bei Supabase-Timeout:
+ * - `SUPABASE_TIMEOUT_MS`: maximale Wartezeit vor Offline-Fallback
+ * - `isOfflineMode()`: gibt true zurück wenn letzte Request fehlschlug
+ * - `withRetry(fn, n)`: ruft fn bis zu n-mal auf mit exponential backoff
+ * - `onNetworkError`: callback-hook für Retry-Toast in UI
  */
 
 import { MP_ENABLED } from '../utils/featureFlags';
 
-/** Konfig die zur Build-Zeit gelesen wird. Werte sind dann statisch im Bundle. */
+export const SUPABASE_TIMEOUT_MS = 5000;
+
 export interface SupabaseConfig {
   readonly url: string;
   readonly anonKey: string;
 }
 
-/**
- * Minimal-Subset der `@supabase/supabase-js`-API die wir aktuell nutzen.
- * Wird erweitert sobald Sprint S-11 die Realtime-Channels einfuehrt.
- */
 export interface SupabaseClientLike {
-  /** Marker damit der Test sicher gehen kann dass Lazy-Init lief. */
   readonly __initialized: true;
-  /** Konfig die zur Init-Zeit verwendet wurde. */
   readonly config: SupabaseConfig;
 }
 
-/**
- * Liefert true wenn der Multiplayer-Code-Pfad aktiv ist UND beide Supabase-Keys
- * gesetzt sind. Erst dann darf `getSupabase()` aufgerufen werden.
- */
-export function isSupabaseEnabled(): boolean {
-  if (!MP_ENABLED) return false;
-  const cfg = readSupabaseConfig();
-  return cfg !== null;
+// ---- Offline-Mode-State ----
+let _offlineMode = false;
+let _offlineSince: number | null = null;
+
+/** Gibt true zurück wenn die letzte Supabase-Request fehlschlug oder timed out. */
+export function isOfflineMode(): boolean {
+  return _offlineMode;
 }
 
+/** Setzt Offline-Mode. Ruft alle registrierten onNetworkError-Listener auf. */
+export function setOfflineMode(v: boolean, reason?: string): void {
+  if (_offlineMode === v) return;
+  _offlineMode = v;
+  if (v) {
+    _offlineSince = Date.now();
+    _errorListeners.forEach(cb => cb(reason ?? 'Verbindung verloren'));
+  } else {
+    _offlineSince = null;
+    _recoveryListeners.forEach(cb => cb());
+  }
+}
+
+/** Wie lange ist Offline-Mode schon aktiv (ms). 0 wenn nicht offline. */
+export function offlineDuration(): number {
+  if (!_offlineMode || _offlineSince === null) return 0;
+  return Date.now() - _offlineSince;
+}
+
+// ---- Event-Listener ----
+type ErrorCb = (reason: string) => void;
+type RecoveryCb = () => void;
+const _errorListeners = new Set<ErrorCb>();
+const _recoveryListeners = new Set<RecoveryCb>();
+
+/** Registriert einen Callback der bei Netzwerkfehler aufgerufen wird (z.B. für Retry-Toast). */
+export function onNetworkError(cb: ErrorCb): () => void {
+  _errorListeners.add(cb);
+  return () => _errorListeners.delete(cb);
+}
+
+/** Registriert einen Callback der bei Verbindungswiederherstellung aufgerufen wird. */
+export function onNetworkRecovery(cb: RecoveryCb): () => void {
+  _recoveryListeners.add(cb);
+  return () => _recoveryListeners.delete(cb);
+}
+
+// ---- Retry-Helper ----
 /**
- * Liest die Supabase-Konfig aus den Vite-Env-Vars.
- * Liefert null wenn URL oder Key fehlen.
- *
- * @internal exportiert nur fuer Tests.
+ * Ruft eine async-Funktion bis zu maxAttempts-mal auf.
+ * Exponential backoff: 500ms → 1000ms → 2000ms...
+ * Setzt Offline-Mode bei dauerhaftem Fehler.
  */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  label = 'request'
+): Promise<T | null> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await Promise.race([
+        fn(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), SUPABASE_TIMEOUT_MS)
+        )
+      ]);
+      // Erfolg: Offline-Mode zurücksetzen falls aktiv
+      if (_offlineMode) setOfflineMode(false);
+      return result;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (attempt < maxAttempts) {
+        const backoff = 500 * Math.pow(2, attempt - 1);
+        await new Promise(r => setTimeout(r, backoff));
+      } else {
+        setOfflineMode(true, `${label}: ${msg}`);
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+// ---- Supabase-Client ----
+export function isSupabaseEnabled(): boolean {
+  if (!MP_ENABLED) return false;
+  return readSupabaseConfig() !== null;
+}
+
 export function readSupabaseConfig(): SupabaseConfig | null {
   const env: Record<string, unknown> =
     typeof import.meta !== 'undefined' && import.meta.env
@@ -66,20 +121,8 @@ export function readSupabaseConfig(): SupabaseConfig | null {
   return { url, anonKey };
 }
 
-/** Singleton-Cache. `null` bis `getSupabase()` zum ersten Mal erfolgreich lief. */
 let cachedClient: SupabaseClientLike | null = null;
 
-/**
- * Lazy-Init des Supabase-Clients. Wirft wenn:
- *  - `MP_ENABLED=false` (Pfad sollte nie erreicht werden, daher Throw als Diagnose)
- *  - Keys fehlen
- *
- * Bei aktiviertem Flag wird beim ersten Aufruf der echte Client erzeugt und gecached.
- * Subsequente Aufrufe geben den Cache zurueck.
- *
- * Aktuell ist die Implementation ein Platzhalter (Stub-Client). Sprint S-11 ersetzt
- * das durch echten `createClient(url, key)` aus `@supabase/supabase-js`.
- */
 export async function getSupabase(): Promise<SupabaseClientLike> {
   if (!MP_ENABLED) {
     throw new Error('[supabase] MP_ENABLED is false. getSupabase() must not be called.');
@@ -92,10 +135,6 @@ export async function getSupabase(): Promise<SupabaseClientLike> {
       '[supabase] Konfig fehlt. Setze VITE_SUPABASE_URL und VITE_SUPABASE_ANON_KEY in .env.local.'
     );
   }
-
-  // Stub-Client. Sprint S-11 ersetzt durch:
-  //   const { createClient } = await import('@supabase/supabase-js');
-  //   cachedClient = createClient(cfg.url, cfg.anonKey) as unknown as SupabaseClientLike;
   cachedClient = {
     __initialized: true,
     config: cfg
@@ -103,11 +142,10 @@ export async function getSupabase(): Promise<SupabaseClientLike> {
   return cachedClient;
 }
 
-/**
- * Test-Helper: setzt den Cache zurueck. Nur in Tests aufrufen.
- *
- * @internal
- */
 export function _resetSupabaseCacheForTest(): void {
   cachedClient = null;
+  _offlineMode = false;
+  _offlineSince = null;
+  _errorListeners.clear();
+  _recoveryListeners.clear();
 }

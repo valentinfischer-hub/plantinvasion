@@ -24,6 +24,7 @@ import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM, setBiomeAmbience } from '../audio/sfxGenerator';
 import { SoundManager } from '../audio/SoundManager';
+import { onNetworkError, onNetworkRecovery } from '../services/supabase';
 import { DebugOverlay } from '../ui/DebugOverlay';
 import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
 import { getAchievement } from '../data/achievements';
@@ -371,6 +372,21 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     (globalThis as { __overworld?: OverworldScene }).__overworld = this;
     // B7-R8: Debug-Overlay (nur bei ?debug=1)
     this.debugOverlay = new DebugOverlay(this);
+    // B7-R9: Network-Error-Handler — Retry-Toast bei Supabase-Timeout
+    onNetworkError((reason) => {
+      const cam = this.cameras.main;
+      showToast(this, `Offline-Mode: ${reason.slice(0, 40)}. Spiel laeuft lokal weiter.`, 'error', {
+        cameraZoom: cam.zoom || 1,
+        yAbsolute: (cam.height / (cam.zoom || 1)) - 40,
+      });
+    });
+    onNetworkRecovery(() => {
+      const cam = this.cameras.main;
+      showToast(this, 'Verbindung wiederhergestellt.', 'success', {
+        cameraZoom: cam.zoom || 1,
+        yAbsolute: (cam.height / (cam.zoom || 1)) - 40,
+      });
+    });
 
     // Daily-Login-Reward: einmalig pro Real-Time-Tag claimen, dann Toast
     this.tryClaimDailyLogin();

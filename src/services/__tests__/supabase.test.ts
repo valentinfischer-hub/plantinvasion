@@ -3,7 +3,11 @@ import {
   isSupabaseEnabled,
   readSupabaseConfig,
   getSupabase,
-  _resetSupabaseCacheForTest
+  _resetSupabaseCacheForTest,
+  isOfflineMode,
+  setOfflineMode,
+  withRetry,
+  onNetworkError,
 } from '../supabase';
 
 /**
@@ -91,6 +95,45 @@ describe('services/supabase', () => {
       // Mehrfacher Call ist idempotent
       _resetSupabaseCacheForTest();
       _resetSupabaseCacheForTest();
+    });
+  });
+
+  describe('B7-R9: Offline-Mode und Retry (Network-Error-Handling)', () => {
+    it('isOfflineMode() gibt initial false zurück', () => {
+      expect(isOfflineMode()).toBe(false);
+    });
+
+    it('setOfflineMode(true) aktiviert Offline-Mode', () => {
+      setOfflineMode(true, 'test-reason');
+      expect(isOfflineMode()).toBe(true);
+    });
+
+    it('setOfflineMode(false) deaktiviert Offline-Mode', () => {
+      setOfflineMode(true);
+      setOfflineMode(false);
+      expect(isOfflineMode()).toBe(false);
+    });
+
+    it('onNetworkError-Callback wird bei setOfflineMode(true) aufgerufen', () => {
+      const cb = vi.fn();
+      const unsub = onNetworkError(cb);
+      setOfflineMode(true, 'net-fail');
+      expect(cb).toHaveBeenCalledWith('net-fail');
+      unsub();
+    });
+
+    it('withRetry gibt null zurück und setzt offlineMode bei persistentem Fehler', async () => {
+      const failFn = vi.fn().mockRejectedValue(new Error('fail'));
+      const result = await withRetry(failFn, 2, 'test');
+      expect(result).toBeNull();
+      expect(isOfflineMode()).toBe(true);
+      expect(failFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('withRetry gibt Ergebnis zurück bei Erfolg', async () => {
+      const successFn = vi.fn().mockResolvedValue('ok');
+      const result = await withRetry(successFn, 2, 'test');
+      expect(result).toBe('ok');
     });
   });
 
