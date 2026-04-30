@@ -1,5 +1,6 @@
+import Phaser from 'phaser';
 /**
- * FPS-Drop-Monitor (D-041 FI: 60-FPS-Lock Score 3→5)
+ * FPS-Drop-Monitor (D-041 FI: 60-FPS-Lock Score 3â5)
  *
  * Registriert sich am Phaser-Game und loggt jeden FPS-Drop unter 55 fps
  * fuer laenger als 100ms. Feuert PostHog fps_drop Event mit Scene-Context.
@@ -66,7 +67,7 @@ class FpsMonitor {
       duration_ms: Math.round(durationMs)
     };
 
-    // PostHog — nur wenn verfuegbar
+    // PostHog â nur wenn perfuegbar
     const ph = (window as Window & {
       __posthog?: { capture: (e: string, p: Record<string, unknown>) => void }
     }).__posthog;
