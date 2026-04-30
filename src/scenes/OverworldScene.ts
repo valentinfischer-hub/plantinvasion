@@ -569,6 +569,29 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     const bColor = BIOME_COLORS[zone] ?? 0x335533;
     const cam = this.cameras.main;
     cam.flash(400, (bColor >> 16) & 0xff, (bColor >> 8) & 0xff, bColor & 0xff, true);
+    // R82: Sanfter Ambient-Farb-Overlay (2s) — farbiges Rechteck fadet rein/raus
+    // gibt dem Biom einen kurzen atmosphaerischen Farbton beim Betreten
+    const W82 = cam.width; const H82 = cam.height;
+    const ambientOverlay = this.add.rectangle(
+      cam.scrollX + W82 / 2, cam.scrollY + H82 / 2,
+      W82, H82, bColor, 0
+    ).setDepth(750);
+    this.tweens.add({
+      targets: ambientOverlay,
+      alpha: 0.13,
+      duration: 400,
+      ease: 'Cubic.Out',
+      onComplete: () => {
+        this.tweens.add({
+          targets: ambientOverlay,
+          alpha: 0,
+          duration: 1200,
+          delay: 800,
+          ease: 'Cubic.InOut',
+          onComplete: () => ambientOverlay.destroy()
+        });
+      }
+    });
     // D-041 R24 + R60: Zone-Toast via t() internationalisiert
     const zoneKey = `ow.zone.${zone}`;
     const label = t(zoneKey) || (zone.charAt(0).toUpperCase() + zone.slice(1));
