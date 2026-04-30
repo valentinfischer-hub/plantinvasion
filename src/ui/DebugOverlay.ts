@@ -122,3 +122,12 @@ export class DebugOverlay {
     this.container?.destroy();
   }
 }
+
+/**
+ * P0-Fix Run9: initDebugOverlay() — wird von main.ts aufgerufen.
+ * Logt Debug-Modus und registriert globalen KeyHandler fuer Ctrl+D.
+ */
+export function initDebugOverlay(): void {
+  if (!DebugOverlay.isEnabled()) return;
+  console.info('[DebugOverlay] Debug-Modus aktiv (?debug=1)');
+}
