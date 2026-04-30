@@ -566,6 +566,44 @@ export class GardenScene extends Phaser.Scene {
    * Tween beider Parent-Plant-Card-Container 1500ms Cubic.InOut auf Bildmitte (links/rechts versetzt).
    * Resolved true wenn Animation lief, false wenn Cards nicht auffindbar (Fallback-Pfad).
    */
+  /**
+   * B7-R2: Pollen-Partikel-Arc — Bezier-Kurve von Pflanze A zu Pflanze B als Vorstufe zum Drift.
+   * 24 Pollen-Kreise folgen einer quadratischen Bezierkurve mit leichter vertikaler Überhöhung.
+   * Dauer: ~600ms vor dem Drift.
+   */
+  private spawnPollenArc(fromX: number, fromY: number, toX: number, toY: number): void {
+    const STEPS = 24;
+    const midX = (fromX + toX) / 2;
+    const midY = Math.min(fromY, toY) - 60; // Kontrollpunkt: Bogen nach oben
+
+    for (let i = 0; i < STEPS; i++) {
+      const delay = i * 20;
+      const t = i / (STEPS - 1);
+      // Quadratische Bezier P0→P1→P2
+      const bx = (1 - t) * (1 - t) * fromX + 2 * (1 - t) * t * midX + t * t * toX;
+      const by = (1 - t) * (1 - t) * fromY + 2 * (1 - t) * t * midY + t * t * toY;
+
+      const jx = bx + (Math.random() - 0.5) * 8;
+      const jy = by + (Math.random() - 0.5) * 8;
+      const size = 2 + Math.random() * 2.5;
+      const color = i % 3 === 0 ? 0xfcd95c : (i % 3 === 1 ? 0x9be36e : 0xfff5a0);
+
+      this.time.delayedCall(delay, () => {
+        if (!this.scene.isActive()) return;
+        const p = this.add.circle(jx, jy, size, color, 0.9).setDepth(9997);
+        this.tweens.add({
+          targets: p,
+          y: jy - 20 - Math.random() * 15,
+          alpha: 0,
+          scale: 0.3,
+          duration: 500 + Math.random() * 200,
+          ease: 'Cubic.Out',
+          onComplete: () => p.destroy(),
+        });
+      });
+    }
+  }
+
   private playParentDrift(parentAId: string, parentBId: string): Promise<boolean> {
     const cardA = this.cards.get(parentAId);
     const cardB = this.cards.get(parentBId);
@@ -612,6 +650,15 @@ export class GardenScene extends Phaser.Scene {
    * keine Pre-Animation, direkt zum Reveal.
    */
   private async runCrossWithDrift(parentAId: string, parentBId: string, successColor: string): Promise<void> {
+    // B7-R2: Pollen-Partikel-Arc von Slot A nach Slot B spawnen bevor Drift startet
+    const cardAForArc = this.cards.get(parentAId);
+    const cardBForArc = this.cards.get(parentBId);
+    if (cardAForArc && cardBForArc) {
+      this.spawnPollenArc(
+        cardAForArc.container.x, cardAForArc.container.y,
+        cardBForArc.container.x, cardBForArc.container.y
+      );
+    }
     const drifted = await this.playParentDrift(parentAId, parentBId);
     const result = gameStore.crossPlants(parentAId, parentBId);
     if (!result.ok) {
