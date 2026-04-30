@@ -277,7 +277,7 @@ export class MenuScene extends Phaser.Scene {
       this.tweens.add({
         targets: btn,
         alpha: 1,
-        y: btn.y - 20,
+        y: targetY,
         duration: 320,
         ease: 'Back.Out',
         delay: 800 + i * 80
@@ -320,11 +320,11 @@ export class MenuScene extends Phaser.Scene {
         targets: ambientPlant,
         scaleY: 0.63,
         scaleX: 0.57,
-        duration: 1800 + i * 300,
+        duration: 1800,
         ease: 'Sine.InOut',
         yoyo: true,
         repeat: -1,
-        delay: i * 400
+        delay: 0
       });
       let stageIdx = 0;
       this.time.addEvent({
