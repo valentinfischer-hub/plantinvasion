@@ -57,6 +57,8 @@ describe('SaveIndicator Logik', () => {
 
   it('initSaveIndicator erstellt das Element', async () => {
     vi.stubGlobal('document', stub.document);
+    // @ts-ignore
+
     const { initSaveIndicator } = await import('../SaveIndicator?v=init1');
     initSaveIndicator();
     expect(stub.bodyChildren.length).toBeGreaterThan(0);
@@ -64,6 +66,8 @@ describe('SaveIndicator Logik', () => {
 
   it('isSaveIndicatorVisible gibt false zurueck wenn kein Element', async () => {
     vi.stubGlobal('document', undefined);
+    // @ts-ignore
+
     const { isSaveIndicatorVisible } = await import('../SaveIndicator?v=nodom');
     expect(isSaveIndicatorVisible()).toBe(false);
   });
@@ -71,6 +75,8 @@ describe('SaveIndicator Logik', () => {
   it('flashSaveIndicator ohne init ist ein No-Op', async () => {
     // Kein document gesetzt -> init wurde nicht aufgerufen
     vi.stubGlobal('document', undefined);
+    // @ts-ignore
+
     const { flashSaveIndicator } = await import('../SaveIndicator?v=noop');
     // Kein Fehler erwartet
     expect(() => flashSaveIndicator()).not.toThrow();
@@ -78,6 +84,8 @@ describe('SaveIndicator Logik', () => {
 
   it('destroySaveIndicator ohne init ist ein No-Op', async () => {
     vi.stubGlobal('document', undefined);
+    // @ts-ignore
+
     const { destroySaveIndicator } = await import('../SaveIndicator?v=destroy');
     expect(() => destroySaveIndicator()).not.toThrow();
   });
