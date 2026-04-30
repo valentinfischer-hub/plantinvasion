@@ -14,6 +14,7 @@ import {
 import { STARTER_SPECIES } from '../data/species';
 import { HYBRID_SPECIES } from '../data/hybridRecipes';
 import { ACHIEVEMENTS } from '../data/achievements';
+import { t } from '../i18n';
 
 interface PokedexEntry {
   slug: string;
@@ -48,7 +49,7 @@ export class PokedexScene extends Phaser.Scene {
   private sortMode: 'family' | 'rarity' | 'name' = 'family';
   private filterBtn!: Phaser.GameObjects.Text;
   private sortBtn!: Phaser.GameObjects.Text;
-  // B6-R7: Detail-Panel für Einzel-Eintrag
+  // B6-R7: Detail-Panel fÃ¼r Einzel-Eintrag
   private _detailPanel?: Phaser.GameObjects.Container;
 
   constructor() {
@@ -86,7 +87,7 @@ export class PokedexScene extends Phaser.Scene {
     this.drawCompletenessBar(barX, 78, barW, 8, 0);
 
     // S-POLISH-B2-R10: Filter + Sort Buttons
-    this.filterBtn = this.add.text(width / 2 - 80, 96, 'Filter: Alle', {
+    this.filterBtn = this.add.text(width / 2 - 80, 96, t('pokedex.filter.label') + ': ' + t('pokedex.filter.all'), {
       fontFamily: 'monospace', fontSize: '10px', color: '#fcd95c',
       backgroundColor: '#333', padding: { x: 4, y: 2 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -97,21 +98,21 @@ export class PokedexScene extends Phaser.Scene {
       this.scrollY = 0;
       this.renderTab();
     });
-    this.sortBtn = this.add.text(width / 2 + 60, 96, 'Sortierung: Familie', {
+    this.sortBtn = this.add.text(width / 2 + 60, 96, t('pokedex.sort.label') + ': ' + t('pokedex.sort.family'), {
       fontFamily: 'monospace', fontSize: '10px', color: '#b0e0ff',
       backgroundColor: '#333', padding: { x: 4, y: 2 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     this.sortBtn.on('pointerup', () => {
       const modes: Array<'family' | 'rarity' | 'name'> = ['family', 'rarity', 'name'];
       this.sortMode = modes[(modes.indexOf(this.sortMode) + 1) % modes.length];
-      this.sortBtn.setText('Sortierung: ' + { family: 'Familie', rarity: 'Seltenheit', name: 'Name' }[this.sortMode]);
+      this.sortBtn.setText(t('pokedex.sort.label') + ': ' + t('pokedex.sort.' + this.sortMode));
       this.scrollY = 0;
       this.renderTab();
     });
 
     // Tabs
-    this.makeTab(width / 2 - 80, 84, 'species', 'Spezies');
-    this.makeTab(width / 2 + 80, 84, 'achievements', 'Achievements');
+    this.makeTab(width / 2 - 80, 84, 'species', t('pokedex.tab.species'));
+    this.makeTab(width / 2 + 80, 84, 'achievements', t('pokedex.tab.achievements'));
 
     // Container fuer Liste-Inhalt (wird gescrollt)
     this.listContainer = this.add.container(0, this.viewportTop);
@@ -137,7 +138,7 @@ export class PokedexScene extends Phaser.Scene {
 
     // Hint
     this.add
-      .text(width / 2, this.viewportBottom + 4, 'Tab wechseln   ↑↓ scrollen   B/Esc zurück', {
+      .text(width / 2, this.viewportBottom + 4, 'Tab wechseln   ââ scrollen   B/Esc zurÃ¼ck', {
         fontFamily: 'monospace',
         fontSize: '10px',
         color: '#553e2d'
@@ -151,7 +152,7 @@ export class PokedexScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x9be36e)
       .setInteractive({ useHandCursor: true });
     this.add
-      .text(width / 2, backY, 'Zurück (B)', {
+      .text(width / 2, backY, 'ZurÃ¼ck (B)', {
         fontFamily: 'monospace',
         fontSize: '12px',
         color: '#9be36e'
@@ -249,7 +250,7 @@ export class PokedexScene extends Phaser.Scene {
   }
 
   private guessFamily(scientificName: string): string {
-    const genus = scientificName.split(' ')[0] ?? 'Unbekannt';
+    const genus = scientificName.split(' ')[0] ?? t('pokedex.unknown');
     return genus;
   }
 
@@ -270,7 +271,7 @@ export class PokedexScene extends Phaser.Scene {
     );
 
     this.headerCount.setText(
-      `${discovered.size} gesehen  ·  ${captured.size} gefangen  ·  ${this.entries.length} total`
+      `${discovered.size} gesehen  Â·  ${captured.size} gefangen  Â·  ${this.entries.length} total`
     );
 
     // S-POLISH-B2-R10: Filter anwenden
@@ -300,13 +301,13 @@ export class PokedexScene extends Phaser.Scene {
       const isDiscovered = discovered.has(entry.slug);
       const isCaptured = captured.has(entry.slug);
       // S-POLISH-B2-R10: Silhouette fuer unentdeckte Eintraege
-      const status = isCaptured ? '✓' : isDiscovered ? '?' : '▓';
+      const status = isCaptured ? 'â' : isDiscovered ? '?' : 'â';
       const color = isCaptured ? '#9be36e' : isDiscovered ? '#fcd95c' : '#3a3a3a';
-      const displayName = isDiscovered ? entry.name : '???·???';
+      const displayName = isDiscovered ? entry.name : '???Â·???';
       const familyTag = isDiscovered
-        ? (entry.family === 'Hybrid' ? '★ Hybrid' : entry.family)
+        ? (entry.family === 'Hybrid' ? 'â Hybrid' : entry.family)
         : '---';
-      const rarityDots = '★'.repeat(entry.rarity);
+      const rarityDots = 'â'.repeat(entry.rarity);
       const t = this.add
         .text(width / 2, by, `${status}  ${displayName}  (${familyTag}) ${rarityDots}`, {
           fontFamily: 'monospace',
@@ -321,7 +322,7 @@ export class PokedexScene extends Phaser.Scene {
           ease: 'Sine.InOut', yoyo: true, repeat: -1
         });
       }
-      // B6-R7: Klick öffnet Detail-Modal (nur bei entdeckten Einträgen)
+      // B6-R7: Klick Ã¶ffnet Detail-Modal (nur bei entdeckten EintrÃ¤gen)
       if (isDiscovered) {
         t.setInteractive({ useHandCursor: true });
         t.on('pointerover', () => t.setAlpha(0.8));
@@ -334,7 +335,7 @@ export class PokedexScene extends Phaser.Scene {
 
     if (filtered.length === 0) {
       this.listContainer.add(
-        this.add.text(width / 2, 0, 'Kein Eintrag mit diesem Filter.', {
+        this.add.text(width / 2, 0, t('pokedex.empty'), {
           fontFamily: 'monospace', fontSize: '12px', color: '#553e2d'
         }).setOrigin(0.5, 0)
       );
@@ -342,7 +343,7 @@ export class PokedexScene extends Phaser.Scene {
   }
 
   /**
-   * B6-R7: Öffnet Detail-Modal für einen Pokedex-Eintrag.
+   * B6-R7: Ãffnet Detail-Modal fÃ¼r einen Pokedex-Eintrag.
    * Zeigt: botanischen Namen, Familie, Rarity, Status, Beschreibung.
    */
   private openEntryDetail(slug: string, isDiscovered: boolean, isCaptured: boolean): void {
@@ -366,12 +367,12 @@ export class PokedexScene extends Phaser.Scene {
     bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 10);
     container.add(bg);
 
-    // Pflanze in STARTER_SPECIES finden für vollständige Info
+    // Pflanze in STARTER_SPECIES finden fÃ¼r vollstÃ¤ndige Info
     const sp = STARTER_SPECIES.find((s) => s.slug === slug);
     const displayName = sp ? sp.commonName : slug;
     const sciName    = sp ? sp.scientificName : '';
     const desc       = sp ? sp.description : '';
-    const statusLabel = isCaptured ? '✓ Gefangen' : isDiscovered ? '? Gesehen' : '▓ Unbekannt';
+    const statusLabel = isCaptured ? 'â Gefangen' : isDiscovered ? '? Gesehen' : 'â Unbekannt';
     const statusColor = isCaptured ? '#9be36e' : '#fcd95c';
 
     // Titel
@@ -380,7 +381,7 @@ export class PokedexScene extends Phaser.Scene {
     }).setOrigin(0.5);
     container.add(nameText);
 
-    // Botanischer Name (kursiv via font-style nicht verfügbar -> * prefix)
+    // Botanischer Name (kursiv via font-style nicht verfÃ¼gbar -> * prefix)
     if (sciName) {
       const sciText = this.add.text(0, -panelH / 2 + 36, `* ${sciName}`, {
         fontFamily: 'monospace', fontSize: '11px', color: '#9be36e'
@@ -407,7 +408,7 @@ export class PokedexScene extends Phaser.Scene {
     const closeBg = this.add.rectangle(0, panelH / 2 - 22, 120, 24, 0x1a2418, 0.9)
       .setStrokeStyle(1, 0x4a8228)
       .setInteractive({ useHandCursor: true });
-    const closeTxt = this.add.text(0, panelH / 2 - 22, 'Schliessen (X)', {
+    const closeTxt = this.add.text(0, panelH / 2 - 22, t('pokedex.close'), {
       fontFamily: 'monospace', fontSize: '10px', color: '#9be36e'
     }).setOrigin(0.5);
     container.add([closeBg, closeTxt]);
@@ -443,7 +444,7 @@ export class PokedexScene extends Phaser.Scene {
     // Hintergrund
     this.completenessBar.fillStyle(0x222222, 0.8);
     this.completenessBar.fillRect(x, y, w, h);
-    // Füllbalken (grün → gold bei > 80%)
+    // FÃ¼llbalken (grÃ¼n â gold bei > 80%)
     const fillColor = pct >= 0.8 ? 0xfcd95c : 0x4ab84a;
     const fillW = Math.round(w * Math.min(1, pct));
     if (fillW > 0) {
@@ -466,7 +467,7 @@ export class PokedexScene extends Phaser.Scene {
     let by = 0;
     for (const a of ACHIEVEMENTS) {
       const isUnlocked = unlocked.has(a.slug);
-      const status = isUnlocked ? '★' : '·';
+      const status = isUnlocked ? 'â' : 'Â·';
       const color = isUnlocked ? '#fcd95c' : '#553e2d';
       const reward = a.rewardCoins
         ? ` (+${a.rewardCoins}c)`
