@@ -73,6 +73,9 @@ export class GardenScene extends Phaser.Scene {
   private detailPanel?: Phaser.GameObjects.Container;
   private slotHotspots: Array<{ gridX: number; gridY: number; hotspot: Phaser.GameObjects.Rectangle }> = [];
   private dragSource?: { plantId: string; startX: number; startY: number };
+  // B7-R1: Slot-Selection-Glow im CrossMode — pulsierender Ring um ausgewählte Pflanze
+  private slotSelectionGlow?: Phaser.GameObjects.Graphics;
+  private slotSelectionGlowTween?: Phaser.Tweens.Tween;
 
   constructor() {
     super('GardenScene');
@@ -825,6 +828,52 @@ export class GardenScene extends Phaser.Scene {
     // S-POLISH-B2-R3: Companion-Aura - grüne Aura auf Karten bei aktiven Companion-Paaren
     this.updateCompanionAuras(state.plants);
     this.refreshHeader();
+    // B7-R1: Slot-Selection-Glow bei CrossMode-Auswahl
+    this.updateSlotSelectionGlow();
+  }
+
+  /**
+   * B7-R1: Slot-Selection-Glow — pulsierender goldener Ring um erste CrossMode-Auswahl.
+   */
+  private updateSlotSelectionGlow(): void {
+    const selectedCard = this.crossFirstPlantId
+      ? [...this.cards.values()].find(c => c.plant.id === this.crossFirstPlantId)
+      : undefined;
+
+    if (!selectedCard) {
+      if (this.slotSelectionGlowTween) {
+        this.slotSelectionGlowTween.stop();
+        this.slotSelectionGlowTween = undefined;
+      }
+      if (this.slotSelectionGlow) {
+        this.slotSelectionGlow.clear();
+      }
+      return;
+    }
+
+    if (!this.slotSelectionGlow) {
+      this.slotSelectionGlow = this.add.graphics();
+      this.slotSelectionGlow.setDepth(55);
+    }
+    const g = this.slotSelectionGlow;
+    g.clear();
+    const cx = selectedCard.container.x;
+    const cy = selectedCard.container.y;
+    g.lineStyle(3, 0xfcd95c, 0.9);
+    g.strokeCircle(cx, cy, 30);
+    g.lineStyle(1.5, 0xfff5a0, 0.6);
+    g.strokeCircle(cx, cy, 36);
+
+    if (!this.slotSelectionGlowTween) {
+      this.slotSelectionGlowTween = this.tweens.add({
+        targets: g,
+        alpha: { from: 0.55, to: 1.0 },
+        duration: 550,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.InOut',
+      });
+    }
   }
 
   private updateCompanionAuras(plants: Plant[]): void {
