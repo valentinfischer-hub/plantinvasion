@@ -9,7 +9,7 @@ export interface TutorialStep {
   advanceWhen?: (ctx: { tileX: number; tileY: number; facing: string; isMoving: boolean; lastInteract?: string }) => boolean;
 }
 
-// D-041 R19: Tutorial-Texte ueberarbeitet — persoenlicher, klarer, Stardew-Warmth
+// D-041 R19: Tutorial-Texte ueberarbeitet â persoenlicher, klarer, Stardew-Warmth
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     step: 0,
@@ -31,13 +31,13 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     step: 3,
     title: '\u{1FAB4} Dein Garten wartet',
-    text: 'Die goldene Tuer am Spielerhaus fuehrt zu deinem Garten.\nDein erster Sämling ist schon eingepflanzt.\nX = Kreuzen   O = Zurück zur Overworld',
+    text: 'Die goldene Tuer am Spielerhaus fuehrt zu deinem Garten.\nDein erster SÃ¤mling ist schon eingepflanzt.\nX = Kreuzen   O = ZurÃ¼ck zur Overworld',
     advanceWhen: (ctx) => ctx.lastInteract === 'garden'
   },
   {
     step: 4,
     title: '\u{1F5FA}\uFE0F Alles im Ueberblick',
-    text: 'M = Markt     P = Pokédex     Q = Quests\nE = Reden      Shift = Rennen\n\nViel Freude beim Zuechten! \u{1F331}'
+    text: 'M = Markt     P = PokÃ©dex     Q = Quests\nE = Reden      Shift = Rennen\n\nViel Freude beim Zuechten! \u{1F331}'
   }
 ];
 
@@ -328,7 +328,7 @@ export class TutorialOverlay {
       return;
     }
     this.container.setVisible(true);
-    this.titleText.setText(\`(\${t.step + 1}/\${TUTORIAL_STEPS.length})  \${def.title}\`);
+    this.titleText.setText(`(${t.step + 1}/${TUTORIAL_STEPS.length})  ${def.title}`);
 
     // R71: Typewriter fuer Body-Text
     this.startTypewriter(def.text);
