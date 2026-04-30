@@ -23,6 +23,7 @@ import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
 import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM, setBiomeAmbience } from '../audio/sfxGenerator';
+import { SoundManager } from '../audio/SoundManager';
 import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
 import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
@@ -198,6 +199,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private forageSparkleTimer?: Phaser.Time.TimerEvent;
   // S-POLISH-B3-R2: Hotspot-Glow-Graphics fuer interaktive Objekte in Naehe
   private hotspotGlowGraphics?: Phaser.GameObjects.Graphics;
+  // B7-R6: Header-Mute-Toggle
+  private muteBtn?: Phaser.GameObjects.Text;
   private hotspotGlowTimer?: number;
   // S-POLISH-B3-R2: Vollbild-Weltkarte (N-Taste)
   private worldMapOverlay?: Phaser.GameObjects.Container;
@@ -348,9 +351,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Farm-Button: persistent oben rechts, fuehrt zur GardenScene (alias "Farm")
     this.makeFarmButton();
+    this.makeMuteButton();
     if (this.input.keyboard) {
       const farmKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
       farmKey.on('down', () => this.gotoFarm());
+      // B7-R6: M-Taste = Mute-Toggle
+      const muteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+      muteKey.on('down', () => this.toggleMute());
     }
 
     debugLog('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
@@ -547,6 +554,32 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.tweens.add({ targets: c, scale: 1.0, duration: 100, ease: 'Cubic.Out' });
     });
     if (this.miniMap) this.miniMap.ignoreInUICam(c);
+  }
+
+  private makeMuteButton(): void {
+    const { width } = this.scale;
+    const cam = this.cameras.main;
+    const z = cam.zoom || 1;
+    // B7-R6: Mute-Button oben links (neben saveIcon, unter coinHud)
+    const muteLabel = () => SoundManager.muted ? '[M] stumm' : '[M] ton';
+    const muteColor = () => SoundManager.muted ? '#ff7e7e' : '#9be36e';
+    this.muteBtn = this.add.text(8 / z, 60 / z, muteLabel(), {
+      fontFamily: 'monospace',
+      fontSize: '9px',
+      color: muteColor(),
+      backgroundColor: '#1a1f1a',
+      padding: { x: 4, y: 2 },
+    }).setScrollFactor(0).setDepth(1850).setScale(1 / z).setInteractive({ useHandCursor: true });
+    this.muteBtn.on('pointerdown', () => this.toggleMute());
+    this.registerInAllUiCams(this.muteBtn);
+  }
+
+  private toggleMute(): void {
+    SoundManager.toggleMute();
+    if (this.muteBtn) {
+      this.muteBtn.setText(SoundManager.muted ? '[M] stumm' : '[M] ton');
+      this.muteBtn.setColor(SoundManager.muted ? '#ff7e7e' : '#9be36e');
+    }
   }
 
   private gotoFarm(): void {
