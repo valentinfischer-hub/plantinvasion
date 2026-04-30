@@ -183,5 +183,10 @@
   "market.item.bought": "  ({{count}}x gekauft)",
   "market.empty": "Keine Items verfügbar.",
   "help.title": "❓ Hilfe & Hotkeys",
-  "help.back": "Zurück (Esc)"
+  "help.back": "Zurück (Esc)",
+  "diary.empty": "Noch keine Eintraege gesammelt.\nLoese Story-Quests um Tildas Geschichte zu erfahren.",
+  "diary.prev": "< Zurück",
+  "diary.next": "Weiter >",
+  "inventory.item.type": "Typ: {{kind}}",
+  "inventory.item.price": "Kauf: {{buy}}c   Verkauf: {{sell}}c"
 }
