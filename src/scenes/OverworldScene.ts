@@ -617,7 +617,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       const dialogActive = this.dialog?.open_ ?? false;
       const npcWalls = this.npcWalls;
       const now = gameTimeNow();
-      // S-POLISH Run16: Camera-Frustum-Cull Ã¢ÂÂ NPCs > 200px ausserhalb des Viewports
+      // S-POLISH Run16: Camera-Frustum-Cull — NPCs > 200px ausserhalb des Viewports
       // bekommen kein step(). Bewegung + Animationen pausiert ausserhalb des sichtbaren Bereichs.
       const cam = this.cameras.main;
       const camL = cam.scrollX - 200;
@@ -689,7 +689,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       const visitedZones = gameStore.getAchievementCounters().visitedZones;
       const inventory = gameStore.getInventory();
       const updatedFlags = autoSetAct2Flags(flags, visitedZones, inventory);
-      // Side-Effect nur bei Ãnderung
+      // Side-Effect nur bei Änderung
       const flagsChanged = Object.keys(updatedFlags).some(k => updatedFlags[k] !== flags[k]);
       if (flagsChanged) {
         for (const [k, v] of Object.entries(updatedFlags)) {
