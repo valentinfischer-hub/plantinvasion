@@ -31,13 +31,13 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     step: 3,
     title: '\u{1FAB4} Dein Garten wartet',
-    text: 'Die goldene Tuer am Spielerhaus fuehrt zu deinem Garten.\nDein erster SÃ¤mling ist schon eingepflanzt.\nX = Kreuzen   O = ZurÃ¼ck zur Overworld',
+    text: 'Die goldene Tuer am Spielerhaus fuehrt zu deinem Garten.\nDein erster Sämling ist schon eingepflanzt.\nX = Kreuzen   O = Zurück zur Overworld',
     advanceWhen: (ctx) => ctx.lastInteract === 'garden'
   },
   {
     step: 4,
     title: '\u{1F5FA}\uFE0F Alles im Ueberblick',
-    text: 'M = Markt     P = PokÃ©dex     Q = Quests\nE = Reden      Shift = Rennen\n\nViel Freude beim Zuechten! \u{1F331}'
+    text: 'M = Markt     P = Pokédex     Q = Quests\nE = Reden      Shift = Rennen\n\nViel Freude beim Zuechten! \u{1F331}'
   }
 ];
 
