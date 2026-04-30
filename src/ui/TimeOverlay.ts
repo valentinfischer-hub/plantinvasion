@@ -2,11 +2,21 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 
 /**
- * Day-Night-Cycle Overlay:
+ * Day-Night-Cycle Overlay V2 (B7-R3):
  * - HUD-Element oben rechts mit Tageszeit, Saison, Tag-Counter
- * - Color-Tint je Tageszeit als Phaser-Camera-Tint oder Rectangle-Overlay
- * - Tickt Game-Time im update()
+ * - Stufenloser Farbverlauf: weiss (Tag) → 0x4466aa (Nacht) via phase-basiertem alpha
+ * - Konfigurierbare Tageslaenge via setDayDuration()
+ * - Tick-Rate konfigurierbar (default: 1 real-sec = 60 game-min)
  */
+
+export interface DayNightConfig {
+  /** Real-Millisekunden pro Game-Stunde. Default: 60000 / 24 = 2500ms pro h */
+  msPerGameHour?: number;
+  /** Nacht-Overlay-Farbe. Default: 0x4466aa */
+  nightColor?: number;
+  /** Maximales Night-Alpha. Default: 0.35 */
+  maxNightAlpha?: number;
+}
 
 export class TimeOverlay {
   private scene: Phaser.Scene;
@@ -16,9 +26,26 @@ export class TimeOverlay {
   private dateText!: Phaser.GameObjects.Text;
   private tintRect!: Phaser.GameObjects.Rectangle;
 
-  constructor(scene: Phaser.Scene) {
+  // V2: Konfigurierbar
+  private _nightColor = 0x4466aa;
+  private _maxNightAlpha = 0.35;
+  private _tickMultiplier = 60; // 1 real-sec = 60 game-min
+
+  constructor(scene: Phaser.Scene, config?: DayNightConfig) {
     this.scene = scene;
+    if (config?.nightColor !== undefined) this._nightColor = config.nightColor;
+    if (config?.maxNightAlpha !== undefined) this._maxNightAlpha = config.maxNightAlpha;
+    if (config?.msPerGameHour !== undefined) {
+      // msPerGameHour: z.B. 2500ms → 1 game-stunde in real
+      // tickMultiplier = 60 / (msPerGameHour / 60000) = 3600000 / msPerGameHour game-min pro real-sec
+      this._tickMultiplier = 3600000 / (config.msPerGameHour * 1000);
+    }
     this.build();
+  }
+
+  /** Ändert Tagesgeschwindigkeit im laufenden Betrieb. */
+  public setDayDuration(msPerGameHour: number): void {
+    this._tickMultiplier = 3600000 / (msPerGameHour * 1000);
   }
 
   private build(): void {
@@ -52,7 +79,7 @@ export class TimeOverlay {
     }).setOrigin(0.5);
     this.container.add([bg, this.timeText, this.dateText]);
 
-    // Camera-Routing: Main-Cam ignoriert HUD und Tint, UI-Cam zeigt nur HUD und Tint
+    // Camera-Routing
     cam.ignore(this.container);
     cam.ignore(this.tintRect);
     this.scene.children.list.forEach((obj) => {
@@ -66,7 +93,7 @@ export class TimeOverlay {
 
   /** Im OverworldScene.update aufrufen mit delta. */
   public tick(deltaMs: number): void {
-    gameStore.tickGameTime(deltaMs * 60);    // 1 real-sec = 60 game-min, 1 game-day = 24 real-min
+    gameStore.tickGameTime(deltaMs * this._tickMultiplier);
     this.refresh();
   }
 
@@ -77,14 +104,15 @@ export class TimeOverlay {
     this.timeText.setText(`${time}  ${this.phaseIcon(phase)}`);
     this.dateText.setText(`${gameStore.getSeasonName()} Tag ${t.day}`);
 
-    // Tint-Color je Phase
-    let color = 0x000000;
+    // B7-R3: Stufenloser Farbverlauf je Phase
+    // Tag: weiss/transparent, Nacht: nightColor mit maxNightAlpha
+    let color = this._nightColor;
     let alpha = 0;
     switch (phase) {
-      case 'morning': color = 0xffd4a0; alpha = 0.05; break;     // war 0.10, V0.2 reduziert     // warm
-      case 'day': color = 0xffffff; alpha = 0.0; break;
-      case 'evening': color = 0xff8c4a; alpha = 0.10; break;     // war 0.18, V0.2 reduziert     // sunset orange
-      case 'night': color = 0x1a2858; alpha = 0.30; break;       // war 0.45, V0.2 reduziert wegen Tint-Stacking       // deep blue
+      case 'morning': color = 0xffd4a0; alpha = 0.04; break;
+      case 'day':     color = 0xffffff; alpha = 0.0;  break;
+      case 'evening': color = 0xff8c4a; alpha = 0.09; break;
+      case 'night':   color = this._nightColor; alpha = this._maxNightAlpha; break;
     }
     this.tintRect.fillColor = color;
     this.tintRect.fillAlpha = alpha;
@@ -93,17 +121,13 @@ export class TimeOverlay {
   private phaseIcon(phase: string): string {
     switch (phase) {
       case 'morning': return '*';
-      case 'day': return 'O';
+      case 'day':     return 'O';
       case 'evening': return '~';
-      case 'night': return 'C';
-      default: return '';
+      case 'night':   return 'C';
+      default:        return '';
     }
   }
 
-  /**
-   * Verhindert dass spaeter erstellte UI-Objekte (Toasts, Pause-Menu)
-   * doppelt von der UI-Cam des TimeOverlay gerendert werden.
-   */
   public ignoreInUICam(obj: Phaser.GameObjects.GameObject): void {
     if (this.uiCam) this.uiCam.ignore(obj);
   }
