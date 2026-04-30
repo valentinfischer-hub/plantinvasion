@@ -270,6 +270,23 @@ export class GardenScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
     seedBtn.on('pointerdown', () => this.openSeedPlantModal());
 
+    // R81: Tilda-Dekoration oben rechts — kleines Avatar-Icon mit Idle-Bob-Tween
+    const tildaCircle = this.add.arc(width - 30, 30, 18, 0, 360, false, 0x2a4a2a, 1)
+      .setStrokeStyle(2, 0x9be36e).setDepth(200).setScrollFactor(0);
+    this.add.text(width - 30, 30, '\u{1F33F}', {
+      fontFamily: 'monospace', fontSize: '14px'
+    }).setOrigin(0.5).setDepth(201).setScrollFactor(0);
+    // Sanfter Bob-Up-Down Tween auf Tilda-Avatar
+    this.tweens.add({
+      targets: tildaCircle,
+      y: 28,
+      duration: 1200,
+      ease: 'Sine.InOut',
+      yoyo: true,
+      repeat: -1,
+      delay: 200
+    });
+
     // Welt-Erkunden-Button: prominent oben links, fuehrt zur OverworldScene
     const worldBtn = this.add.text(70, 14, 'Welt (W)', {
       fontFamily: 'monospace',
@@ -728,26 +745,61 @@ export class GardenScene extends Phaser.Scene {
         onComplete: () => ring.destroy()
       });
     }
-    // R65: Hybrid-Text-Sticker der nach oben driftet
-    const stickerText = isMutation ? '✨ Mutation!' : '🌿 Hybrid!';
-    const sticker = this.add.text(cx, cy - 20, stickerText, {
-      fontFamily: 'monospace', fontSize: '18px', color: isMutation ? '#ff7eb8' : '#9be36e',
-      stroke: '#000000', strokeThickness: 3
-    }).setOrigin(0.5).setDepth(10000).setAlpha(0);
+    // R65+R80: Hybrid-Text-Sticker — Zoom-In Star-Burst Stinger
+    const stickerText = isMutation ? '\u2728 MUTATION!' : '\u{1F33F} HYBRID!';
+    const sticker = this.add.text(cx, cy, stickerText, {
+      fontFamily: 'monospace', fontSize: isMutation ? '24px' : '22px',
+      color: isMutation ? '#ff7eb8' : '#9be36e',
+      stroke: '#000000', strokeThickness: 4,
+      shadow: { offsetX: 0, offsetY: 0, color: isMutation ? '#b86ee3' : '#fcd95c', blur: 12, fill: true }
+    }).setOrigin(0.5).setDepth(10000).setAlpha(0).setScale(0.2);
+    // Phase 1: Zoom-In (Punch)
     this.tweens.add({
       targets: sticker,
-      y: cy - 70,
-      alpha: { from: 0, to: 1 },
-      scale: { from: 0.5, to: 1.2 },
-      duration: 400,
+      y: cy - 30,
+      alpha: 1,
+      scale: 1.4,
+      duration: 320,
       ease: 'Back.Out',
       onComplete: () => {
+        // Phase 2: Settle + hold
         this.tweens.add({
-          targets: sticker, alpha: 0, y: cy - 100, duration: 600, delay: 800, ease: 'Cubic.Out',
-          onComplete: () => sticker.destroy()
+          targets: sticker, scale: 1.1, duration: 200, ease: 'Cubic.Out',
+          onComplete: () => {
+            // Phase 3: Drift up + fade
+            this.tweens.add({
+              targets: sticker, alpha: 0, y: cy - 90, scale: 0.9,
+              duration: 700, delay: 900, ease: 'Cubic.Out',
+              onComplete: () => sticker.destroy()
+            });
+          }
         });
       }
     });
+    // R80: Star-Burst — 8 Sterne um den Sticker
+    for (let si = 0; si < 8; si++) {
+      const angle = (Math.PI * 2 * si) / 8;
+      const r = 50 + Math.random() * 20;
+      const star = this.add.text(
+        cx + Math.cos(angle) * 8, cy + Math.sin(angle) * 8,
+        isMutation ? '\u2605' : '\u2728',
+        { fontFamily: 'monospace', fontSize: '12px', color: isMutation ? '#ff7eb8' : '#fcd95c' }
+      ).setOrigin(0.5).setDepth(10001).setAlpha(0).setScale(0.3);
+      this.tweens.add({
+        targets: star,
+        x: cx + Math.cos(angle) * r,
+        y: cy + Math.sin(angle) * r,
+        alpha: { from: 0, to: 1 },
+        scale: 1.2,
+        duration: 350, delay: 80 + si * 30, ease: 'Back.Out',
+        onComplete: () => {
+          this.tweens.add({
+            targets: star, alpha: 0, scale: 0.5, duration: 400, delay: 400, ease: 'Cubic.Out',
+            onComplete: () => star.destroy()
+          });
+        }
+      });
+    }
 
     // PostHog-Event fuer Telemetrie
     const posthog = (window as Window & { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog;
@@ -769,15 +821,18 @@ export class GardenScene extends Phaser.Scene {
    * @param x1,y1 Startpunkt (Pflanze A)
    * @param x2,y2 Endpunkt (Pflanze B)
    */
+  /**
+   * B6-R8: Pollen-Partikel-Arc zwischen zwei Karten-Positionen.
+   * R79: Goldener Partikel-Burst am Endpunkt + leichter Screen-Flash.
+   */
   private spawnPollenArc(x1: number, y1: number, x2: number, y2: number): void {
     const MX = (x1 + x2) / 2;
-    const MY = Math.min(y1, y2) - 80; // Kontrollpunkt oben (Bogen nach oben)
+    const MY = Math.min(y1, y2) - 80;
     const STEPS = 12;
     const colors = [0xffd700, 0xffee88, 0xffc830];
 
     for (let i = 0; i <= STEPS; i++) {
       const t = i / STEPS;
-      // Quadratischer Bezier: B(t) = (1-t)^2 * P0 + 2*(1-t)*t * PM + t^2 * P1
       const nt = 1 - t;
       const bx = nt * nt * x1 + 2 * nt * t * MX + t * t * x2;
       const by = nt * nt * y1 + 2 * nt * t * MY + t * t * y2;
@@ -795,6 +850,34 @@ export class GardenScene extends Phaser.Scene {
         onComplete: () => dot.destroy()
       });
     }
+
+    // R79: Goldener Partikel-Burst am Ziel-Punkt (Endpunkt des Bogens)
+    const burstDelay = STEPS * 60 + 100;
+    this.time.delayedCall(burstDelay, () => {
+      const cam = this.cameras.main;
+      // Leichter Screen-Flash (gold, schwach)
+      const flash = this.add.rectangle(
+        cam.scrollX + cam.width / 2, cam.scrollY + cam.height / 2,
+        cam.width, cam.height, 0xffd700, 0.12
+      ).setDepth(9995);
+      this.tweens.add({ targets: flash, alpha: 0, duration: 350, ease: 'Cubic.Out', onComplete: () => flash.destroy() });
+      // 16 goldene Partikel burst aus x2/y2
+      for (let bi = 0; bi < 16; bi++) {
+        const angle = (Math.PI * 2 * bi) / 16 + (Math.random() - 0.5) * 0.4;
+        const dist = 25 + Math.random() * 40;
+        const p = this.add.circle(x2, y2, 2 + Math.random() * 2, 0xffd700, 0.9).setDepth(1900);
+        this.tweens.add({
+          targets: p,
+          x: x2 + Math.cos(angle) * dist,
+          y: y2 + Math.sin(angle) * dist,
+          alpha: 0, scale: 0.2,
+          duration: 600 + Math.random() * 200,
+          ease: 'Cubic.Out',
+          onUpdate: () => { p.x = Math.round(p.x); p.y = Math.round(p.y); },
+          onComplete: () => p.destroy()
+        });
+      }
+    });
   }
 
   private spawnStageUpBurst(x: number, y: number): void {
