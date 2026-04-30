@@ -7,7 +7,7 @@ export interface DialogChoice {
 }
 
 /**
- * DialogBox V3 — D-041 R74 Polish.
+ * DialogBox V3 â D-041 R74 Polish.
  *
  * R74: Tilda-Avatar-Platzhalter (farbiger Kreis + Initialen) links neben Speaker-Label.
  *   - NPC-Avatar: gruener Kreis mit Initiale fuer generische NPCs
@@ -219,7 +219,7 @@ export class DialogBox {
         .setStrokeStyle(1, 0x553e2d)
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
-      const txt = this.scene.add.text(-w / 2 + 8, 0, \`\${i + 1}. \${c.label}\`, {
+      const txt = this.scene.add.text(-w / 2 + 8, 0, `${i + 1}. ${c.label}`, {
         fontFamily: 'monospace', fontSize: '12px', color: '#9be36e'
       }).setOrigin(0, 0.5);
       bg.on('pointerover', () => { bg.setStrokeStyle(2, 0xfcd95c); txt.setColor('#fcd95c'); });
