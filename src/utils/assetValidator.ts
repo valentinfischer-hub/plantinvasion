@@ -87,7 +87,7 @@ export function validateSceneAssets(
         console.warn(msg);
 
         if (spec.critical) {
-          fireAppError(assetLoadError(spec.key, new Error('Asset not loaded')));
+          fireAppError(assetLoadError(spec.key, 'Asset not loaded'));
         }
       }
     }
