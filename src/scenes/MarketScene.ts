@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { ITEMS, type ItemDef } from '../data/items';
 import { sfx } from '../audio/sfxGenerator';
+import { t } from '../i18n/index';
 
 /**
  * Markt-UI mit Buy/Sell-Liste.
@@ -18,16 +19,16 @@ export class MarketScene extends Phaser.Scene {
   }
 
   private modeLabel(): string {
-    if (this.mode === 'roster') return 'Modus: Tagesangebot';
-    if (this.mode === 'buy') return 'Modus: Kaufen (alle)';
-    return 'Modus: Verkaufen';
+    if (this.mode === 'roster') return t('market.mode.daily');
+    if (this.mode === 'buy') return t('market.mode.buy');
+    return t('market.mode.sell');
   }
 
   create(): void {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1a2820');
 
-    this.add.text(width / 2, 30, 'Anyas Markt', {
+    this.add.text(width / 2, 30, t('market.title'), {
       fontFamily: 'monospace', fontSize: '20px', color: '#fcd95c'
     }).setOrigin(0.5);
 
@@ -47,7 +48,7 @@ export class MarketScene extends Phaser.Scene {
 
     // Back-Button
     const backY = height - 30;
-    this.makeButton(width / 2, backY, 'Zurück (B)', '#fcd95c', () => this.scene.start('OverworldScene'));
+    this.makeButton(width / 2, backY, t('market.back'), '#fcd95c', () => this.scene.start('OverworldScene'));
     if (this.input.keyboard) {
       const backKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
       backKey.on('down', () => this.scene.start('OverworldScene'));
@@ -89,7 +90,7 @@ export class MarketScene extends Phaser.Scene {
       const have = inv[item.slug] ?? 0;
       const isBuy = this.mode === 'buy' || this.mode === 'roster';
       const price = isBuy ? item.buyPrice : item.sellPrice;
-      const action = isBuy ? 'Kaufen' : 'Verkaufen';
+      const action = isBuy ? t('market.action.buy') : t('market.action.sell');
 
       // S-POLISH-B2-R9: Greyed-out fuer heute bereits gekaufte Roster-Items
       const boughtCount = this.mode === 'roster' ? gameStore.getMarketBoughtToday(item.slug) : 0;
@@ -105,11 +106,11 @@ export class MarketScene extends Phaser.Scene {
       const nameTxt = this.add.text(-(width - 40) / 2 + 10, -8, item.name, {
         fontFamily: 'monospace', fontSize: '12px', color: nameColor
       });
-      const boughtLabel = alreadyBought ? `  (${boughtCount}x gekauft)` : '';
-      const detailTxt = this.add.text(-(width - 40) / 2 + 10, 6, `Bestand: ${have}  Preis: ${price}${boughtLabel}`, {
+      const boughtLabel = alreadyBought ? t('market.item.bought', { count: boughtCount }) : '';
+      const detailTxt = this.add.text(-(width - 40) / 2 + 10, 6, t('market.item.stock', { have, price, label: boughtLabel }), {
         fontFamily: 'monospace', fontSize: '10px', color: alreadyBought ? '#556655' : '#8a6e4a'
       });
-      const btnLabel = alreadyBought ? 'Nochmal' : action;
+      const btnLabel = alreadyBought ? t('market.action.repeat') : action;
       const btnColor = alreadyBought ? '#6a9e6a' : (isBuy ? '#9be36e' : '#fcd95c');
       const buyBtn = this.add.text((width - 40) / 2 - 70, 0, btnLabel, {
         fontFamily: 'monospace', fontSize: '11px', color: btnColor,
