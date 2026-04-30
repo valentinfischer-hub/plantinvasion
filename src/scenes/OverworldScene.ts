@@ -24,6 +24,7 @@ import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
 import { sfx, startAmbientBGM, setBiomeAmbience } from '../audio/sfxGenerator';
 import { SoundManager } from '../audio/SoundManager';
+import { DebugOverlay } from '../ui/DebugOverlay';
 import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
 import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
@@ -201,6 +202,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private hotspotGlowGraphics?: Phaser.GameObjects.Graphics;
   // B7-R6: Header-Mute-Toggle
   private muteBtn?: Phaser.GameObjects.Text;
+  // B7-R8: Debug-Overlay
+  private debugOverlay?: DebugOverlay;
   private hotspotGlowTimer?: number;
   // S-POLISH-B3-R2: Vollbild-Weltkarte (N-Taste)
   private worldMapOverlay?: Phaser.GameObjects.Container;
@@ -366,6 +369,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.hotspotGlowGraphics = this.add.graphics();
     this.hotspotGlowGraphics.setDepth(600);
     (globalThis as { __overworld?: OverworldScene }).__overworld = this;
+    // B7-R8: Debug-Overlay (nur bei ?debug=1)
+    this.debugOverlay = new DebugOverlay(this);
 
     // Daily-Login-Reward: einmalig pro Real-Time-Tag claimen, dann Toast
     this.tryClaimDailyLogin();
@@ -1076,6 +1081,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.hotspotGlowTimer = now2;
       this.refreshHotspotGlows();
     }
+    // B7-R8: Debug-Overlay tick
+    this.debugOverlay?.tick(delta);
 
     // S-POLISH-B3-R2: Weltkarte (N-Taste)
     if (Phaser.Input.Keyboard.JustDown(this.keyN)) {
