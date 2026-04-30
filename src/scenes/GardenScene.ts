@@ -19,9 +19,7 @@ import {
   isBlooming,
   TIER_COLORS,
   TIER_THRESHOLDS,
-  tierForCareScore,
-  totalXpToReachLevel,
-  STAGE_LEVEL_THRESHOLDS
+  tierForCareScore
 } from '../data/leveling';
 import { GROWTH_STAGE_NAMES, QUALITY_TIERS, type Plant, type QualityTier } from '../types/plant';
 import { getSpecies } from '../data/species';
@@ -34,7 +32,6 @@ import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
 import { showToast, type ToastType } from '../ui/Toast';
 import { drawModalBox } from '../ui/uiTheme';
-import { sfx } from '../audio/sfxGenerator';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -62,9 +59,6 @@ export class GardenScene extends Phaser.Scene {
   // S-POLISH Run16: Subscribe-Throttle — renderPlants() max 1x alle 500ms aus der store-Subscription
   private _renderPending = false;
   private crossMode = false;
-  private companionLineGraphics?: Phaser.GameObjects.Graphics;
-  // S-POLISH-B2-R13: Bonsai-Aura-Ring Graphics
-  private bonsaiAuraGraphics?: Phaser.GameObjects.Graphics;
   private crossFirstPlantId: string | null = null;
   private crossModeHint?: Phaser.GameObjects.Text;
   private crossBtnBg?: Phaser.GameObjects.Rectangle;
@@ -73,9 +67,6 @@ export class GardenScene extends Phaser.Scene {
   private detailPanel?: Phaser.GameObjects.Container;
   private slotHotspots: Array<{ gridX: number; gridY: number; hotspot: Phaser.GameObjects.Rectangle }> = [];
   private dragSource?: { plantId: string; startX: number; startY: number };
-  // B7-R1: Slot-Selection-Glow im CrossMode — pulsierender Ring um ausgewählte Pflanze
-  private slotSelectionGlow?: Phaser.GameObjects.Graphics;
-  private slotSelectionGlowTween?: Phaser.Tweens.Tween;
 
   constructor() {
     super('GardenScene');
@@ -102,6 +93,8 @@ export class GardenScene extends Phaser.Scene {
     generateAllPlantStages(this);
 
     this.cameras.main.setBackgroundColor('#2d3a2a');
+    // D-041 R16: Fade-In beim Scene-Einstieg
+    this.cameras.main.fadeIn(280, 0, 0, 0);
 
     // Boden-Tile-Background (Sprint 1 Atlas): full-screen 32x32 Tile-Pattern
     // mit ground_erdig-Variationen rotiert per Hash-Index. Subtle Alpha
@@ -196,16 +189,6 @@ export class GardenScene extends Phaser.Scene {
           this.tweens.add({ targets: hotspot, scaleX: 1.0, scaleY: 1.0, duration: 100, ease: 'Cubic.Out' });
         });
         this.slotHotspots.push({ gridX: x, gridY: y, hotspot });
-
-        // S-POLISH-B3-R1: Slot-Nummerierung A1–D3 (dezenter Stardew-Inventory-Stil)
-        const colLabel = String.fromCharCode(65 + x); // A, B, C, D
-        const rowLabel = (y + 1).toString();           // 1, 2, 3
-        this.add.text(sx + 4, sy + 2, `${colLabel}${rowLabel}`, {
-          fontFamily: 'monospace',
-          fontSize: '8px',
-          color: '#5a7050',
-          alpha: 0.7
-        }).setDepth(-2);
       }
     }
 
@@ -260,7 +243,7 @@ export class GardenScene extends Phaser.Scene {
     }
 
     // Header-Button "Pflanze einsaeen"
-    const seedBtn = this.add.text(width - 70, 14, 'Saeen', {
+    const seedBtn = this.add.text(width - 70, 14, 'Säen', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#1a1f1a',
@@ -299,6 +282,40 @@ export class GardenScene extends Phaser.Scene {
     this.crossFirstPlantId = null;
     this.refreshCrossUI();
     this.renderPlants();
+
+    // P0 Fix 3 (D-041): Cross-Mode Affordance — Pulse + Shake + Toast
+    if (this.crossBtnBg && this.crossBtnTxt) {
+      if (this.crossMode) {
+        // Aktivierung: Gold-Pulse auf Button + Shake-Feedback
+        this.tweens.add({
+          targets: this.crossBtnBg,
+          scaleX: 1.12, scaleY: 1.12,
+          duration: 100,
+          ease: 'Cubic.Out',
+          yoyo: true,
+          onComplete: () => {
+            // Kontinuierlicher Glow-Puls solange aktiv
+            if (this.crossMode) {
+              this.tweens.add({
+                targets: this.crossBtnTxt,
+                alpha: 0.55,
+                duration: 600,
+                ease: 'Sine.InOut',
+                yoyo: true,
+                repeat: -1
+              });
+            }
+          }
+        });
+        this.showFlash('Cross-Mode aktiv — wähle erste Pflanze', '#fcd95c');
+      } else {
+        // Deaktivierung: alle Pulse-Tweens stoppen, zurücksetzen
+        this.tweens.killTweensOf(this.crossBtnTxt);
+        this.tweens.killTweensOf(this.crossBtnBg);
+        this.crossBtnTxt?.setAlpha(1);
+        this.crossBtnBg?.setScale(1);
+      }
+    }
   }
 
   private refreshCrossUI(): void {
@@ -566,44 +583,6 @@ export class GardenScene extends Phaser.Scene {
    * Tween beider Parent-Plant-Card-Container 1500ms Cubic.InOut auf Bildmitte (links/rechts versetzt).
    * Resolved true wenn Animation lief, false wenn Cards nicht auffindbar (Fallback-Pfad).
    */
-  /**
-   * B7-R2: Pollen-Partikel-Arc — Bezier-Kurve von Pflanze A zu Pflanze B als Vorstufe zum Drift.
-   * 24 Pollen-Kreise folgen einer quadratischen Bezierkurve mit leichter vertikaler Überhöhung.
-   * Dauer: ~600ms vor dem Drift.
-   */
-  private spawnPollenArc(fromX: number, fromY: number, toX: number, toY: number): void {
-    const STEPS = 24;
-    const midX = (fromX + toX) / 2;
-    const midY = Math.min(fromY, toY) - 60; // Kontrollpunkt: Bogen nach oben
-
-    for (let i = 0; i < STEPS; i++) {
-      const delay = i * 20;
-      const t = i / (STEPS - 1);
-      // Quadratische Bezier P0→P1→P2
-      const bx = (1 - t) * (1 - t) * fromX + 2 * (1 - t) * t * midX + t * t * toX;
-      const by = (1 - t) * (1 - t) * fromY + 2 * (1 - t) * t * midY + t * t * toY;
-
-      const jx = bx + (Math.random() - 0.5) * 8;
-      const jy = by + (Math.random() - 0.5) * 8;
-      const size = 2 + Math.random() * 2.5;
-      const color = i % 3 === 0 ? 0xfcd95c : (i % 3 === 1 ? 0x9be36e : 0xfff5a0);
-
-      this.time.delayedCall(delay, () => {
-        if (!this.scene.isActive()) return;
-        const p = this.add.circle(jx, jy, size, color, 0.9).setDepth(9997);
-        this.tweens.add({
-          targets: p,
-          y: jy - 20 - Math.random() * 15,
-          alpha: 0,
-          scale: 0.3,
-          duration: 500 + Math.random() * 200,
-          ease: 'Cubic.Out',
-          onComplete: () => p.destroy(),
-        });
-      });
-    }
-  }
-
   private playParentDrift(parentAId: string, parentBId: string): Promise<boolean> {
     const cardA = this.cards.get(parentAId);
     const cardB = this.cards.get(parentBId);
@@ -650,15 +629,6 @@ export class GardenScene extends Phaser.Scene {
    * keine Pre-Animation, direkt zum Reveal.
    */
   private async runCrossWithDrift(parentAId: string, parentBId: string, successColor: string): Promise<void> {
-    // B7-R2: Pollen-Partikel-Arc von Slot A nach Slot B spawnen bevor Drift startet
-    const cardAForArc = this.cards.get(parentAId);
-    const cardBForArc = this.cards.get(parentBId);
-    if (cardAForArc && cardBForArc) {
-      this.spawnPollenArc(
-        cardAForArc.container.x, cardAForArc.container.y,
-        cardBForArc.container.x, cardBForArc.container.y
-      );
-    }
     const drifted = await this.playParentDrift(parentAId, parentBId);
     const result = gameStore.crossPlants(parentAId, parentBId);
     if (!result.ok) {
@@ -668,7 +638,7 @@ export class GardenScene extends Phaser.Scene {
     const isMutation = !!result.child?.isMutation;
     this.playHybridReveal(isMutation);
     this.showFlash(isMutation ? 'Mutation! Neue Pflanze' : 'Kreuzung erfolgreich', successColor);
-    // Scale-In der neuen Hybrid-Card sobald renderPlants sie erstellt hat
+    // D-041 R18: Scale-In + 3-Pulse Glow auf neuer Hybrid-Card
     if (result.child) {
       const hybridId = result.child.id;
       this.time.delayedCall(20, () => {
@@ -676,11 +646,33 @@ export class GardenScene extends Phaser.Scene {
         if (!newCard) return;
         const targetScale = newCard.container.scale || 1;
         newCard.container.setScale(0);
+        // Scale-in mit overshooting Back.Out
         this.tweens.add({
           targets: newCard.container,
           scale: targetScale,
-          duration: 420,
-          ease: 'Back.Out'
+          duration: 480,
+          ease: 'Back.Out',
+          onComplete: () => {
+            // 3x Pulse-Glow nach Reveal
+            let pulses = 0;
+            const doPulse = () => {
+              if (pulses >= 3) return;
+              pulses++;
+              this.tweens.add({
+                targets: newCard.container,
+                scaleX: targetScale * 1.08,
+                scaleY: targetScale * 1.08,
+                duration: 140,
+                ease: 'Sine.Out',
+                yoyo: true,
+                onComplete: () => {
+                  newCard.container.setScale(targetScale);
+                  this.time.delayedCall(180, doPulse);
+                }
+              });
+            };
+            doPulse();
+          }
         });
       });
     }
@@ -785,64 +777,6 @@ export class GardenScene extends Phaser.Scene {
     }
   }
 
-  /** Booster-Partikel-Burst in Booster-spezifischer Farbe */
-  /**
-   * S-POLISH-B3-R1: Harvest-Floating-Text — "+X Coins" aufsteigend von Pflanze.
-   */
-  private spawnHarvestFloatingText(x: number, y: number, coins: number): void {
-    const label = this.add.text(x, y - 20, `+${coins} Coins`, {
-      fontFamily: 'monospace',
-      fontSize: '13px',
-      color: '#ffd166',
-      stroke: '#1a1f1a',
-      strokeThickness: 3
-    }).setOrigin(0.5).setDepth(2000);
-    this.tweens.add({
-      targets: label,
-      y: y - 70,
-      alpha: 0,
-      duration: 1400,
-      ease: 'Cubic.Out',
-      onComplete: () => label.destroy()
-    });
-  }
-
-  private spawnBoosterBurst(x: number, y: number, color: number): void {
-    for (let i = 0; i < 12; i++) {
-      const dot = this.add.circle(x, y, 4, color, 1).setDepth(1500);
-      const angle = (i / 12) * Math.PI * 2;
-      const dist = 20 + Math.random() * 30;
-      this.tweens.add({
-        targets: dot,
-        x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist,
-        alpha: 0,
-        scale: 0.1,
-        duration: 600,
-        ease: 'Power2',
-        onComplete: () => dot.destroy()
-      });
-    }
-    // Zentral-Glow
-    const glow = this.add.circle(x, y, 12, color, 0.7).setDepth(1499);
-    this.tweens.add({ targets: glow, alpha: 0, scale: 2.5, duration: 400, onComplete: () => glow.destroy() });
-  }
-
-  /** Soil-Upgrade-Effekt: kurzes Pulsieren in lila */
-  private spawnSoilUpgradeEffect(x: number, y: number): void {
-    const ring = this.add.circle(x, y, 16, 0xb86ee3, 0.8).setDepth(1500);
-    this.tweens.add({ targets: ring, alpha: 0, scale: 3, duration: 500, ease: 'Power2', onComplete: () => ring.destroy() });
-    // Drei goldene Funken
-    for (let i = 0; i < 6; i++) {
-      const spark = this.add.circle(x, y, 3, 0xffd166, 1).setDepth(1501);
-      const angle = (i / 6) * Math.PI * 2;
-      this.tweens.add({
-        targets: spark, x: x + Math.cos(angle) * 24, y: y + Math.sin(angle) * 24,
-        alpha: 0, scale: 0.3, duration: 450, ease: 'Back.Out', onComplete: () => spark.destroy()
-      });
-    }
-  }
-
   private refreshHeader(): void {
     const state = gameStore.get();
     this.headerText.setText(
@@ -872,98 +806,7 @@ export class GardenScene extends Phaser.Scene {
         this.cards.delete(id);
       }
     });
-    // S-POLISH-B2-R3: Companion-Aura - grüne Aura auf Karten bei aktiven Companion-Paaren
-    this.updateCompanionAuras(state.plants);
     this.refreshHeader();
-    // B7-R1: Slot-Selection-Glow bei CrossMode-Auswahl
-    this.updateSlotSelectionGlow();
-  }
-
-  /**
-   * B7-R1: Slot-Selection-Glow — pulsierender goldener Ring um erste CrossMode-Auswahl.
-   */
-  private updateSlotSelectionGlow(): void {
-    const selectedCard = this.crossFirstPlantId
-      ? [...this.cards.values()].find(c => c.plant.id === this.crossFirstPlantId)
-      : undefined;
-
-    if (!selectedCard) {
-      if (this.slotSelectionGlowTween) {
-        this.slotSelectionGlowTween.stop();
-        this.slotSelectionGlowTween = undefined;
-      }
-      if (this.slotSelectionGlow) {
-        this.slotSelectionGlow.clear();
-      }
-      return;
-    }
-
-    if (!this.slotSelectionGlow) {
-      this.slotSelectionGlow = this.add.graphics();
-      this.slotSelectionGlow.setDepth(55);
-    }
-    const g = this.slotSelectionGlow;
-    g.clear();
-    const cx = selectedCard.container.x;
-    const cy = selectedCard.container.y;
-    g.lineStyle(3, 0xfcd95c, 0.9);
-    g.strokeCircle(cx, cy, 30);
-    g.lineStyle(1.5, 0xfff5a0, 0.6);
-    g.strokeCircle(cx, cy, 36);
-
-    if (!this.slotSelectionGlowTween) {
-      this.slotSelectionGlowTween = this.tweens.add({
-        targets: g,
-        alpha: { from: 0.55, to: 1.0 },
-        duration: 550,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.InOut',
-      });
-    }
-  }
-
-  private updateCompanionAuras(plants: Plant[]): void {
-    if (!this.companionLineGraphics) {
-      this.companionLineGraphics = this.add.graphics();
-      this.companionLineGraphics.setDepth(50);
-    }
-    const g = this.companionLineGraphics;
-    g.clear();
-    const drawn = new Set<string>();
-    for (const plant of plants) {
-      const { bonus } = companionBonus(plant, plants);
-      if (bonus <= 0) continue;
-      // Zeichne einen grünen Glow-Ring um die Card
-      const card = this.cards.get(plant.id);
-      if (!card) continue;
-      const cx = card.container.x, cy = card.container.y;
-      const pairKey = `${plant.gridX},${plant.gridY}`;
-      if (drawn.has(pairKey)) continue;
-      drawn.add(pairKey);
-      g.lineStyle(2, 0x9be36e, 0.5);
-      g.strokeCircle(cx, cy, TILE * 0.52);
-    }
-
-    // S-POLISH-B2-R13: Bonsai-Aura — goldener Ring um Bonsai-Pflanzen
-    if (!this.bonsaiAuraGraphics) {
-      this.bonsaiAuraGraphics = this.add.graphics();
-      this.bonsaiAuraGraphics.setDepth(49);
-    }
-    const bg = this.bonsaiAuraGraphics;
-    bg.clear();
-    for (const plant of plants) {
-      if (!plant.bonsaiMode) continue;
-      const card = this.cards.get(plant.id);
-      if (!card) continue;
-      const cx = card.container.x, cy = card.container.y;
-      // Äusserer goldener Ring
-      bg.lineStyle(3, 0xfcd95c, 0.55);
-      bg.strokeCircle(cx, cy, TILE * 0.56);
-      // Innerer Ring (dünner)
-      bg.lineStyle(1, 0xffd700, 0.3);
-      bg.strokeCircle(cx, cy, TILE * 0.44);
-    }
   }
 
   /**
@@ -1215,32 +1058,36 @@ export class GardenScene extends Phaser.Scene {
       card.sprite.setTexture(key);
     }
 
-    // Stage-Up-Burst
+    // Stage-Up-Burst + P1 Bounce-Scale (Art-UI D-041)
     if (stage > card.lastSeenStage) {
       this.spawnStageUpBurst(card.container.x, card.container.y);
       card.lastSeenStage = stage;
+      // Scale-Bounce 1.0 -> 1.15 -> 1.0 mit Back.easeOut
+      const baseScaleX = card.sprite.scaleX;
+      const baseScaleY = card.sprite.scaleY;
+      this.tweens.add({
+        targets: card.sprite,
+        scaleX: baseScaleX * 1.15,
+        scaleY: baseScaleY * 1.15,
+        duration: 160,
+        ease: 'Back.Out',
+        yoyo: true,
+        onComplete: () => {
+          card.sprite.setScale(baseScaleX, baseScaleY);
+        }
+      });
     }
 
     const stageName = GROWTH_STAGE_NAMES[stage];
-    card.levelText.setText(`L${plant.level} · ${stageName}`);
+    card.levelText.setText(`Lv.${plant.level} | ${stageName}`);
 
     // S-POLISH Run13: Droop-Visual fuer dehydrierte Pflanzen (< 20% hydration)
-    // S-POLISH-B2-R2: Booster-Cooldown-Tint (überschreibt Droop nur wenn kein Droop)
     if (plant.hydration < 20) {
+      // Gelblicher Tint und leichter y-Offset (welk)
       card.sprite.setTint(0xc8b860);
       if (card.sprite.y === 0) card.sprite.setY(2);
     } else {
-      // Booster-Tint: subtiler Grün-Schimmer wenn ein Booster aktiv ist
-      const activeBoosters = plant.activeBoosters.filter(b => Date.now() - b.startedAt < b.durationMs);
-      if (activeBoosters.length > 0) {
-        // Subtiler Booster-Tint: leicht grün für wachstumsbooster, gold für pristine, lila für hybrid
-        const hasHybrid = activeBoosters.some(b => b.type === 'hybrid');
-        const hasPristine = activeBoosters.some(b => b.type === 'xp');
-        const tintColor = hasHybrid ? 0xd0a0ff : hasPristine ? 0xffeeaa : 0xaaffaa;
-        card.sprite.setTint(tintColor);
-      } else {
-        card.sprite.clearTint();
-      }
+      card.sprite.clearTint();
       if (card.sprite.y !== 0) card.sprite.setY(0);
     }
 
@@ -1276,12 +1123,11 @@ export class GardenScene extends Phaser.Scene {
     if (hStatus === 'vertrocknet') {
       card.thirstIcon.setText('!!').setColor('#ff5555');
     } else if (hStatus === 'trocken') {
-      // S-POLISH-B3-R1: Tropfen-Icon fuer trockene Pflanzen (Stardew-Wasser-Indikator)
-      card.thirstIcon.setText('💧').setColor('#ff8c42');
+      card.thirstIcon.setText('!').setColor('#ff8c42');
     } else if (hStatus === 'durstig') {
-      card.thirstIcon.setText('💧').setColor('#ffd166');
+      card.thirstIcon.setText('~').setColor('#ffd166');
     } else if (ready) {
-      card.thirstIcon.setText('💧').setColor('#4dafff');
+      card.thirstIcon.setText('*').setColor('#4dafff');
     } else {
       card.thirstIcon.setText('').setColor('#999999');
     }
@@ -1316,12 +1162,6 @@ export class GardenScene extends Phaser.Scene {
         card.bg.lineStyle(2, 0xffd166, 0.5);
         card.bg.strokeRoundedRect(-TILE / 2 + 2, -TILE / 2 + 2, TILE - 4, TILE - 4, 6);
       }
-    }
-
-    // S-POLISH-B2-R13: Bonsai-Badge — gold Punkt oben-rechts wenn bonsaiMode aktiv
-    if (plant.bonsaiMode) {
-      card.bg.fillStyle(0xfcd95c, 0.9);
-      card.bg.fillCircle(TILE / 2 - 6, -TILE / 2 + 6, 4);
     }
   }
 
@@ -1397,25 +1237,12 @@ export class GardenScene extends Phaser.Scene {
       biomeMatchMultiplier(plant.speciesSlug, zone) *
       hybridVigorMultiplier(plant) *
       timeOfDayMultiplier();
-    // S-POLISH-B3-R1: Stage-Fortschritt-Infos
-    const stageNames = GROWTH_STAGE_NAMES as unknown as string[];
-    const nextStageLvl = stage < 4 ? STAGE_LEVEL_THRESHOLDS[stage + 1] : null;
-    const xpNeededForStage = nextStageLvl ? (totalXpToReachLevel(nextStageLvl) - (plant.totalXp ?? 0)) : 0;
-    const daysToNextStage = (xpPerSec > 0 && nextStageLvl)
-      ? Math.ceil(xpNeededForStage / (xpPerSec * 86400 * 0.5))
-      : 0;
-    const stageInfo = nextStageLvl
-      ? `Stage ${stage + 1}/${stageNames.length - 1} → ${stageNames[stage + 1]} (~${daysToNextStage}d)`
-      : `Stage ${stage}/${stageNames.length - 1} (Max)`;
-    const estimatedCoins = Math.round((5 + 0 * 4) * 1); // rough estimate common tier
-    const harvestInfo = stage >= 4 ? `Ertrag ~${estimatedCoins}–${estimatedCoins + 16} Coins` : `Ertrag ab Stage Blooming`;
-
     const lines = [
-      `Stage: ${GROWTH_STAGE_NAMES[stage]}  (${stageInfo})`,
+      `Stage: ${GROWTH_STAGE_NAMES[stage]}`,
       `Level: ${plant.level} / 100`,
       `XP: ${Math.floor(plant.xp)} / ${xpToNextLevel(plant.level)}`,
       `Hydration: ${Math.floor(plant.hydration)}% (${hStatus})`,
-      `Wachstum: ${xpPerSec.toFixed(2)} XP/s  |  ${harvestInfo}`,
+      `Wachstum: ${xpPerSec.toFixed(2)} XP/s`,
       ``,
       `ATK ${plant.stats.atk}  DEF ${plant.stats.def}  SPD ${plant.stats.spd}`,
       `Generation: F${plant.generation}${plant.isMutation ? ' (Mutation' + (plant.mutationKind ? '-' + plant.mutationKind : '') + ')' : ''}`,
@@ -1523,17 +1350,11 @@ export class GardenScene extends Phaser.Scene {
 
     // Bonsai-Toggle
     const bonsaiY = soilY + 28;
-    // S-POLISH-B2-R13: Grow-Modus-Selector mit visueller Differenzierung
-    const modeIcon = plant.bonsaiMode ? '🌿' : '🌱';
-    const modeColor = plant.bonsaiMode ? '#fcd95c' : '#9be36e';
-    const modeBg = plant.bonsaiMode ? '#2a2000' : '#1a2a1a';
-    const bonsaiLabel = plant.bonsaiMode
-      ? `${modeIcon} BONSAI  (Cap L44, +30% HP)`
-      : `${modeIcon} NORMAL  (unbegrenzt Level-Up)`;
-    const bonsaiBtn = this.add.text(-panelW / 2 + 14, bonsaiY, `${bonsaiLabel}  [Toggle]`, {
+    const bonsaiLabel = plant.bonsaiMode ? 'Bonsai aktiv (Cap L44)' : 'Normal (Stage-Up moeglich)';
+    const bonsaiBtn = this.add.text(-panelW / 2 + 14, bonsaiY, `${bonsaiLabel}  [Bonsai-Toggle]`, {
       fontFamily: 'monospace', fontSize: '9px',
-      color: modeColor,
-      backgroundColor: modeBg,
+      color: plant.bonsaiMode ? '#fcd95c' : '#bbbbbb',
+      backgroundColor: '#1a1f1a',
       padding: { x: 4, y: 2 }
     }).setInteractive({ useHandCursor: true });
     bonsaiBtn.on('pointerdown', () => {
@@ -1562,10 +1383,25 @@ export class GardenScene extends Phaser.Scene {
     if (ready) waterBtn.setInteractive({ useHandCursor: true });
     waterBtn.on('pointerdown', () => {
       if (!canBeWatered(plant)) return;
+      // D-041 R28: Wasser-Ripple aus Button-Position
+      const card = this.cards.get(plant.id);
+      if (card) {
+        const wx = card.container.x;
+        const wy = card.container.y;
+        for (let r = 0; r < 3; r++) {
+          const ring = this.add.circle(wx, wy, 4 + r * 6, 0x5b8de8, 0.6).setDepth(2001);
+          this.tweens.add({
+            targets: ring, scaleX: 3 + r, scaleY: 3 + r, alpha: 0,
+            duration: 500 + r * 120, ease: 'Cubic.Out', delay: r * 80,
+            onComplete: () => ring.destroy()
+          });
+        }
+      }
       gameStore.updatePlant(plant.id, (p) => {
         const { plant: updated } = waterPlant(p);
         return updated;
       });
+      this.showFlash('💧 Gegossen!', '#5b8de8');
       this.openDetailPanel(plant.id);
     });
     container.add(waterBtn);
@@ -1585,15 +1421,35 @@ export class GardenScene extends Phaser.Scene {
           const parts = [`+${result.coins} Coin`];
           if (result.seedSlug) parts.push(`+1 ${result.seedSlug} Samen`);
           if (result.pollen) parts.push(`+1 Pristine-Pollen`);
-          this.showFlash(`Ernte: ${parts.join(', ')}`, '#ffd166');
-          // S-POLISH-B2-R18: Harvest-SFX + Gold-Partikel-Burst
-          sfx.harvest();
+          // D-041 R23: Harvest-Animation — Coin-Burst aus Karte
           const card = this.cards.get(plant.id);
           if (card) {
-            this.spawnHarvestBurst(card.container.x, card.container.y);
-            // S-POLISH-B3-R1: Floating-Zahl "+X Coins"
-            this.spawnHarvestFloatingText(card.container.x, card.container.y, result.coins);
+            const cx = card.container.x;
+            const cy = card.container.y;
+            // Coin-Burst: 8 goldene Kreise fliegen nach oben
+            for (let i = 0; i < 8; i++) {
+              const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
+              const dist = 40 + Math.random() * 50;
+              const coin = this.add.circle(cx, cy, 4, 0xffd166, 1).setDepth(2000);
+              this.tweens.add({
+                targets: coin,
+                x: cx + Math.cos(angle) * dist,
+                y: cy + Math.sin(angle) * dist - 20,
+                alpha: 0,
+                scale: 0.3,
+                duration: 600 + Math.random() * 300,
+                ease: 'Cubic.Out',
+                onComplete: () => coin.destroy()
+              });
+            }
+            // Card shrink + flash bei Ernte
+            this.tweens.add({
+              targets: card.container,
+              scaleX: 1.15, scaleY: 1.15,
+              duration: 100, ease: 'Cubic.Out', yoyo: true
+            });
           }
+          this.showFlash(`🌾 Ernte: ${parts.join(', ')}`, '#ffd166');
           this.openDetailPanel(plant.id);
         } else {
           this.showFlash(result.reason ?? 'Ernte fehlgeschlagen', '#ff8c42');
@@ -1633,9 +1489,6 @@ export class GardenScene extends Phaser.Scene {
       const result = gameStore.upgradeSoil(plant.gridX, plant.gridY);
       if (result.ok) {
         this.showFlash(`Soil aufgeruestet zu ${result.newTier}`, '#b86ee3');
-        // S-POLISH-B2-R2: Soil-Upgrade-Animation
-        const card = this.cards.get(plant.id);
-        if (card) this.spawnSoilUpgradeEffect(card.container.x, card.container.y);
         this.openDetailPanel(plant.id);
       } else {
         this.showFlash(result.reason ?? 'Soil-Upgrade fehlgeschlagen', '#ff7e7e');
@@ -1700,16 +1553,6 @@ export class GardenScene extends Phaser.Scene {
         const r = gameStore.applyItemToPlant(plantId, slug);
         if (r.ok) {
           this.showFlash(r.message ?? 'Angewendet', '#ffd166');
-          // S-POLISH-B2-R2: Booster-Partikel-Burst in Booster-Farbe
-          const boosterColors: Record<string, number> = {
-            'compost-tea': 0x4caf50, 'compost-bag': 0x4caf50,
-            'volcano-ash': 0x4caf50, 'swamp-pollen': 0x4caf50,
-            'pristine-pollen': 0xffd700, 'growth-hormone': 0xffd700,
-            'hybrid-booster': 0x9c27b0, 'sun-lamp': 0xffa726, 'sprinkler': 0x2196f3
-          };
-          const burstColor = boosterColors[slug] ?? 0xffd166;
-          const plantCard = this.cards.get(plantId);
-          if (plantCard) this.spawnBoosterBurst(plantCard.container.x, plantCard.container.y, burstColor);
           container.destroy();
           this.detailPanel = undefined;
           this.openDetailPanel(plantId);
