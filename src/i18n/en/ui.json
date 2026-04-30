@@ -170,5 +170,16 @@
   "pokedex.back": "Back (B)",
   "pokedex.unknown": "Unknown",
   "pokedex.empty": "No entries match this filter.",
-  "pokedex.close": "Close (X)"
+  "pokedex.close": "Close (X)",
+  "market.title": "Anya's Market",
+  "market.back": "Back (B)",
+  "market.mode.daily": "Mode: Daily Offer",
+  "market.mode.buy": "Mode: Buy (all)",
+  "market.mode.sell": "Mode: Sell",
+  "market.action.buy": "Buy",
+  "market.action.sell": "Sell",
+  "market.action.repeat": "Again",
+  "market.item.stock": "Stock: {{have}}  Price: {{price}}{{label}}",
+  "market.item.bought": "  ({{count}}x bought)",
+  "market.empty": "No items available."
 }
