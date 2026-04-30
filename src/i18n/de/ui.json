@@ -170,5 +170,16 @@
   "pokedex.back": "Zurück (B)",
   "pokedex.unknown": "Unbekannt",
   "pokedex.empty": "Kein Eintrag mit diesem Filter.",
-  "pokedex.close": "Schliessen (X)"
+  "pokedex.close": "Schliessen (X)",
+  "market.title": "Anyas Markt",
+  "market.back": "Zurück (B)",
+  "market.mode.daily": "Modus: Tagesangebot",
+  "market.mode.buy": "Modus: Kaufen (alle)",
+  "market.mode.sell": "Modus: Verkaufen",
+  "market.action.buy": "Kaufen",
+  "market.action.sell": "Verkaufen",
+  "market.action.repeat": "Nochmal",
+  "market.item.stock": "Bestand: {{have}}  Preis: {{price}}{{label}}",
+  "market.item.bought": "  ({{count}}x gekauft)",
+  "market.empty": "Keine Items verfügbar."
 }
