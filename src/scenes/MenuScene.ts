@@ -67,10 +67,14 @@ export class MenuScene extends Phaser.Scene {
 
   public create(): void {
     const { width, height } = this.scale;
-    // R48: Version-Badge rechts unten
-    this.add.text(width - 8, height - 8, 'v0.3-alpha', {
-      fontFamily: 'monospace', fontSize: '9px', color: '#3a5a3a'
-    }).setOrigin(1, 1).setDepth(10);
+    // R83: Poliertes Version-Badge mit Deploy-Datum + Hintergrund
+    const badgeText = 'v0.9-alpha | 2026-04-30';
+    const badgeBg = this.add.rectangle(width - 8, height - 8, badgeText.length * 6 + 16, 18, 0x0a1a0a, 0.7)
+      .setOrigin(1, 1).setDepth(10).setStrokeStyle(1, 0x3a5a3a);
+    this.add.text(width - 16, height - 8, badgeText, {
+      fontFamily: 'monospace', fontSize: '9px', color: '#5a8a5a'
+    }).setOrigin(1, 1).setDepth(11);
+    void badgeBg; // verwendet fuer visuelle Verbesserung
     // FI-D-041: title-visible mark + boot_time_ms PostHog event
     performance.mark('title-visible');
     try {
@@ -359,8 +363,9 @@ export class MenuScene extends Phaser.Scene {
       }
     });
 
-    this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
+    // R83: Status-Line - aktueller Build-Status
+    this.add.text(cx, height - 24, 'D-041 | Closed Alpha 2026 | plantinvasion.io', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#4a3a2a'
     }).setOrigin(0.5);
     // S-POLISH-START: First-Visit-Welcome-Modal für neue Spieler ohne Save
     if (!save) {
