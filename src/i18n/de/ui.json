@@ -155,28 +155,20 @@
   "ow.dailyLogin.toast": "Tagesbelohnung: {{label}}",
   "diary.title": "Tildas Tagebuch",
   "diary.back": "Zurueck (B)",
-  "pokedex": {
-    "tab": {
-      "species": "Spezies",
-      "achievements": "Erfolge"
-    },
-    "filter": {
-      "label": "Filter",
-      "all": "Alle",
-      "discovered": "Gesehen",
-      "captured": "Gefangen",
-      "bred": "Gezüchtet"
-    },
-    "sort": {
-      "label": "Sortierung",
-      "family": "Familie",
-      "rarity": "Seltenheit",
-      "name": "Name"
-    },
-    "hint": "Tab wechseln  ↑↓ scrollen   B/Esc zurück",
-    "back": "Zurück (B)",
-    "unknown": "Unbekannt",
-    "empty": "Kein Eintrag mit diesem Filter.",
-    "close": "Schliessen (X)"
-  }
+  "pokedex.tab.species": "Spezies",
+  "pokedex.tab.achievements": "Erfolge",
+  "pokedex.filter.label": "Filter",
+  "pokedex.filter.all": "Alle",
+  "pokedex.filter.discovered": "Gesehen",
+  "pokedex.filter.captured": "Gefangen",
+  "pokedex.filter.bred": "Gezüchtet",
+  "pokedex.sort.label": "Sortierung",
+  "pokedex.sort.family": "Familie",
+  "pokedex.sort.rarity": "Seltenheit",
+  "pokedex.sort.name": "Name",
+  "pokedex.hint": "Tab wechseln  ↑↓ scrollen   B/Esc zurück",
+  "pokedex.back": "Zurück (B)",
+  "pokedex.unknown": "Unbekannt",
+  "pokedex.empty": "Kein Eintrag mit diesem Filter.",
+  "pokedex.close": "Schliessen (X)"
 }
