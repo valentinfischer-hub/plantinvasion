@@ -155,28 +155,20 @@
   "ow.dailyLogin.toast": "Daily reward: {{label}}",
   "diary.title": "Tilda's Diary",
   "diary.back": "Back (B)",
-  "pokedex": {
-    "tab": {
-      "species": "Species",
-      "achievements": "Achievements"
-    },
-    "filter": {
-      "label": "Filter",
-      "all": "All",
-      "discovered": "Seen",
-      "captured": "Caught",
-      "bred": "Bred"
-    },
-    "sort": {
-      "label": "Sort",
-      "family": "Family",
-      "rarity": "Rarity",
-      "name": "Name"
-    },
-    "hint": "Switch tab  ↑↓ scroll   B/Esc back",
-    "back": "Back (B)",
-    "unknown": "Unknown",
-    "empty": "No entries match this filter.",
-    "close": "Close (X)"
-  }
+  "pokedex.tab.species": "Species",
+  "pokedex.tab.achievements": "Achievements",
+  "pokedex.filter.label": "Filter",
+  "pokedex.filter.all": "All",
+  "pokedex.filter.discovered": "Seen",
+  "pokedex.filter.captured": "Caught",
+  "pokedex.filter.bred": "Bred",
+  "pokedex.sort.label": "Sort",
+  "pokedex.sort.family": "Family",
+  "pokedex.sort.rarity": "Rarity",
+  "pokedex.sort.name": "Name",
+  "pokedex.hint": "Switch tab  ↑↓ scroll   B/Esc back",
+  "pokedex.back": "Back (B)",
+  "pokedex.unknown": "Unknown",
+  "pokedex.empty": "No entries match this filter.",
+  "pokedex.close": "Close (X)"
 }
