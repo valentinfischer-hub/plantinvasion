@@ -274,14 +274,14 @@ export class InventoryScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e', fontStyle: 'bold',
       wordWrap: { width: w - 16 }
     });
-    const kind = this.add.text(8, 30, `Typ: ${this.kindLabel(def.kind)}`, {
+    const kind = this.add.text(8, 30, t('inventory.item.type', { kind: this.kindLabel(def.kind) }), {
       fontFamily: 'monospace', fontSize: '10px', color: '#fcd95c'
     });
     const desc = this.add.text(8, 50, def.description, {
       fontFamily: 'monospace', fontSize: '11px', color: '#ffffff',
       wordWrap: { width: w - 16 }
     });
-    const price = this.add.text(8, 160, `Kauf: ${def.buyPrice}c   Verkauf: ${def.sellPrice}c`, {
+    const price = this.add.text(8, 160, t('inventory.item.price', { buy: def.buyPrice, sell: def.sellPrice }), {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     });
     this.detailPanel.add([bg, title, kind, desc, price]);
