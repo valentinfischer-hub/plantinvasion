@@ -43,7 +43,7 @@ export class MenuScene extends Phaser.Scene {
     this.load.atlas('ui_sprint_0', 'assets/atlases/ui_sprint_0.webp', 'assets/atlases/ui_sprint_0.json');
 
     // 16 einzelne Boden-Tile-Files (erdig/steinig/moosig/aschig je 4 Varianten)
-    // fuer GardenScene-Slot-Variation per Slot-Index modulo 4.
+    // für GardenScene-Slot-Variation per Slot-Index modulo 4.
     const groundTypes = ['erdig', 'steinig', 'moosig', 'aschig'];
     groundTypes.forEach((type) => {
       for (let v = 1; v <= 4; v++) {
@@ -51,7 +51,7 @@ export class MenuScene extends Phaser.Scene {
       }
     });
 
-    // Plant-Sprites Legacy-Fallback (Sprint 0 Pilot-Spezies fuer existierende species-Map).
+    // Plant-Sprites Legacy-Fallback (Sprint 0 Pilot-Spezies für existierende species-Map).
     const species = ['sunflower', 'spike-cactus', 'venus-flytrap', 'lavender', 'tomato-plant'];
     const stageFiles = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
     species.forEach((slug) => {
@@ -67,6 +67,25 @@ export class MenuScene extends Phaser.Scene {
 
   public create(): void {
     const { width, height } = this.scale;
+    // R83: Poliertes Version-Badge mit Deploy-Datum + Hintergrund
+    const badgeText = 'v0.9-alpha | 2026-04-30';
+    const badgeBg = this.add.rectangle(width - 8, height - 8, badgeText.length * 6 + 16, 18, 0x0a1a0a, 0.7)
+      .setOrigin(1, 1).setDepth(10).setStrokeStyle(1, 0x3a5a3a);
+    this.add.text(width - 16, height - 8, badgeText, {
+      fontFamily: 'monospace', fontSize: '9px', color: '#5a8a5a'
+    }).setOrigin(1, 1).setDepth(11);
+    void badgeBg; // verwendet fuer visuelle Verbesserung
+    // FI-D-041: title-visible mark + boot_time_ms PostHog event
+    performance.mark('title-visible');
+    try {
+      performance.measure('boot-time', 'boot-start', 'title-visible');
+      const bootMs = Math.round(performance.getEntriesByName('boot-time')[0]?.duration ?? 0);
+      if (bootMs > 0) {
+        const ph = (window as Window & { __posthog?: { capture: (e: string, p: Record<string, unknown>) => void } }).__posthog;
+        ph?.capture('boot_time_ms', { duration_ms: bootMs, layout: (globalThis as { __layout?: string }).__layout ?? 'unknown' });
+      }
+    } catch (_) { /* PerformanceMeasure nicht verfuegbar */ }
+
     this.cameras.main.setBackgroundColor('#1a2820');
 
     // Tile-Background mit ground_erdig-Variationen (Sprint 1 Atlas).
@@ -99,7 +118,7 @@ export class MenuScene extends Phaser.Scene {
       const leaf2 = this.add.ellipse(cx + 14, plantY + 24, 22, 12, 0x6abf3a).setRotation(0.3);
       const flower = this.add.circle(cx, plantY, 14, 0xff7eb8).setStrokeStyle(2, 0x000000);
       const flowerCenter = this.add.circle(cx, plantY, 5, 0xfcd95c);
-      // QW-14: Idle-Bob-Tween fuer das Logo-Pflanz-Objekt
+      // QW-14: Idle-Bob-Tween für das Logo-Pflanz-Objekt
     this.tweens.add({
       targets: [stem, leaf1, leaf2, flower, flowerCenter],
       y: '-=5',
@@ -125,7 +144,6 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
-    void stem; void leaf1; void leaf2; void flower; void flowerCenter;
     }
 
     // Spezies-Showcase: 6 Spezies als kleine Bloom-Sprites unten als Footer-Decoration
@@ -153,6 +171,7 @@ export class MenuScene extends Phaser.Scene {
     const title = this.add.text(cx, plantY + 75, 'Plantinvasion', {
       fontFamily: 'monospace', fontSize: '36px', color: '#9be36e'
     }).setOrigin(0.5);
+    this.tweens.killTweensOf(title);
     title.setAlpha(0);
     title.setScale(0.7);
     this.tweens.add({
@@ -172,6 +191,25 @@ export class MenuScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
       delay: 900
+    });
+    // R75: Shimmer-Overlay auf Title-Text — weiss-transparentes Rechteck
+    // das ueber den Titel gleitet alle 3.5s (Shimmer-Effekt)
+    this.time.delayedCall(1800, () => {
+      const spawnShimmer = () => {
+        if (!this.scene.isActive()) return;
+        const sh = this.add.rectangle(title.x - 120, title.y, 60, 36, 0xffffff, 0.18)
+          .setOrigin(0.5).setDepth(title.depth + 1);
+        this.tweens.add({
+          targets: sh,
+          x: title.x + 120,
+          alpha: { from: 0.18, to: 0 },
+          duration: 600,
+          ease: 'Cubic.InOut',
+          onComplete: () => sh.destroy()
+        });
+        this.time.delayedCall(3500, spawnShimmer);
+      };
+      spawnShimmer();
     });
 
     // S-POLISH-START: Subtitle-Rotation (3 Taglines im Loop, je 3.5s sichtbar plus 0.5s Cross-Fade)
@@ -207,15 +245,21 @@ export class MenuScene extends Phaser.Scene {
 
     const save = loadGame();
 
+    // D-041 Run9: Staggered Button Entrance – alle Buttons starten bei alpha=0, y+20 (slide up)
+    const menuBtns: Phaser.GameObjects.Container[] = [];
     let by = plantY + 170;
     if (save) {
-      void this.makeButton(cx, by, t('menu.continue'), '#9be36e', () => {
+      const contBtn = this.makeButton(cx, by, t('menu.continue'), '#9be36e', () => {
         sfx.dialogAdvance();
         startAmbientBGM();
         // Garten ist Herzstueck: Default auf GardenScene
         const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
-        this.scene.start(target);
+        // R77: Iris-Wipe Transition
+        this.irisWipeTo(target);
       });
+      contBtn.setAlpha(0);
+      (contBtn as Phaser.GameObjects.Container).setY(by + 20);
+      menuBtns.push(contBtn);
       by += 60;
     }
     const newGameBtn = this.makeButton(cx, by, save ? t('menu.newGame') : t('menu.startGame'), '#fcd95c', () => {
@@ -226,7 +270,41 @@ export class MenuScene extends Phaser.Scene {
       gameStore.advanceTutorial(0);
       sfx.dialogAdvance();
       startAmbientBGM();
-      this.scene.start('OverworldScene');
+      // R77: Iris-Wipe Transition
+      this.irisWipeTo('OverworldScene');
+    });
+    newGameBtn.setAlpha(0);
+    (newGameBtn as Phaser.GameObjects.Container).setY(by + 20);
+    menuBtns.push(newGameBtn);
+    by += 60;
+    const _settingsBtn = this.makeButton(cx, by, t('menu.settings'), '#8eaedd', () => {
+      sfx.dialogAdvance();
+      this.cameras.main.fadeOut(200, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('SettingsScene'));
+    });
+    _settingsBtn.setAlpha(0);
+    (_settingsBtn as Phaser.GameObjects.Container).setY(by + 20);
+    menuBtns.push(_settingsBtn);
+    by += 60;
+    const _helpBtn = this.makeButton(cx, by, t('menu.help'), '#fcd95c', () => {
+      sfx.dialogAdvance();
+      this.cameras.main.fadeOut(200, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('HelpScene'));
+    });
+    _helpBtn.setAlpha(0);
+    (_helpBtn as Phaser.GameObjects.Container).setY(by + 20);
+    menuBtns.push(_helpBtn);
+    by += 60;
+    // Staggered entrance: slide up + fade in, 80ms apart, starts after title reveal (delay 800ms)
+    menuBtns.forEach((btn, i) => {
+      this.tweens.add({
+        targets: btn,
+        alpha: 1,
+        y: btn.y - 20,
+        duration: 320,
+        ease: 'Back.Out',
+        delay: 800 + i * 80
+      });
     });
     // S-POLISH-START: Primary-CTA Pulse-Animation um neue Spieler zum Klick zu fuehren
     this.tweens.add({
@@ -238,28 +316,64 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
       delay: 1400
     });
-    by += 60;
-    const _settingsBtn = this.makeButton(cx, by, t('menu.settings'), '#8eaedd', () => {
-      sfx.dialogAdvance();
-      this.scene.start('SettingsScene');
-    });
-    by += 60;
-    const _helpBtn = this.makeButton(cx, by, t('menu.help'), '#fcd95c', () => {
-      sfx.dialogAdvance();
-      this.scene.start('HelpScene');
-    });
-    by += 60;
+    // D-041 R31: Attract-Ring Beacon â expandierende Ringe als persistentes CTA-Signal
+    const spawnBeaconRing = (delayMs: number) => {
+      this.time.delayedCall(delayMs, () => {
+        if (!this.scene.isActive()) return;
+        const ring = this.add.circle(newGameBtn.x, newGameBtn.y, 110, 0xfcd95c, 0)
+          .setStrokeStyle(2, 0xfcd95c, 0.6)
+          .setDepth(89);
+        this.tweens.add({
+          targets: ring,
+          scaleX: 1.8,
+          scaleY: 1.8,
+          alpha: 0,
+          duration: 1800,
+          ease: 'Cubic.Out',
+          onComplete: () => ring.destroy()
+        });
+        spawnBeaconRing(2400); // wiederhole alle 2.4s
+      });
+    };
+    spawnBeaconRing(2000);
+    spawnBeaconRing(3200); // zweiter Ring versetzt
 
-    const _hint = this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
+    // R67: Fluester-Subtext unter newGameBtn (Tagline rotiert alle 5s)
+    const newGameSublines = [
+      'Dein Abenteuer beginnt hier',
+      '200 Pflanzen warten auf dich',
+      'Zuechte einzigartige Hybriden'
+    ];
+    let ngSubIdx = 0;
+    const ngSub = this.add.text(cx, newGameBtn.y + 34, newGameSublines[0], {
+      fontFamily: 'monospace', fontSize: '9px', color: '#9be36e'
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: ngSub, alpha: 0.7, duration: 500, delay: 1600 });
+    this.time.addEvent({
+      delay: 5000, loop: true,
+      callback: () => {
+        this.tweens.add({
+          targets: ngSub, alpha: 0, duration: 300, ease: 'Cubic.Out',
+          onComplete: () => {
+            ngSubIdx = (ngSubIdx + 1) % newGameSublines.length;
+            ngSub.setText(newGameSublines[ngSubIdx]);
+            this.tweens.add({ targets: ngSub, alpha: 0.7, duration: 300, ease: 'Cubic.Out' });
+          }
+        });
+      }
+    });
+
+    // R83: Status-Line - aktueller Build-Status
+    this.add.text(cx, height - 24, 'D-041 | Closed Alpha 2026 | plantinvasion.io', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#4a3a2a'
     }).setOrigin(0.5);
-    // S-POLISH-START: First-Visit-Welcome-Modal fuer neue Spieler ohne Save
+    // S-POLISH-START: First-Visit-Welcome-Modal für neue Spieler ohne Save
     if (!save) {
       this.time.delayedCall(1500, () => this.showWelcomeModal());
     }
 
     // S-POLISH-START: Auto-Ambient-BGM nach 2s damit Hauptmenue Atmosphaere bekommt
-    // (mit Try-Catch fuer Browser-Autoplay-Block, dann erst beim ersten Button-Click)
+    // (mit Try-Catch für Browser-Autoplay-Block, dann erst beim ersten Button-Click)
     this.time.delayedCall(2000, () => {
       try { startAmbientBGM(); } catch { /* Browser-Autoplay-Block, BGM startet bei erstem Click */ }
     });
@@ -271,6 +385,17 @@ export class MenuScene extends Phaser.Scene {
       const plantY = height - 80;
       const stages = ['sonnenherz_stage_0_seed.webp', 'sonnenherz_stage_1_sprout.webp', 'sonnenherz_stage_2_juvenile.webp', 'sonnenherz_stage_3_adult.webp'];
       const ambientPlant = this.add.image(plantX, plantY, 'plants_sprint_0', stages[0]).setOrigin(0.5, 1).setScale(0.6).setAlpha(0.7);
+      // D-041 Run9: Idle-Breathing für Ambient-Plants
+      this.tweens.add({
+        targets: ambientPlant,
+        scaleY: 0.63,
+        scaleX: 0.57,
+        duration: 1800,
+        ease: 'Sine.InOut',
+        yoyo: true,
+        repeat: -1,
+        delay: 0
+      });
       let stageIdx = 0;
       this.time.addEvent({
         delay: 3000,
@@ -289,9 +414,29 @@ export class MenuScene extends Phaser.Scene {
           });
         }
       });
+      // D-041 R38: Spiegel-Pflanze rechts für Tiefe + Symmetrie
+      const mirrorStages = ['steinblatt_stage_0_seed.webp', 'steinblatt_stage_1_sprout.webp', 'steinblatt_stage_2_juvenile.webp', 'steinblatt_stage_3_adult.webp'];
+      const mirrorPlant = this.add.image(width - 60, height - 80, 'plants_sprint_0', mirrorStages[0])
+        .setOrigin(0.5, 1).setScale(0.6).setAlpha(0.55).setFlipX(true);
+      this.tweens.add({
+        targets: mirrorPlant, scaleY: 0.63, scaleX: 0.57,
+        duration: 2100, ease: 'Sine.InOut', yoyo: true, repeat: -1, delay: 600
+      });
+      let mIdx = 0;
+      this.time.addEvent({
+        delay: 3800, loop: true,
+        callback: () => {
+          mIdx = (mIdx + 1) % mirrorStages.length;
+          this.tweens.add({ targets: mirrorPlant, alpha: 0.1, duration: 300, ease: 'Cubic.Out',
+            onComplete: () => {
+              mirrorPlant.setFrame(mirrorStages[mIdx]);
+              this.tweens.add({ targets: mirrorPlant, alpha: 0.55, duration: 300, ease: 'Cubic.Out' });
+            }
+          });
+        }
+      });
     }
 
-    void _hint; void _settingsBtn; void _helpBtn; void newGameBtn; void title; void subtitle;
   }
 
   private showWelcomeModal(): void {
@@ -308,18 +453,9 @@ export class MenuScene extends Phaser.Scene {
     overlay.add(panel);
 
     const slides = [
-      {
-        title: 'Willkommen in Plantinvasion',
-        body: 'Sammle, zuechte plus kaempfe mit Pflanzen. Jede Spezies hat\nDNA die du kombinieren kannst um neue Hybriden zu schaffen.'
-      },
-      {
-        title: 'Cozy plus Strategisch',
-        body: 'Garten-Hub fuer Pflege plus Zuchten.\nWelt-Erkundung fuer Wild-Encounter plus Quests.\nKein Stress: dein Tempo bestimmt der Tag.'
-      },
-      {
-        title: 'Tipps zum Start',
-        body: 'X = Kreuzen plus G = Garten plus W = Welt\nKlick einen leeren Slot um zu pflanzen\nKlick eine Pflanze fuer Detail-Panel'
-      }
+      { title: t('menu.slide1Title'), body: t('menu.slide1Body') },
+      { title: t('menu.slide2Title'), body: t('menu.slide2Body') },
+      { title: t('menu.slide3Title'), body: t('menu.slide3Body') }
     ];
 
     let slideIdx = 0;
@@ -346,7 +482,7 @@ export class MenuScene extends Phaser.Scene {
       dots.forEach((d, i) => d.setFillStyle(i === slideIdx ? 0x9be36e : 0x44603f));
     };
 
-    const nextBtn = this.add.text(panelW / 2 - 50, panelH / 2 - 25, 'Weiter ->', {
+    const nextBtn = this.add.text(panelW / 2 - 50, panelH / 2 - 25, t('menu.next'), {
       fontFamily: 'monospace', fontSize: '13px', color: '#9be36e',
       backgroundColor: '#000000', padding: { x: 10, y: 5 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -355,7 +491,7 @@ export class MenuScene extends Phaser.Scene {
       if (slideIdx < slides.length - 1) {
         slideIdx++;
         updateSlide();
-        if (slideIdx === slides.length - 1) nextBtn.setText('Los gehts!');
+        if (slideIdx === slides.length - 1) nextBtn.setText(t('menu.start'));
       } else {
         this.tweens.add({
           targets: overlay,
@@ -368,7 +504,7 @@ export class MenuScene extends Phaser.Scene {
     });
     overlay.add(nextBtn);
 
-    const skipBtn = this.add.text(-panelW / 2 + 35, panelH / 2 - 25, 'Skip', {
+    const skipBtn = this.add.text(-panelW / 2 + 35, panelH / 2 - 25, t('menu.skip'), {
       fontFamily: 'monospace', fontSize: '11px', color: '#888888',
       padding: { x: 6, y: 3 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
@@ -388,6 +524,29 @@ export class MenuScene extends Phaser.Scene {
     this.tweens.add({ targets: overlay, alpha: 1, duration: 400, ease: 'Cubic.Out' });
   }
 
+  /**
+   * R77: Iris-Wipe Transition — expandierender schwarzer Circle von Bildmitte.
+   * Wechselt zur targetScene nach Abschluss des Wipes.
+   */
+  private irisWipeTo(targetScene: string, fromX?: number, fromY?: number): void {
+    const { width, height } = this.scale;
+    const ox = fromX ?? width / 2;
+    const oy = fromY ?? height / 2;
+    const maxR = Math.sqrt(width * width + height * height) * 0.6;
+    // schwarzer Kreis expandiert von Button-Center nach aussen
+    const circle = this.add.arc(ox, oy, 4, 0, 360, false, 0x000000, 1)
+      .setDepth(99999).setOrigin(0.5);
+    this.tweens.add({
+      targets: circle,
+      radius: maxR,
+      duration: 480,
+      ease: 'Cubic.In',
+      onComplete: () => {
+        this.scene.start(targetScene);
+      }
+    });
+  }
+
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
     const w = 220;
@@ -400,20 +559,35 @@ export class MenuScene extends Phaser.Scene {
     const txt = this.add.text(0, 0, label, {
       fontFamily: 'monospace', fontSize: '14px', color: accent
     }).setOrigin(0.5);
-    // S-POLISH-09: Hover-State (Scale 1.05 plus Border-Glow auf 3px)
+    // D-041 R22: Hover/Press polish — fill tint + text brighten + scale
     bg.on('pointerover', () => {
-      // S-POLISH Run4: Back.Out fuer bounciger Hover-Gefuehl
+      this.tweens.killTweensOf(c);
       this.tweens.add({ targets: c, scale: 1.06, duration: 150, ease: 'Back.Out' });
       bg.setStrokeStyle(3, accentColor);
+      bg.setFillStyle(accentColor, 0.12);
+      txt.setAlpha(1.0);
       sfx.dialogAdvance();
     });
     bg.on('pointerout', () => {
+      this.tweens.killTweensOf(c);
       this.tweens.add({ targets: c, scale: 1.0, duration: 120, ease: 'Cubic.Out' });
       bg.setStrokeStyle(2, accentColor);
       bg.setFillStyle(0x000000, 0.65);
+      txt.setAlpha(0.92);
     });
-    bg.on('pointerdown', () => { bg.setFillStyle(accentColor, 0.4); });
-    bg.on('pointerup', () => { bg.setFillStyle(0x000000, 0.65); onClick(); });
+    bg.on('pointerdown', () => {
+      this.tweens.killTweensOf(c);
+      // R76: Scale-Squish (X etwas schmaler, Y etwas hoeher = organisches Press-Feeling)
+      this.tweens.add({ targets: c, scaleX: 0.92, scaleY: 1.05, duration: 70, ease: 'Cubic.Out' });
+      bg.setFillStyle(accentColor, 0.35);
+    });
+    bg.on('pointerup', () => {
+      // R76: Bounce-Back nach Squish
+      this.tweens.add({ targets: c, scaleX: 1.0, scaleY: 1.0, duration: 110, ease: 'Back.Out' });
+      bg.setFillStyle(0x000000, 0.65);
+      onClick();
+    });
+    txt.setAlpha(0.92); // leicht gedimmt im Idle
     c.add([bg, txt]);
     return c;
   }

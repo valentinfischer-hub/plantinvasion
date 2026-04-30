@@ -177,7 +177,7 @@ class GameStore {
     return this.state.energy ?? ENERGY_MAX;
   }
 
-  /** Energie vollständig regenerieren (nach dem Schlafen / Tagesende). */
+  /** Energie vollstÃ¤ndig regenerieren (nach dem Schlafen / Tagesende). */
   regenEnergyForNewDay(): void {
     this.state.energy = regenEnergy(this.state.energy ?? 0);
     this.notify();
@@ -320,7 +320,7 @@ class GameStore {
   plantSeed(seedSlug: string): { ok: boolean; reason?: string; plant?: Plant } {
     if (!isSeedItem(seedSlug)) return { ok: false, reason: 'Kein Seed-Item' };
     if (!this.hasItem(seedSlug)) return { ok: false, reason: 'Seed nicht im Inventar' };
-    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'sow')) return { ok: false, reason: 'Zu müde zum Säen (Energy leer)' };
+    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'sow')) return { ok: false, reason: 'Zu mÃ¼de zum SÃ¤en (Energy leer)' };
     const speciesSlug = speciesSlugFromSeed(seedSlug);
     if (!speciesSlug) return { ok: false, reason: 'Ungueltiger Seed-Slug' };
     // B-012: separater Reason fuer Garten-voll vs unbekannte Spezies (vorher beide vermischt -> User wusste nicht warum)
@@ -343,7 +343,7 @@ class GameStore {
   plantSeedAt(seedSlug: string, gridX: number, gridY: number): { ok: boolean; reason?: string; plant?: Plant } {
     if (!isSeedItem(seedSlug)) return { ok: false, reason: 'Kein Seed-Item' };
     if (!this.hasItem(seedSlug)) return { ok: false, reason: 'Seed nicht im Inventar' };
-    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'sow')) return { ok: false, reason: 'Zu müde zum Säen (Energy leer)' };
+    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'sow')) return { ok: false, reason: 'Zu mÃ¼de zum SÃ¤en (Energy leer)' };
     const speciesSlug = speciesSlugFromSeed(seedSlug);
     if (!speciesSlug) return { ok: false, reason: 'Ungueltiger Seed-Slug' };
     if (gridX < 0 || gridX >= GRID_COLUMNS || gridY < 0 || gridY >= GRID_ROWS) {
@@ -447,7 +447,7 @@ class GameStore {
   }
 
   /**
-   * Importiert einen JSON-Spielstand. Gibt { ok: true } zurück wenn erfolgreich,
+   * Importiert einen JSON-Spielstand. Gibt { ok: true } zurÃ¼ck wenn erfolgreich,
    * sonst { ok: false, error: '<Grund>' }.
    */
   importSaveJSON(json: string): { ok: boolean; error?: string } {
@@ -462,7 +462,7 @@ class GameStore {
       if (typeof parsed.playerId !== 'string') {
         return { ok: false, error: 'Fehlende playerId' };
       }
-      // Spielstand als neuen State übernehmen (in-Memory + save)
+      // Spielstand als neuen State Ã¼bernehmen (in-Memory + save)
       this.state = parsed as GameState;
       this.save();
       this.notify();
@@ -475,7 +475,7 @@ class GameStore {
   /**
    * Cloud-Sync Stub (S-POLISH-B2-R17).
    * Wird in Sprint S-12 (Multiplayer) mit echtem Supabase-Aufruf ersetzt.
-   * Gibt immer { ok: false, reason: 'stub' } zurück solange MP_ENABLED = false.
+   * Gibt immer { ok: false, reason: 'stub' } zurÃ¼ck solange MP_ENABLED = false.
    */
   async cloudSyncUpload(): Promise<{ ok: boolean; reason?: string }> {
     return { ok: false, reason: 'Cloud-Sync noch nicht aktiviert (kommt in S-12)' };
@@ -502,7 +502,7 @@ class GameStore {
     const lastDay = Math.floor(last / (24 * 60 * 60 * 1000));
     const dayDiff = todayDay - lastDay;
     if (dayDiff === 1) {
-      // Konsekutiver Tag → Streak erhöhen
+      // Konsekutiver Tag â Streak erhÃ¶hen
       this.state.loginStreak = (this.state.loginStreak ?? 0) + 1;
     } else if (dayDiff > 1) {
       // Streak gebrochen
@@ -547,7 +547,11 @@ class GameStore {
   // =========================================================
 
   /** Forage-Tile-Loot. Cooldown gilt pro Tile via Key "zone:x:y". */
-  forageTile(zone: string, tileX: number, tileY: number, now = Date.now()): { ok: boolean; reason?: string; itemSlug?: string; toast?: string } {
+  /**
+   * B4-R7: forageTile mit Journal-Tracking und Rare-Drop-Flag.
+   * isRareDrop = true wenn Drop aus einer seltenen Kategorie.
+   */
+  forageTile(zone: string, tileX: number, tileY: number, now = Date.now()): { ok: boolean; reason?: string; itemSlug?: string; toast?: string; isRareDrop?: boolean } {
     if (!this.state.forageTilesCooldown) this.state.forageTilesCooldown = {};
     const key = `${zone}:${tileX}:${tileY}`;
     const lastAt = this.state.forageTilesCooldown[key] ?? 0;
@@ -558,8 +562,22 @@ class GameStore {
     const drop = rollForagePool(zone);
     this.addItem(drop.itemSlug, 1);
     this.state.forageTilesCooldown[key] = now;
+    // B4-R7: Journal-Update (dedupliciert)
+    if (!this.state.forageJournal) this.state.forageJournal = {};
+    if (!this.state.forageJournal[zone]) this.state.forageJournal[zone] = [];
+    if (!this.state.forageJournal[zone].includes(drop.itemSlug)) {
+      this.state.forageJournal[zone].push(drop.itemSlug);
+    }
+    // B4-R7: Rare-Drop-Erkennung (Pristine-Pollen, Booster-Items < 5% Chance)
+    const rareItems = ['pristine-pollen', 'volcano-ash', 'swamp-pollen', 'hybrid-booster'];
+    const isRareDrop = rareItems.includes(drop.itemSlug);
     this.notify();
-    return { ok: true, itemSlug: drop.itemSlug, toast: drop.toastLabel };
+    return { ok: true, itemSlug: drop.itemSlug, toast: drop.toastLabel, isRareDrop };
+  }
+
+  /** B4-R7: Foraging-Journal fuer alle Biome. */
+  getForageJournal(): Record<string, string[]> {
+    return this.state.forageJournal ?? {};
   }
 
   /** Hidden-Spot-Loot. One-shot pro Save. */
@@ -814,7 +832,7 @@ class GameStore {
 
   skipTutorial(): void {
     this.state.tutorial = { step: 5, done: true };
-    // S-POLISH-B2-R7: tutorial_skipped Flag für Analytics
+    // S-POLISH-B2-R7: tutorial_skipped Flag fÃ¼r Analytics
     if (!this.state.story) this.state.story = { flags: {}, currentAct: 0, metNpcs: [], diaryEntries: [] };
     this.state.story.flags['tutorial_skipped'] = true;
     this.save();
@@ -1057,7 +1075,7 @@ class GameStore {
     if (!ccA.ok) return { ok: false, reason: ccA.reason };
     const ccB = canCross(b);
     if (!ccB.ok) return { ok: false, reason: ccB.reason };
-    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'cross')) return { ok: false, reason: 'Zu müde zum Kreuzen (Energy leer)' };
+    if (!canAffordEnergy(this.state.energy ?? ENERGY_MAX, 'cross')) return { ok: false, reason: 'Zu mÃ¼de zum Kreuzen (Energy leer)' };
     const COST = 50;
     if (this.state.coins < COST) return { ok: false, reason: `Du brauchst ${COST} Gold` };
     // Free Slot
@@ -1187,9 +1205,20 @@ class GameStore {
     return () => this.listeners.delete(fn);
   }
 
+  private _savePending = false;
+
+  private scheduleAutoSave(): void {
+    if (this._savePending) return;
+    this._savePending = true;
+    setTimeout(() => {
+      this.save();
+      this._savePending = false;
+    }, 15_000);
+  }
+
   private notify(): void {
     this.listeners.forEach((l) => l(this.state));
-    this.save();
+    this.scheduleAutoSave(); // B-019: Debounce — max 1 Save alle 15s im Tick-Loop
   }
 }
 

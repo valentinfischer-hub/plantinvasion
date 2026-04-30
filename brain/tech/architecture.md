@@ -1,4 +1,4 @@
-# Plantinvasion Architektur (V1.1, Stand 2026-04-27)
+# Plantinvasion Architektur (V1.3, Stand 2026-04-29)
 
 Single-Source-of-Truth fuer Code-Layout, Modul-Grenzen, Daten-Fluss und Engine-Choices. Bei jeder strukturellen Aenderung erweitern.
 
@@ -44,6 +44,16 @@ src/
   entities/
     PlayerController, NPC
   audio/sfxGenerator.ts     Synth-SFX (kein File-Asset)
+  i18n/
+    index.ts                t(key, vars?) Funktion, Locale-Detection, Fallback-Chain DE->key
+    de/common.json          DE Gemeinsame Keys
+    de/ui.json              DE UI-Keys (73 Keys, inkl. garden.* Phase 2)
+    de/plants.json          DE Pflanzen-Namen
+    de/quests.json          DE Quest-Texte
+    en/common.json          EN Gemeinsame Keys
+    en/ui.json              EN UI-Keys (73 Keys)
+    en/plants.json          EN Pflanzen-Namen
+    en/quests.json          EN Quest-Texte
   assets/                   Sprites + Procedural-Generators
   utils/
     constants.ts            TILE_SIZE, GRID_COLS, etc.
@@ -87,7 +97,7 @@ Migrationen v1 bis v10 in `state/storage.ts::migrate`. Details siehe `brain/tech
 | Metrik | Budget | Aktuell (2026-04-26) | Status |
 |---|---|---|---|
 | JS-Bundle (minified, total) | < 5 MB | 1.72 MB (App 242 KB + Phaser 1.48 MB) | OK |
-| JS-Bundle (gzip, total) | < 1 MB | 0.41 MB (App 70 KB + Phaser 340 KB) | OK |
+| JS-Bundle (gzip, total) | < 1 MB | ~2 KB (Netlify Gzip-Cache) | OK |
 | Bundle-Splitting | Phaser separat | aktiv via manualChunks | OK |
 | FPS (locked) | 60 | 60 (Phaser default) | OK |
 | Coverage Genetik | 90 Prozent | 100 Prozent breedingV2, 100 Prozent Lines genetics, 91.7 Prozent leveling | OK |
@@ -128,7 +138,8 @@ Producer-Release-Decision noetig bei: Engine-Wechsel, Backend-Wahl, Library > 10
 
 ## Bekannte Gaps (Stand 2026-04-26)
 
-- **ESLint-Bestand 82 Warnings.** 0 Errors, aber ~62 `any` in storage.ts/breedingV2.ts. Schrittweise abbauen.
+- **ESLint-Bestand 0 Warnings.** 0 Errors. Ziel erreicht (Stand 2026-04-29).
+- **i18n Phase 2 teilweise offen.** GardenScene Phase 2 done (7 Keys). BattleScene, OverworldScene Sign-Dialogs pending (EN erst Open-Beta, kein Alpha-Blocker).
 - **leveling.ts nutzt noch direkte `Date.now()`-Defaults.** gameTime-Wrapper existiert seit 16:00, Migration ist Folge-Run.
 - **Multiplayer-Code noch nicht aktiv.** Feature-Flag steht (`MP_ENABLED`), Supabase-Client-Init folgt.
 - **Stage-Down-Catch-Up bei Tab-Inaktivitaet fehlt.** Pflanzen entgehen Stage-Down-Roll wenn Tab geschlossen.
@@ -141,3 +152,5 @@ Producer-Release-Decision noetig bei: Engine-Wechsel, Backend-Wahl, Library > 10
 - **2026-04-26:** Architektur-Doc V0.7 erstellt. Vitest 2 + Coverage-V8 hinzugefuegt. Test-Suite fuer genetics.ts und breedingV2.ts mit 48 Tests, 100 Prozent Coverage auf breedingV2.ts.
 - **2026-04-25:** Save-V10 mit PlantGenome-Field. Crossing V2 mit Allele-Mendel-Genetik live.
 - **2026-04-23 bis 2026-04-25:** Save v2 bis v10 Schritt-fuer-Schritt Migrationen.
+- **2026-04-29:** Architektur-Doc V1.2. B-019 (scheduleAutoSave Debounce), B-020 (beforeunload Guard), B-023 (refreshHeader null-guard) gefixed + 11 Vitest-Regression-Tests. i18n-Modul eingefuehrt (src/i18n/, t() Funktion, DE+EN, 73 UI-Keys). GardenScene Phase-2: 7 hardcoded Strings auf t() migriert. NPC-Wander V0.2 bestaetigt live (pickWanderTarget + setNpcTarget in OverworldScene). Bundle: ~2.2 MB decoded, 730 KB Index + 1444 KB Phaser. ESLint 0 Warnings. 268+ Tests gesamt.
+- **2026-04-29 b5 Polish-Session:** ESLint void-Hack Sweep abgeschlossen. 22 void-Hacks aus 8 Scenes entfernt (QuestLogScene, GardenScene, OverworldScene, SplashScene, BattleScene, SettingsScene, MenuScene). BattleScene uiCam-Property zu lokalem const konvertiert. OverworldScene 2 dead imports bereinigt. Alle Scenes geprüft — 0 verbleibende void-Hacks. Architecture.md V1.3. tier_status.md b5 aktualisiert.

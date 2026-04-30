@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { t } from '../i18n/index';
 
 /**
  * Tildas Tagebuch: zeigt alle gesammelten Eintraege der Story.
@@ -108,7 +109,7 @@ export class DiaryScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#1f2417');
 
     // Titel
-    this.add.text(width / 2, 24, 'Tildas Tagebuch', {
+    this.add.text(width / 2, 24, t('diary.title'), {
       fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_REWARD
     }).setOrigin(0.5);
 
@@ -116,7 +117,7 @@ export class DiaryScene extends Phaser.Scene {
     this.entries = DIARY_ENTRIES.filter((e) => collected.includes(e.id));
 
     if (this.entries.length === 0) {
-      this.add.text(width / 2, height / 2, 'Noch keine Eintraege gesammelt.\nLoese Story-Quests um Tildas Geschichte zu erfahren.', {
+      this.add.text(width / 2, height / 2, t('diary.empty'), {
         fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_BODY, color: '#8a6e4a',
         align: 'center', wordWrap: { width: width - 40 }
       }).setOrigin(0.5);
@@ -145,8 +146,8 @@ export class DiaryScene extends Phaser.Scene {
         .setStrokeStyle(1, MODAL_BORDER_COLOR).setInteractive({ useHandCursor: true });
       const nextBtn = this.add.rectangle((width / 4) * 3, height - 56, 80, 28, 0x222222, 0.9)
         .setStrokeStyle(1, MODAL_BORDER_COLOR).setInteractive({ useHandCursor: true });
-      this.add.text(width / 4, height - 56, '< Prev', { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS }).setOrigin(0.5);
-      this.add.text((width / 4) * 3, height - 56, 'Next >', { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS }).setOrigin(0.5);
+      this.add.text(width / 4, height - 56, t('diary.prev'), { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS }).setOrigin(0.5);
+      this.add.text((width / 4) * 3, height - 56, t('diary.next'), { fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_SMALL, color: COLOR_SUCCESS }).setOrigin(0.5);
       prevBtn.on('pointerup', () => this.navigate(-1));
       nextBtn.on('pointerup', () => this.navigate(1));
       if (this.input.keyboard) {
@@ -160,7 +161,7 @@ export class DiaryScene extends Phaser.Scene {
     const backBg = this.add.rectangle(width / 2, height - 24, 160, 32, 0x000000, 0.7)
       .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, height - 24, 'Zurueck (B)', {
+    this.add.text(width / 2, height - 24, t('diary.back'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');

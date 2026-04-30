@@ -14,12 +14,52 @@ export interface MoveDef {
   power: number;          // 0 = status-only move
   accuracy: number;       // 0-1
   priority: number;       // -1 langsam, 0 normal, 1 schnell
+  /** B4-R5: PP (Power Points) — maximale Nutzungen, default 10 */
+  pp?: number;
   status?: { effect: StatusEffect; chance: number; turns?: number };
   selfBoost?: { stat: 'atk' | 'def' | 'spd'; mult: number; turns: number };
   enemyDebuff?: { stat: 'atk' | 'def' | 'spd'; mult: number; turns: number };
   heal?: number;          // % maxHp heal fuer self
+  /** B4-R5: familySlug fuer STAB-Bonus — wenn vorhanden und gleich wie Angreifer-Familie */
+  stab?: boolean;
   flavor: string;         // Spass-Beschreibung
   description: string;    // Im Spiel angezeigt
+}
+
+/** B4-R5: PP-Tracking pro Slot */
+export interface MovePPState {
+  slug: string;
+  current: number;
+  max: number;
+}
+
+/** B4-R5: PP aus MoveDef ableiten */
+export function getMaxPP(move: MoveDef): number {
+  return move.pp ?? 10;
+}
+
+/** B4-R5: Alle Move-PP fuer eine Pflanze initialisieren */
+export function initPPState(moveSlugs: string[]): MovePPState[] {
+  return moveSlugs.map((slug) => {
+    const def = getMove(slug);
+    const max = def ? getMaxPP(def) : 10;
+    return { slug, current: max, max };
+  });
+}
+
+/** B4-R5: Rast setzt alle PP zurueck */
+export function restoreAllPP(ppStates: MovePPState[]): MovePPState[] {
+  return ppStates.map((s) => ({ ...s, current: s.max }));
+}
+
+/** B4-R5: PP verbrauchen, gibt false wenn keine PP mehr */
+export function consumePP(ppStates: MovePPState[], slug: string): { states: MovePPState[]; ok: boolean } {
+  const idx = ppStates.findIndex((s) => s.slug === slug);
+  if (idx === -1) return { states: ppStates, ok: true }; // kein Tracking = immer ok
+  if (ppStates[idx].current <= 0) return { states: ppStates, ok: false };
+  const newStates = [...ppStates];
+  newStates[idx] = { ...newStates[idx], current: newStates[idx].current - 1 };
+  return { states: newStates, ok: true };
 }
 
 export const MOVES: MoveDef[] = [

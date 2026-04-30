@@ -25,8 +25,15 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
-        manualChunks: {
-          phaser: ['phaser']
+        // D-041 Run12: Granulares Chunk-Splitting fuer besseres Browser-Caching
+        // phaser: eigener Chunk (~1.4 MB), aendert sich selten -> langer CDN-Cache
+        // game-data: alle statischen Daten (species, moves, maps) -> separate Cache-Gruppe
+        // ui: UI-Komponenten + Overlays -> klein, haeufig geupdated
+        manualChunks(id: string) {
+          if (id.includes('node_modules/phaser')) return 'phaser';
+          if (id.includes('/src/data/species') || id.includes('/src/data/moves') || id.includes('/src/data/maps')) return 'game-data';
+          if (id.includes('/src/ui/') || id.includes('/src/audio/')) return 'ui';
+          if (id.includes('/src/scenes/Battle') || id.includes('/src/data/battle')) return 'battle';
         }
       }
     }

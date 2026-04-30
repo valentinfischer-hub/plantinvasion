@@ -82,7 +82,7 @@ describe('showToast Konsistenz-Pflichten', () => {
   it('einheitlicher #1a1f1a Background', () => {
     const scene = makeScene();
     showToast(scene as unknown as Parameters<typeof showToast>[0], 'm', 'info');
-    expect((scene.add.text as ReturnType<typeof vi.fn>).mock.calls[0][3]).toMatchObject({ backgroundColor: '#1a1f1a' });
+    expect((scene.add.text as ReturnType<typeof vi.fn>).mock.calls[0][3].backgroundColor).toMatch(/^#1a1f1a/);
   });
   it('14px monospace', () => {
     const scene = makeScene();

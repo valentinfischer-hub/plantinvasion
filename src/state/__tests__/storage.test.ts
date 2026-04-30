@@ -469,3 +469,37 @@ describe('S-POLISH Run10: loadGame corrupt-detection + size-warning', () => {
     expect(state?.version).toBe(SAVE_SCHEMA_VERSION);
   });
 });
+
+describe('Save-Migration v10 -> v11: energy + loginStreak + marketBoughtToday Defaults', () => {
+  it('setzt energy auf 100 bei v10-Save ohne energy-Feld', () => {
+    rawSave(10, { plants: [] });
+    const state = loadGame();
+    expect(state).not.toBeNull();
+    expect(state!.version).toBe(SAVE_SCHEMA_VERSION);
+    expect(state!.energy).toBe(100);
+    expect(state!.loginStreak).toBe(0);
+    expect(state!.loginDaysTotal).toBe(0);
+    expect(state!.marketBoughtToday).toEqual({});
+    expect(state!.marketBoughtTodayDay).toBe(-1);
+  });
+
+  it('setzt energy auf 100 bei aktuellem Save ohne energy-Feld', () => {
+    rawSave(SAVE_SCHEMA_VERSION, { plants: [] });
+    const state = loadGame();
+    expect(state).not.toBeNull();
+    expect(state!.energy).toBe(100);
+  });
+
+  it('behaelt vorhandenes energy-Feld beim Laden', () => {
+    rawSave(SAVE_SCHEMA_VERSION, { plants: [], energy: 42 });
+    const state = loadGame();
+    expect(state!.energy).toBe(42);
+  });
+
+  it('loginStreak wird nicht ueberschrieben wenn vorhanden', () => {
+    rawSave(SAVE_SCHEMA_VERSION, { plants: [], loginStreak: 7, loginDaysTotal: 14 });
+    const state = loadGame();
+    expect(state!.loginStreak).toBe(7);
+    expect(state!.loginDaysTotal).toBe(14);
+  });
+});

@@ -1,5 +1,5 @@
 import type { PlantFamily } from '../data/encounters';
-import { getMove, defaultMovesForFamily, type MoveDef, type StatusEffect } from '../data/moves';
+import { getMove, defaultMovesForFamily, consumePP, getMaxPP, initPPState, restoreAllPP, type MoveDef, type MovePPState, type StatusEffect } from '../data/moves';
 
 /**
  * Battle-Engine V0.2 mit Pokemon-Style Move-Selection plus Status-Effects.
@@ -35,6 +35,8 @@ export interface BattleSide {
   statuses: ActiveStatus[];
   modifiers: StatModifier[];
   spriteKey?: string;
+  /** B4-R5: PP-Tracking */
+  ppStates?: MovePPState[];
 }
 
 const TYPE_CHART: Record<PlantFamily, Partial<Record<PlantFamily, number>>> = {
@@ -96,12 +98,12 @@ export function applyMove(attacker: BattleSide, defender: BattleSide, move: Move
     };
   }
 
-  // Accuracy
+  // B4-R5: Accuracy-Check
   if (rng() > move.accuracy) {
     return {
       attacker, defender, move,
       hit: false, dmg: 0, effectiveness: 1, crit: false,
-      log: `${log} Verfehlt!`
+      log: `${log}\nVerfehlt! (${Math.round(move.accuracy * 100)}% Trefferquote)`
     };
   }
 
@@ -114,13 +116,18 @@ export function applyMove(attacker: BattleSide, defender: BattleSide, move: Move
     const def = effectiveStat(defender, 'def');
     const ratio = Math.log2(1 + atk / Math.max(1, def));
     effectiveness = familyMultiplier(attacker.family, defender.family);
-    crit = rng() < attacker.stats.spd / 600;
+    // B4-R5: Feste 6.25% Crit-Chance (Pokémon-Standard)
+    const CRIT_CHANCE = 0.0625;
+    crit = rng() < CRIT_CHANCE;
     const critMod = crit ? 1.5 : 1;
+    // B4-R5: STAB-Bonus: gleiche Familie wie Angreifer => +50%
+    const stabMod = (move.family !== 'Universal' && move.family === attacker.family) ? 1.5 : 1.0;
     const baseDmg = ratio * move.power * 1.2;
     const cap = Math.floor(defender.stats.maxHp * 0.55);
-    dmg = Math.max(1, Math.min(cap, Math.floor(baseDmg * effectiveness * critMod)));
+    dmg = Math.max(1, Math.min(cap, Math.floor(baseDmg * effectiveness * critMod * stabMod)));
     defender.stats.hp = Math.max(0, defender.stats.hp - dmg);
-    log += `\n${dmg} Schaden${crit ? ' (KRITISCH!)' : ''}`;
+    const stabStr = stabMod > 1 ? ' (STAB)' : '';
+    log += `\n${dmg} Schaden${crit ? ' (KRITISCH!)' : ''}${stabStr}`;
     if (effectiveness > 1) log += ' - Sehr effektiv!';
     else if (effectiveness < 1) log += ' - Wenig effektiv...';
   }
@@ -343,6 +350,9 @@ export function pickWildMove(wild: BattleSide, rng: () => number = Math.random):
 
 // ============================================================
 // Boss-Battle-Erweiterungen V0.2 (2026-04-28)
+// B4-R5: PP-System Re-Exports fuer BattleScene-Nutzung
+export { initPPState, consumePP, restoreAllPP, getMaxPP };
+
 // Multi-Phase-Support + Boss-spezifischer Move-Picker
 // ============================================================
 

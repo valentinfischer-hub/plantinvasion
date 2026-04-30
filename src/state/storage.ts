@@ -90,6 +90,15 @@ export interface GameState {
   // S-POLISH-B2-R12: Login-Streak
   loginStreak?: number;                        // aufeinanderfolgende Tage mit Daily-Login
   loginDaysTotal?: number;                     // Gesamtzahl der Login-Tage
+  // B4-R7: Foraging-Journal (welche Items in welchem Biom gefunden)
+  forageJournal?: Record<string, string[]>;     // zone -> [itemSlug, ...] (dedupliziert)
+  // B4-R8: NPC-Dialog-History (letzte 5 Dialoge pro NPC)
+  npcDialogHistory?: Record<string, string[]>;  // npcId -> [lastLine, ...]
+  // B4-R10: Score-System
+  playerScore?: number;                // aktueller Session-Score
+  scoreMultiplier?: number;            // 1.0 bis 3.0
+  highscores?: number[];               // Top-5 lokal, absteigend sortiert
+  lastDailyChallengeSeed?: number;     // dayIndex des letzten Daily-Challenge
 }
 
 const STORAGE_KEY = 'plantinvasion_save_v1';
@@ -346,7 +355,7 @@ export function loadGame(): GameState | null {
   } catch (e) {
     console.error('[storage] corrupt save detected, discarding (JSON.parse failed)', e);
     // PostHog: save corrupted
-    (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('save_corrupted', { reason: 'json_parse_failed' });
+    typeof window !== 'undefined' && (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('save_corrupted', { reason: 'json_parse_failed' });
     return null;
   }
 }

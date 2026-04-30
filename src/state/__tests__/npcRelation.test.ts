@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 // Teste NPC-Relation-Logik isoliert (ohne gameStore/Phaser)
 
@@ -11,36 +11,36 @@ describe('NPC-Hearts-System Logik', () => {
   }
   
   function heartsDisplay(count: number): string {
-    const filled = '♥'.repeat(count);
-    const empty = '♡'.repeat(MAX_HEARTS - count);
+    const filled = 'â¥'.repeat(count);
+    const empty = 'â¡'.repeat(MAX_HEARTS - count);
     return filled + empty;
   }
 
-  it('addHearts erhöht den Wert', () => {
+  it('addHearts erhÃ¶ht den Wert', () => {
     expect(addHearts(0, 1)).toBe(1);
     expect(addHearts(5, 2)).toBe(7);
   });
 
-  it('addHearts geht nicht über MAX_HEARTS', () => {
+  it('addHearts geht nicht Ã¼ber MAX_HEARTS', () => {
     expect(addHearts(9, 5)).toBe(MAX_HEARTS);
     expect(addHearts(10, 1)).toBe(MAX_HEARTS);
   });
 
-  it('heartsDisplay zeigt korrekte Anzahl gefüllter Herzen', () => {
+  it('heartsDisplay zeigt korrekte Anzahl gefÃ¼llter Herzen', () => {
     const display = heartsDisplay(3);
-    expect(display.split('♥').length - 1).toBe(3);
-    expect(display.split('♡').length - 1).toBe(7);
+    expect(display.split('â¥').length - 1).toBe(3);
+    expect(display.split('â¡').length - 1).toBe(7);
   });
 
   it('heartsDisplay bei 0 Hearts zeigt nur leere Herzen', () => {
     const display = heartsDisplay(0);
-    expect(display.includes('♥')).toBe(false);
-    expect(display.split('♡').length - 1).toBe(MAX_HEARTS);
+    expect(display.includes('â¥')).toBe(false);
+    expect(display.split('â¡').length - 1).toBe(MAX_HEARTS);
   });
 
-  it('heartsDisplay bei MAX_HEARTS zeigt nur gefüllte Herzen', () => {
+  it('heartsDisplay bei MAX_HEARTS zeigt nur gefÃ¼llte Herzen', () => {
     const display = heartsDisplay(MAX_HEARTS);
-    expect(display.includes('♡')).toBe(false);
+    expect(display.includes('â¡')).toBe(false);
   });
 
   it('Weekly-Gift-Key ist eindeutig pro NPC+Woche', () => {

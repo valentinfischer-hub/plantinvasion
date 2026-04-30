@@ -174,7 +174,11 @@ function drawAdult(g: Phaser.GameObjects.Graphics, p: PlantPalette) {
     pix(g, 10, 8, p.bloom);
     pix(g, 22, 9, p.bloom);
   } else {
+    // B4-R6: Verbesserter Adult mit mehr Blatt-Detail
     rect(g, 15, 8, 2, 17, p.stem);
+    pix(g, 14, 10, p.leafDark); // Stiel-Schattierung
+    pix(g, 14, 15, p.leafDark);
+    pix(g, 14, 20, p.leafDark);
     rect(g, 6, 12, 8, 4, p.leaf);
     rect(g, 18, 12, 8, 4, p.leaf);
     rect(g, 8, 17, 6, 4, p.leaf);
@@ -184,8 +188,16 @@ function drawAdult(g: Phaser.GameObjects.Graphics, p: PlantPalette) {
     rect(g, 18, 11, 8, 1, p.leafDark);
     rect(g, 8, 16, 6, 1, p.leafDark);
     rect(g, 18, 16, 6, 1, p.leafDark);
-    pix(g, 14, 8, p.bloom);
-    pix(g, 17, 8, p.bloom);
+    pix(g, 8, 14, p.leafDark); // Blatt-Vene
+    pix(g, 23, 14, p.leafDark);
+    pix(g, 10, 19, p.leafDark);
+    pix(g, 21, 19, p.leafDark);
+    // Knospe
+    rect(g, 13, 5, 6, 4, p.bloom);
+    pix(g, 15, 4, p.bloom);
+    pix(g, 16, 4, p.bloom);
+    pix(g, 14, 8, 0xfff7d4);
+    pix(g, 17, 8, 0xfff7d4);
   }
 }
 
@@ -230,22 +242,43 @@ function drawBlooming(g: Phaser.GameObjects.Graphics, p: PlantPalette) {
     pix(g, 15, 8, 0x000000);
     pix(g, 16, 8, 0x000000);
   } else {
+    // B4-R6: Verbessertes Flower-Blooming mit mehr Detail
     rect(g, 15, 8, 2, 17, p.stem);
+    // Stiel-Schattierung
+    pix(g, 14, 10, p.leafDark);
+    pix(g, 14, 14, p.leafDark);
+    pix(g, 14, 18, p.leafDark);
+    // Blaetter mit Schattierung
     rect(g, 6, 16, 8, 3, p.leaf);
     rect(g, 18, 16, 8, 3, p.leaf);
     rect(g, 8, 21, 6, 3, p.leaf);
     rect(g, 18, 21, 6, 3, p.leaf);
     rect(g, 6, 15, 8, 1, p.leafDark);
     rect(g, 18, 15, 8, 1, p.leafDark);
+    pix(g, 8, 20, p.leafDark); // Blatt-Venen
+    pix(g, 23, 20, p.leafDark);
+    // Bluete: Bluetenblätter
     rect(g, 11, 4, 10, 6, p.bloom);
     rect(g, 9, 6, 14, 4, p.bloom);
     rect(g, 13, 2, 6, 4, p.bloom);
-    pix(g, 14, 5, 0xfff7d4);
-    pix(g, 17, 7, 0xfff7d4);
-    pix(g, 15, 8, 0xfff7d4);
-    pix(g, 12, 7, 0xfff7d4);
-    pix(g, 10, 5, p.leafDark);
-    pix(g, 21, 6, p.leafDark);
+    // Blueten-Schattierung (dunklere Kanten)
+    const bloomDark = (p.bloom & 0xfefefe) >> 1; // halbe Helligkeit
+    pix(g, 11, 4, bloomDark);
+    pix(g, 20, 4, bloomDark);
+    pix(g, 9, 8, bloomDark);
+    pix(g, 22, 8, bloomDark);
+    // Zentrum mit Glanz-Punkten
+    pix(g, 15, 5, 0xfff7d4);
+    pix(g, 16, 5, 0xfff7d4);
+    pix(g, 14, 6, 0xfff7d4);
+    pix(g, 17, 6, 0xfff7d4);
+    pix(g, 15, 7, 0xfffabb);
+    pix(g, 16, 7, 0xfffabb);
+    // Bluetenblatt-Details
+    pix(g, 12, 3, p.bloom);
+    pix(g, 19, 3, p.bloom);
+    pix(g, 10, 6, p.bloom);
+    pix(g, 21, 6, p.bloom);
   }
 }
 

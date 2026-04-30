@@ -16,7 +16,7 @@ function ctx(): AudioContext {
 }
 
 let _masterVolume = 0.4;
-// S-POLISH-B2-R14: Separate SFX + Music-Lautstärke
+// S-POLISH-B2-R14: Separate SFX + Music-LautstÃ¤rke
 let _sfxVolume = 1.0;   // 0..1, relativ zu _masterVolume
 let _musicVolume = 1.0; // 0..1, relativ zu _masterVolume
 
@@ -131,11 +131,6 @@ export const sfx = {
     // Finaler Glocken-Ton
     setTimeout(() => blip({ freq: 1568, freqEnd: 1568, duration: 0.4, volume: 0.25, type: 'sine' }), 480);
   },
-  /** S-POLISH-B2-R18: Harvest-SFX — fröhlicher aufsteigender Zwei-Ton */
-  harvest(): void {
-    blip({ freq: 523, freqEnd: 659, duration: 0.12, volume: 0.4, type: 'sine' });
-    setTimeout(() => blip({ freq: 784, freqEnd: 1046, duration: 0.15, volume: 0.35, type: 'sine' }), 100);
-  }
 };
 
 /**
@@ -190,7 +185,7 @@ export function stopAmbientBGM(): void {
 }
 
 // ---- S-POLISH-B2-R14: Biome-Ambience ----
-// Biom-spezifische Ton-Signatur via procedurale Töne
+// Biom-spezifische Ton-Signatur via procedurale TÃ¶ne
 type Biome = 'wurzelheim' | 'verdanto' | 'kaktoria' | 'frostkamm' | 'salzbucht' | 'mordwald' | 'magmabluete';
 
 let _currentBiome: Biome | null = null;
@@ -265,7 +260,7 @@ export function setBiomeAmbience(biome: Biome | null): void {
       _biomeNodes.push({ osc, gain, lfo, lfoGain });
     }
   } catch {
-    // Audio nicht verfügbar
+    // Audio nicht verfÃ¼gbar
   }
 }
 
