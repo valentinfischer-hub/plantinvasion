@@ -22,14 +22,11 @@ import { DialogBox } from '../ui/DialogBox';
 import { TILE_SPRITE_KEYS, getAllSpriteFiles } from '../assets/spriteRegistry';
 import { generateBiomeFallbackTiles } from '../assets/biomeFallbackTiles';
 import { gameStore } from '../state/gameState';
-import { sfx, startAmbientBGM, setBiomeAmbience } from '../audio/sfxGenerator';
-import { SoundManager } from '../audio/SoundManager';
-import { onNetworkError, onNetworkRecovery } from '../services/supabase';
-import { DebugOverlay } from '../ui/DebugOverlay';
+import { sfx, startAmbientBGM } from '../audio/sfxGenerator';
 import { isForageTile, FORAGE_TILE_BUSH, FORAGE_TILE_WILDPLANT, findHiddenSpot } from '../data/foraging';
 import { getAchievement } from '../data/achievements';
 import { QUESTS, type QuestDef } from '../data/quests';
-import { buildTouchControls, buildSwipeHandler, buildPinchZoom, isTouchDevice, type TouchKeysHandle } from '../ui/TouchControls';
+import { buildTouchControls, type TouchKeysHandle } from '../ui/TouchControls';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { MiniMap } from '../ui/MiniMap';
 import { PauseOverlay } from '../ui/PauseOverlay';
@@ -43,7 +40,7 @@ import { showToast } from '../ui/Toast';
 import { now as gameTimeNow } from '../utils/gameTime';
 import { evaluateAct1Progress, autoSetAct1Flags } from '../data/storyAct1';
 import { evaluateAct2Progress, autoSetAct2Flags } from '../data/storyAct2';
-import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_BODY, FONT_SIZE_SMALL, FONT_SIZE_TITLE, MODAL_BORDER_COLOR } from '../ui/uiTheme';
 
 const SIGN_DIALOGS: Record<string, string[]> = {
   // Verdanto
@@ -198,16 +195,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private timeOverlay!: TimeOverlay;
   private saveIcon!: Phaser.GameObjects.Text;
   private coinHud!: Phaser.GameObjects.Text;
-  // S-POLISH-B3-R2: Hotspot-Glow-Graphics fuer interaktive Objekte in Naehe
-  private hotspotGlowGraphics?: Phaser.GameObjects.Graphics;
-  // B7-R6: Header-Mute-Toggle
-  private muteBtn?: Phaser.GameObjects.Text;
-  // B7-R8: Debug-Overlay
-  private debugOverlay?: DebugOverlay;
-  private hotspotGlowTimer?: number;
-  // S-POLISH-B3-R2: Vollbild-Weltkarte (N-Taste)
-  private worldMapOverlay?: Phaser.GameObjects.Container;
-  private keyN!: Phaser.Input.Keyboard.Key;
   private weatherOverlay!: WeatherOverlay;
   private seasonTint!: SeasonTintOverlay;
   private particles!: AmbientParticles;
@@ -293,7 +280,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.key4 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.FOUR);
     this.keyBoss = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.K);
     this.keyDiary = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
-    this.keyN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.N);
 
     // Debug
     this.debugText = this.add.text(8, 8, '', {
@@ -303,15 +289,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Touch-Controls (D-Pad) - nur auf Touch-Geraeten sichtbar
     this.touch = buildTouchControls(this);
     this.player.touch = this.touch;
-    // S-POLISH-B2-R15: Swipe-Gesten + Pinch-to-Zoom fuer Mobile
-    if (isTouchDevice()) {
-      buildSwipeHandler(this, (dir) => {
-        // Swipe simuliert eine kurze Touch-Eingabe (120ms)
-        this.touch[dir].pressed = true;
-        this.time.delayedCall(120, () => { this.touch[dir].pressed = false; });
-      });
-      buildPinchZoom(this, 0.8, 2.0);
-    }
 
     // Tutorial-Overlay
     this.tutorial = new TutorialOverlay(this);
@@ -319,10 +296,10 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.miniMap.refresh(this.currentZone);
     this.pauseMenu = new PauseOverlay(this, [
       { label: 'Weiterspielen', onSelect: () => this.pauseMenu.close() },
-      { label: 'Inventar (I)', onSelect: () => { this.pauseMenu.close(); this.trackStart('InventoryScene'); } },
-      { label: 'Pokedex (P)', onSelect: () => { this.pauseMenu.close(); this.trackStart('PokedexScene'); } },
-      { label: 'Quests (Q)', onSelect: () => { this.pauseMenu.close(); this.trackStart('QuestLogScene'); } },
-      { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.trackStart('MenuScene'); } }
+      { label: 'Inventar (I)', onSelect: () => { this.pauseMenu.close(); this.scene.start('InventoryScene'); } },
+      { label: 'Pokedex (P)', onSelect: () => { this.pauseMenu.close(); this.scene.start('PokedexScene'); } },
+      { label: 'Quests (Q)', onSelect: () => { this.pauseMenu.close(); this.scene.start('QuestLogScene'); } },
+      { label: 'Hauptmenu', onSelect: () => { this.pauseMenu.close(); this.scene.start('MenuScene'); } }
     ]);
     this.registerInAllUiCams(this.pauseMenu.container);
     this.registerInAllUiCams(this.pauseMenu.dim);
@@ -354,38 +331,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Farm-Button: persistent oben rechts, fuehrt zur GardenScene (alias "Farm")
     this.makeFarmButton();
-    this.makeMuteButton();
     if (this.input.keyboard) {
       const farmKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
       farmKey.on('down', () => this.gotoFarm());
-      // B7-R6: M-Taste = Mute-Toggle
-      const muteKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
-      muteKey.on('down', () => this.toggleMute());
     }
 
     debugLog('[OverworldScene] created, player at', this.player.tileX, this.player.tileY);
-
-    // S-POLISH-B3-R2: Hotspot-Glow-Graphics Overlay
-    this.hotspotGlowGraphics = this.add.graphics();
-    this.hotspotGlowGraphics.setDepth(600);
     (globalThis as { __overworld?: OverworldScene }).__overworld = this;
-    // B7-R8: Debug-Overlay (nur bei ?debug=1)
-    this.debugOverlay = new DebugOverlay(this);
-    // B7-R9: Network-Error-Handler — Retry-Toast bei Supabase-Timeout
-    onNetworkError((reason) => {
-      const cam = this.cameras.main;
-      showToast(this, `Offline-Mode: ${reason.slice(0, 40)}. Spiel laeuft lokal weiter.`, 'error', {
-        cameraZoom: cam.zoom || 1,
-        yAbsolute: (cam.height / (cam.zoom || 1)) - 40,
-      });
-    });
-    onNetworkRecovery(() => {
-      const cam = this.cameras.main;
-      showToast(this, 'Verbindung wiederhergestellt.', 'success', {
-        cameraZoom: cam.zoom || 1,
-        yAbsolute: (cam.height / (cam.zoom || 1)) - 40,
-      });
-    });
 
     // Daily-Login-Reward: einmalig pro Real-Time-Tag claimen, dann Toast
     this.tryClaimDailyLogin();
@@ -399,7 +351,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
 
     // Coin-HUD oben-links unter saveIcon
     this.coinHud = this.add.text(8 / zS, 42 / zS, '', {
-      fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_REWARD, backgroundColor: '#1a1f1a', padding: { x: 6, y: 3 }
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: '#f4e8c1', stroke: '#000000', strokeThickness: 2, backgroundColor: '#1a1f1a', padding: { x: 6, y: 3 }
     }).setScrollFactor(0).setDepth(1850).setScale(1 / zS);
     this.registerInAllUiCams(this.coinHud);
     this.refreshCoinHud();
@@ -409,8 +361,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     this.showZoneToast(this.currentZone);
     // Zone-Visit fuer Achievement-Tracking
     gameStore.recordZoneVisit(this.currentZone);
-    // S-POLISH-B2-R14: Biom-spezifische Ambience starten
-    setBiomeAmbience(this.currentZone as Parameters<typeof setBiomeAmbience>[0]);
 
     // Initial-Snapshot der bekannten Achievements
     this.knownAchievements = new Set(gameStore.getAchievements());
@@ -433,119 +383,47 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (!def) return;
     const cam = this.cameras.main;
     const z = cam.zoom || 1;
-    // B7-R4: Slide-In von oben rechts mit Bronze/Silber/Gold-Icon, Auto-Dismiss 4s
-    const W = 300, H = 76;
-    const targetX = (cam.width - W / 2 - 12) / z;
-    const startX = (cam.width + W) / z; // ausserhalb des Viewports rechts
-    const targetY = 80 / z;
+    // Camera-Zoom-aware Position (siehe DialogBox.ts)
     const container = this.add
-      .container(startX, targetY)
+      .container(cam.width / 2 / z, 80 / z)
       .setScrollFactor(0)
-      .setDepth(2200)
+      .setDepth(2100)
       .setScale(1 / z);
     const bg = this.add.graphics();
-    // Goldener Hintergrund mit doppeltem Rahmen
-    bg.fillStyle(0x1a1400, 0.96);
-    bg.fillRoundedRect(-W / 2, -H / 2, W, H, 10);
-    bg.lineStyle(3, 0xffd700, 1);
-    bg.strokeRoundedRect(-W / 2, -H / 2, W, H, 10);
-    bg.lineStyle(1, 0xb8860b, 0.6);
-    bg.strokeRoundedRect(-W / 2 + 4, -H / 2 + 4, W - 8, H - 8, 7);
+    bg.fillStyle(0xffd166, 0.95);
+    bg.fillRoundedRect(-160, -28, 320, 56, 8);
+    bg.lineStyle(2, 0xb86ee3, 1);
+    bg.strokeRoundedRect(-160, -28, 320, 56, 8);
     container.add(bg);
-    // B7-R4: Tier-Icon links (Bronze=■, Silber=◆, Gold=★)
-    const tierIcon = def.tier === 'gold' ? '★' : def.tier === 'silver' ? '◆' : '■';
-    const tierColor = def.tier === 'gold' ? '#ffd700' : def.tier === 'silver' ? '#c0c0c0' : '#cd7f32';
-    const icon = this.add.text(-W / 2 + 20, 0, tierIcon, {
-      fontFamily: FONT_FAMILY, fontSize: '22px', color: tierColor
-    }).setOrigin(0.5);
-    // "Achievement freigeschaltet!" Header
-    const header = this.add.text(10, -H / 2 + 14, 'Achievement freigeschaltet!', {
-      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#ffd700'
-    }).setOrigin(0.5, 0).setAlpha(0.9);
-    // Achievement-Name gross
-    const name = this.add.text(10, -H / 2 + 28, def.name, {
-      fontFamily: FONT_FAMILY, fontSize: '14px', color: '#ffffff'
+    const title = this.add.text(0, -16, 'Achievement!', {
+      fontFamily: FONT_FAMILY, fontSize: '12px', color: '#1a1f1a'
     }).setOrigin(0.5, 0);
-    // Beschreibung klein
-    const desc = this.add.text(10, -H / 2 + 48, def.description.slice(0, 45) + (def.description.length > 45 ? '…' : ''), {
-      fontFamily: FONT_FAMILY, fontSize: '9px', color: '#bbbbbb'
+    const name = this.add.text(0, 4, def.name, {
+      fontFamily: FONT_FAMILY, fontSize: FONT_SIZE_TITLE, color: '#1a1f1a'
     }).setOrigin(0.5, 0);
-    container.add([bg, icon, header, name, desc]);
+    container.add([title, name]);
     this.registerInAllUiCams(container);
-    // S-POLISH-B2-R6: Achievement-Jingle statt simples dialogOpen
-    sfx.achievementJingle();
-    // B7-R4: Slide-In von oben rechts (350ms), dann Auto-Dismiss nach 4s (Fade-Out 600ms)
-    this.tweens.add({
-      targets: container,
-      x: targetX,
-      duration: 350,
-      ease: 'Back.Out',
-    });
-    // Auto-Dismiss: Slide-Out nach rechts
-    this.tweens.add({
-      targets: container,
-      x: startX,
-      alpha: 0,
-      delay: 4000,
-      duration: 600,
-      ease: 'Cubic.In',
-      onComplete: () => container.destroy(),
-    });
-    // Konfetti-Burst um den Toast
-    for (let i = 0; i < 8; i++) {
-      const conf = this.add.circle(
-        cam.width / 2 / z + (Math.random() - 0.5) * W,
-        90 / z + (Math.random() - 0.5) * H,
-        3, [0xffd700, 0xff6b6b, 0x4ecdc4, 0x95e56e][Math.floor(Math.random() * 4)], 0.9
-      ).setScrollFactor(0).setDepth(2199);
-      this.tweens.add({
-        targets: conf, y: conf.y - 40, alpha: 0, duration: 800, delay: i * 60,
-        ease: 'Power2', onComplete: () => conf.destroy()
-      });
-    }
-  }
-
-
-  /** S-POLISH-B2-R11: Quest-Abschluss-Banner (grüner Toast oben mittig) */
-  private showQuestCompleteToast(questTitle: string, rewardCoins: number): void {
-    const cam = this.cameras.main;
-    const z = cam.zoom || 1;
-    const W = 300, H = 62;
-    const container = this.add
-      .container(cam.width / 2 / z, 150 / z)
-      .setScrollFactor(0)
-      .setDepth(2200)
-      .setScale(1 / z);
-    const bg = this.add.graphics();
-    bg.fillStyle(0x0d1f0d, 0.95);
-    bg.fillRoundedRect(-W / 2, -H / 2, W, H, 8);
-    bg.lineStyle(2, 0x4ab84a, 1);
-    bg.strokeRoundedRect(-W / 2, -H / 2, W, H, 8);
-    bg.lineStyle(1, 0x2d8a2d, 0.5);
-    bg.strokeRoundedRect(-W / 2 + 3, -H / 2 + 3, W - 6, H - 6, 5);
-    container.add(bg);
-    const icon = this.add.text(-W / 2 + 18, 0, '✓', {
-      fontFamily: FONT_FAMILY, fontSize: '20px', color: '#4ab84a'
-    }).setOrigin(0.5);
-    const header = this.add.text(12, -H / 2 + 10, 'Quest abgeschlossen!', {
-      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#4ab84a'
-    }).setOrigin(0.5, 0);
-    const title = this.add.text(12, -H / 2 + 26, questTitle.slice(0, 36) + (questTitle.length > 36 ? '…' : ''), {
-      fontFamily: FONT_FAMILY, fontSize: '13px', color: '#ffffff'
-    }).setOrigin(0.5, 0);
-    const reward = this.add.text(12, -H / 2 + 44, rewardCoins > 0 ? `+${rewardCoins} Gold` : '', {
-      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#fcd95c'
-    }).setOrigin(0.5, 0);
-    container.add([bg, icon, header, title, reward]);
-    this.registerInAllUiCams(container);
-    sfx.dialogAdvance();
+    sfx.dialogOpen();
+    // S-POLISH Run-2: Entrance-Animation (Scale + Alpha-In) dann Fade-Out
+    container.setScale(0.85);
     container.setAlpha(0);
-    this.tweens.add({ targets: container, alpha: 1, duration: 300, ease: 'Cubic.Out' });
     this.tweens.add({
-      targets: container, alpha: 0, delay: 3500, duration: 600, ease: 'Cubic.Out',
+      targets: container,
+      scale: 1,
+      alpha: 1,
+      duration: 280,
+      ease: 'Back.Out'
+    });
+    this.tweens.add({
+      targets: container,
+      alpha: 0,
+      delay: 3200,
+      duration: 600,
+      ease: 'Cubic.Out',
       onComplete: () => container.destroy()
     });
   }
+
 
   private makeFarmButton(): void {
     const { width } = this.scale;
@@ -576,105 +454,27 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (this.miniMap) this.miniMap.ignoreInUICam(c);
   }
 
-  private makeMuteButton(): void {
-    const cam = this.cameras.main;
-    const z = cam.zoom || 1;
-    // B7-R6: Mute-Button oben links (neben saveIcon, unter coinHud)
-    const muteLabel = () => SoundManager.muted ? '[M] stumm' : '[M] ton';
-    const muteColor = () => SoundManager.muted ? '#ff7e7e' : '#9be36e';
-    this.muteBtn = this.add.text(8 / z, 60 / z, muteLabel(), {
-      fontFamily: 'monospace',
-      fontSize: '9px',
-      color: muteColor(),
-      backgroundColor: '#1a1f1a',
-      padding: { x: 4, y: 2 },
-    }).setScrollFactor(0).setDepth(1850).setScale(1 / z).setInteractive({ useHandCursor: true });
-    this.muteBtn.on('pointerdown', () => this.toggleMute());
-    this.registerInAllUiCams(this.muteBtn);
-  }
-
-  private toggleMute(): void {
-    SoundManager.toggleMute();
-    if (this.muteBtn) {
-      this.muteBtn.setText(SoundManager.muted ? '[M] stumm' : '[M] ton');
-      this.muteBtn.setColor(SoundManager.muted ? '#ff7e7e' : '#9be36e');
-    }
-  }
-
   private gotoFarm(): void {
     if (this.dialog?.open_) return;
     sfx.door();
     gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GardenScene', this.currentZone);
-    this.trackStart('GardenScene');
+    this.scene.start('GardenScene');
   }
 
   private tryClaimDailyLogin(): void {
     const r = gameStore.claimDailyLogin();
     if (!r.ok || !r.reward) return;
+    // Tier-3 V0.2: Tagesbelohnung-Toast als reward-Variante (gold), bottom-positioniert.
     const cam = this.cameras.main;
-    const streak = gameStore.getLoginStreak();
-    const total = gameStore.getLoginDaysTotal();
-    // S-POLISH-B2-R12: Streak-Info in Toast-Label
-    const streakLabel = streak > 1 ? `  🔥 ${streak} Tage Streak!` : '';
-    const toast = showToast(this, `Tagesbelohnung: ${r.reward.label}${streakLabel}`, 'reward', {
+    const toast = showToast(this, `Tagesbelohnung: ${r.reward.label}`, 'reward', {
       cameraZoom: cam.zoom || 1,
       yAbsolute: cam.height - 60,
       padding: { x: 12, y: 8 },
       duration: 4000,
       delay: 2500
     });
+    // Verhindere Doppel-Rendering durch UI-Cam des Tutorial-Overlays
     this.registerInAllUiCams(toast);
-    // S-POLISH-B2-R12: Kalender-Grid-Animation (7 Tage-Dots, nach 3s)
-    this.time.delayedCall(3000, () => {
-      this.showLoginCalendar(streak, total);
-    });
-  }
-
-  /** S-POLISH-B2-R12: Mini-Kalender mit 7 Dots (letzte Woche) */
-  private showLoginCalendar(streak: number, _total: number): void {
-    const cam = this.cameras.main;
-    const z = cam.zoom || 1;
-    const W = 230, H = 54;
-    const container = this.add
-      .container(cam.width / 2 / z, cam.height / 2 / z)
-      .setScrollFactor(0)
-      .setDepth(2205)
-      .setScale(1 / z);
-    const bg = this.add.graphics();
-    bg.fillStyle(0x1a1400, 0.94);
-    bg.fillRoundedRect(-W / 2, -H / 2, W, H, 8);
-    bg.lineStyle(2, 0xfcd95c, 0.7);
-    bg.strokeRoundedRect(-W / 2, -H / 2, W, H, 8);
-    container.add(bg);
-    // Label
-    const lbl = this.add.text(0, -H / 2 + 10, `Streak: ${streak} Tage`, {
-      fontFamily: FONT_FAMILY, fontSize: '10px', color: '#fcd95c'
-    }).setOrigin(0.5, 0);
-    container.add(lbl);
-    // 7 Dots (letzten 7 Tage als Kreise)
-    const dotSpacing = 28;
-    const dotY = 8;
-    for (let i = 0; i < 7; i++) {
-      const dotX = -3 * dotSpacing + i * dotSpacing;
-      const isActive = i >= 7 - Math.min(streak, 7);
-      const dotColor = isActive ? 0xfcd95c : 0x333333;
-      const dot = this.add.circle(dotX, dotY, 8, dotColor, isActive ? 1 : 0.5);
-      container.add(dot);
-      if (isActive) {
-        // Pulse-Animation für aktive Dots
-        this.tweens.add({
-          targets: dot, alpha: { from: 1, to: 0.6 }, duration: 400 + i * 60,
-          ease: 'Sine.InOut', yoyo: true, repeat: 2
-        });
-      }
-    }
-    this.registerInAllUiCams(container);
-    container.setAlpha(0);
-    this.tweens.add({ targets: container, alpha: 1, duration: 250, ease: 'Cubic.Out' });
-    this.tweens.add({
-      targets: container, alpha: 0, delay: 3000, duration: 500,
-      onComplete: () => container.destroy()
-    });
   }
 
   private registerInAllUiCams(obj: Phaser.GameObjects.GameObject): void {
@@ -683,184 +483,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     if (this.seasonTint) this.seasonTint.ignoreInUICam(obj);
     if (this.particles) this.particles.ignoreInUICam(obj);
     if (this.weatherOverlay) this.weatherOverlay.ignoreInUICam(obj);
-  }
-
-  /** S-POLISH-B2-R8: NPC-Hearts-Feedback-Animation */
-  private spawnNpcHeartsFeedback(x: number, y: number, color: number): void {
-    for (let i = 0; i < 3; i++) {
-      const heart = this.add.text(
-        x + (Math.random() - 0.5) * 20,
-        y,
-        '♥',
-        { fontFamily: 'monospace', fontSize: '14px', color: '#ff6b6b' }
-      ).setOrigin(0.5).setDepth(600).setAlpha(0.9);
-      this.tweens.add({
-        targets: heart,
-        y: y - 30 - i * 10,
-        alpha: 0,
-        scale: 0.5,
-        duration: 700,
-        delay: i * 120,
-        ease: 'Power2',
-        onComplete: () => heart.destroy()
-      });
-    }
-    void color; // param für zukünftige Farb-Variation
-  }
-
-  /** S-POLISH-B2-R4: Foraging-Fund-Animation - Item-Pop Bounce */
-  private spawnForagePop(x: number, y: number): void {
-    const star = this.add.text(x, y, '✦', {
-      fontFamily: 'monospace', fontSize: '18px', color: '#9be36e'
-    }).setOrigin(0.5).setDepth(500).setScale(0);
-    this.tweens.add({
-      targets: star, scale: 1.3, y: y - 10, duration: 180, ease: 'Back.Out',
-      onComplete: () => {
-        this.tweens.add({
-          targets: star, scale: 1.0, y: y - 22, alpha: 0, duration: 400, ease: 'Power2',
-          onComplete: () => star.destroy()
-        });
-      }
-    });
-    for (let i = 0; i < 5; i++) {
-      const dot = this.add.circle(x, y, 3, 0x9be36e, 0.9).setDepth(499);
-      const angle = (i / 5) * Math.PI * 2;
-      this.tweens.add({
-        targets: dot, x: x + Math.cos(angle) * 18, y: y + Math.sin(angle) * 18,
-        alpha: 0, scale: 0.2, duration: 350, onComplete: () => dot.destroy()
-      });
-    }
-  }
-
-  /**
-   * S-POLISH-B3-R2: Hotspot-Highlight-Glow fuer interaktive Objekte im 3-Tile-Radius.
-   * Zeichnet subtilen Glow-Ring um NPCs, Forage-Tiles und Zone-Eingaenge.
-   */
-  private refreshHotspotGlows(): void {
-    if (!this.hotspotGlowGraphics) return;
-    const g = this.hotspotGlowGraphics;
-    g.clear();
-
-    const px = this.player?.tileX ?? 0;
-    const py = this.player?.tileY ?? 0;
-    const RADIUS = 3;
-    const now = Date.now();
-    const pulse = 0.35 + 0.15 * Math.sin(now / 600);
-
-    // NPC-Glows
-    for (const npc of this.npcs) {
-      const dx = Math.abs(npc.data.tileX - px);
-      const dy = Math.abs(npc.data.tileY - py);
-      if (Math.max(dx, dy) <= RADIUS) {
-        const wx = npc.data.tileX * TILE_SIZE + TILE_SIZE / 2;
-        const wy = npc.data.tileY * TILE_SIZE + TILE_SIZE / 2;
-        g.fillStyle(0xfcd95c, pulse * 0.5);
-        g.fillCircle(wx, wy, TILE_SIZE * 0.55);
-        g.lineStyle(2, 0xfcd95c, pulse);
-        g.strokeCircle(wx, wy, TILE_SIZE * 0.55);
-      }
-    }
-
-    // Forage-Tiles in Naehe (check in 3x3 grid around player)
-    for (let ty = py - RADIUS; ty <= py + RADIUS; ty++) {
-      for (let tx = px - RADIUS; tx <= px + RADIUS; tx++) {
-        const t = this.getTile(tx, ty);
-        if (isForageTile(t)) {
-          const wx = tx * TILE_SIZE + TILE_SIZE / 2;
-          const wy = ty * TILE_SIZE + TILE_SIZE / 2;
-          g.fillStyle(0x9be36e, pulse * 0.35);
-          g.fillCircle(wx, wy, TILE_SIZE * 0.4);
-          g.lineStyle(1, 0x9be36e, pulse * 0.8);
-          g.strokeCircle(wx, wy, TILE_SIZE * 0.4);
-        }
-      }
-    }
-  }
-
-  /**
-   * S-POLISH-B3-R2: Vollbild-Weltkarte mit allen Biomen und Player-Position.
-   */
-  private showWorldMapOverlay(): void {
-    if (this.worldMapOverlay) {
-      this.worldMapOverlay.destroy();
-      this.worldMapOverlay = undefined;
-      return;
-    }
-    const cam = this.cameras.main;
-    const W = cam.width;
-    const H = cam.height;
-    const z = cam.zoom || 1;
-
-    const overlay = this.add.container(W / (2 * z), H / (2 * z));
-    overlay.setScrollFactor(0);
-    overlay.setDepth(3000);
-    overlay.setScale(1 / z);
-    this.worldMapOverlay = overlay;
-
-    // Hintergrund
-    const bg = this.add.rectangle(0, 0, W - 40, H - 40, 0x0a1208, 0.95)
-      .setStrokeStyle(2, 0x9be36e);
-    overlay.add(bg);
-
-    const title = this.add.text(0, -(H - 40) / 2 + 14, 'WELTKARTE (N zum Schliessen)', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#9be36e'
-    }).setOrigin(0.5, 0);
-    overlay.add(title);
-
-    // Biom-Grid (8 Biome)
-    const ZONES_MAP = [
-      { slug: 'wurzelheim', label: 'Wurzelheim',   col: 1, row: 2, color: 0x4a7a3a },
-      { slug: 'verdanto',   label: 'Verdanto',      col: 1, row: 1, color: 0x2e8b57 },
-      { slug: 'kaktoria',   label: 'Kaktoria',      col: 0, row: 2, color: 0xd2a024 },
-      { slug: 'mordwald',   label: 'Mordwald',      col: 2, row: 1, color: 0x4a2d6a },
-      { slug: 'frostkamm', label: 'Frostkamm',     col: 1, row: 0, color: 0x6ab4d4 },
-      { slug: 'salzbucht', label: 'Salzbucht',     col: 2, row: 2, color: 0x1e6e8c },
-      { slug: 'magmabluete', label: 'Magmabluete', col: 0, row: 1, color: 0xc43a2a },
-      { slug: 'glaciara',  label: 'Glaciara',       col: 1, row: -1, color: 0x9de8f0 },
-    ];
-
-    const CELL_W = 110;
-    const CELL_H = 60;
-    const GRID_PAD = 14;
-    const startX = -(CELL_W + GRID_PAD);  // 3 cols centered
-    const startY = -(CELL_H + GRID_PAD) * 1.5;
-
-    for (const zone of ZONES_MAP) {
-      const cx = startX + zone.col * (CELL_W + GRID_PAD);
-      const cy = startY + zone.row * (CELL_H + GRID_PAD);
-      const isCurrentZone = zone.slug === this.currentZone;
-      const cell = this.add.rectangle(cx, cy, CELL_W, CELL_H, zone.color, 0.75)
-        .setStrokeStyle(isCurrentZone ? 3 : 1, isCurrentZone ? 0xfcd95c : 0x444444);
-      const lbl = this.add.text(cx, cy - 8, zone.label, {
-        fontFamily: 'monospace', fontSize: '10px',
-        color: isCurrentZone ? '#fcd95c' : '#dcdcdc'
-      }).setOrigin(0.5);
-      const hint = this.add.text(cx, cy + 6, isCurrentZone ? '▶ Hier' : '', {
-        fontFamily: 'monospace', fontSize: '9px', color: '#fcd95c'
-      }).setOrigin(0.5);
-      overlay.add([cell, lbl, hint]);
-    }
-
-    // Player-Marker in aktuellem Biom
-    const curZone = ZONES_MAP.find((z) => z.slug === this.currentZone);
-    if (curZone) {
-      const mcx = startX + curZone.col * (CELL_W + GRID_PAD);
-      const mcy = startY + curZone.row * (CELL_H + GRID_PAD);
-      const marker = this.add.text(mcx + CELL_W / 2 - 14, mcy - CELL_H / 2 + 4, '★', {
-        fontFamily: 'monospace', fontSize: '16px', color: '#fcd95c'
-      }).setOrigin(0.5, 0);
-      overlay.add(marker);
-    }
-
-    // Close-Button
-    const closeBtn = this.add.text((W - 40) / 2 - 12, -(H - 40) / 2 + 10, 'X', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#888888'
-    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
-    closeBtn.on('pointerdown', () => {
-      overlay.destroy();
-      this.worldMapOverlay = undefined;
-    });
-    overlay.add(closeBtn);
   }
 
   private refreshNpcNameTags(): void {
@@ -895,8 +517,22 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   }
 
   private showZoneToast(zone: string): void {
-    // Tier-3 V0.2: Zone-Toast als Header-Variante des zentralen Helpers.
-    const label = zone.charAt(0).toUpperCase() + zone.slice(1);
+    // S3-Fix (2026-05-10): i18n-Keys für alle Zonen, ZONE_LABELS als Fallback
+    // Keys in de/ui.json + en/ui.json: "overworld.zone.<zone>"
+    const ZONE_LABELS: Record<string, string> = {
+      wurzelheim: '🌿 Wurzelheim',
+      verdanto: '🌲 Verdanto',
+      kaktoria: '🌵 Kaktoria',
+      frostkamm: '❄️ Frostkamm',
+      salzbucht: '🌊 Salzbucht',
+      mordwald: '🍄 Mordwald',
+      glaciara: '🧊 Glaciara',
+      magmabluete: '🔥 Magmablüte',
+    };
+    const i18nKey = `overworld.zone.${zone}`;
+    const translated = t(i18nKey);
+    // i18next gibt den Key zurück wenn er fehlt — Fallback auf ZONE_LABELS
+    const label = translated !== i18nKey ? translated : (ZONE_LABELS[zone] ?? (zone.charAt(0).toUpperCase() + zone.slice(1)));
     const cam = this.cameras.main;
     const toast = showToast(this, label, 'success', {
       cameraZoom: cam.zoom || 1,
@@ -904,7 +540,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       fontSize: '18px',
       padding: { x: 14, y: 6 },
       depth: 1950,
-      duration: 1200,
+      duration: 1400,
       delay: 1500
     });
     this.registerInAllUiCams(toast);
@@ -1057,7 +693,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
         this._lastPlayerTileX = curX;
         this._lastPlayerTileY = curY;
         this.refreshNpcNameTags();
-        this.refreshHotspotGlows();
       }
     }
     // Periodische Position-Speicherung (alle ~2s wenn nicht moving)
@@ -1073,7 +708,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Tagebuch-Hotkey (T)
     if (Phaser.Input.Keyboard.JustDown(this.keyDiary)) {
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-      this.trackStart('DiaryScene');
+      this.scene.start('DiaryScene');
       return;
     }
     // Boss-Battle-Trigger (K-Hotkey): startet aktive boss-quest in current zone
@@ -1085,37 +720,22 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       });
       if (activeBossQuest && activeBossQuest.goal.type === 'defeat-boss') {
         gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-        this.trackStart('BattleScene', { bossId: activeBossQuest.goal.bossId });
+        this.scene.start('BattleScene', { bossId: activeBossQuest.goal.bossId });
         return;
       }
     }
-    // S-POLISH-B3-R2: Hotspot-Glow kontinuierlicher Pulse-Update (alle 100ms)
-    const now2 = Date.now();
-    if (!this.hotspotGlowTimer || now2 - this.hotspotGlowTimer > 100) {
-      this.hotspotGlowTimer = now2;
-      this.refreshHotspotGlows();
-    }
-    // B7-R8: Debug-Overlay tick
-    this.debugOverlay?.tick(delta);
-
-    // S-POLISH-B3-R2: Weltkarte (N-Taste)
-    if (Phaser.Input.Keyboard.JustDown(this.keyN)) {
-      this.showWorldMapOverlay();
-      return;
-    }
-
     // Quest-Log-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyQ)) {
       this.tutorial?.markInteract('quest');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-      this.trackStart('QuestLogScene');
+      this.scene.start('QuestLogScene');
       return;
     }
     // Markt-Hotkey
     if (Phaser.Input.Keyboard.JustDown(this.keyM)) {
       this.tutorial?.markInteract('market');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-      this.trackStart('MarketScene');
+      this.scene.start('MarketScene');
       return;
     }
     // Pokedex-Hotkey
@@ -1139,13 +759,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyI)) {
       sfx.dialogOpen();
-      this.trackStart('InventoryScene');
+      this.scene.start('InventoryScene');
       return;
     }
     if (Phaser.Input.Keyboard.JustDown(this.keyP)) {
       this.tutorial?.markInteract('pokedex');
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'OverworldScene', this.currentZone);
-      this.trackStart('PokedexScene');
+      this.scene.start('PokedexScene');
       return;
     }
     // Interact-Key (Tastatur oder Touch)
@@ -1292,10 +912,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       this.tutorial?.markInteract('npc');
       const hasMetBefore = gameStore.hasMetNpc(npc.data.id);
       gameStore.meetNpc(npc.data.id);
-      // S-POLISH-B2-R8: Hearts-Feedback bei Erstkontakt
-      if (!hasMetBefore) {
-        this.spawnNpcHeartsFeedback(npc.sprite.x, npc.sprite.y - 24, 0xff6b6b);
-      }
       // S-POLISH Run12: Dialog-Rotation - bei bekannten NPCs Zeile shufflen
       let lines: string[];
       if (hasMetBefore && npc.data.dialog.length > 1) {
@@ -1342,8 +958,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
             if (quest.diaryEntry) gameStore.collectDiaryEntry(quest.diaryEntry);
             lines.push('---', `Quest abgeschlossen: ${quest.title}!`, `Belohnung: ${rewardCoins} Gold`);
             if (quest.diaryEntry) lines.push('Neuer Tagebuch-Eintrag (T)!');
-            // S-POLISH-B2-R11: Quest-Abschluss-Toast
-            this.time.delayedCall(200, () => this.showQuestCompleteToast(quest.title, rewardCoins));
           } else {
             lines.push('---', `Aktive Quest: ${quest.title} (noch nicht erfuellt)`);
           }
@@ -1382,8 +996,6 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       const result = gameStore.forageTile(this.currentZone, front.tileX, front.tileY);
       if (result.ok) {
         sfx.dialogOpen();
-        // S-POLISH-B2-R4: Foraging-Find-Animation - Item-Pop
-        this.spawnForagePop(this.player.sprite.x, this.player.sprite.y - 24);
         this.dialog.open([result.toast ?? 'Du hast etwas gefunden!']);
       } else {
         this.dialog.open([result.reason ?? 'Hier ist gerade nichts.']);
@@ -1581,7 +1193,7 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       debugLog('[OverworldScene] door triggered, switching to GardenScene');
       sfx.door();
       gameStore.setOverworldPos(this.player.tileX, this.player.tileY, this.player.facing, 'GardenScene');
-      this.trackStart('GardenScene');
+      this.scene.start('GardenScene');
       return;
     }
     // Map-Edge: Zone-Wechsel
@@ -1622,14 +1234,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
       else if (this.currentZone === 'mordwald') poolKey = 'mordwald-tallgrass';
       else if (this.currentZone === 'magmabluete') poolKey = 'magmabluete-tallgrass';
       else if (this.currentZone === 'glaciara') poolKey = 'glaciara-tallgrass';
-      this.trackStart('BattleScene', { poolKey });
+      this.scene.start('BattleScene', { poolKey });
       return;
     }
-  }
-
-  /** PostHog: scene transition tracker (S-POLISH) */
-  private trackStart(key: string, data?: Record<string, unknown>): void {
-    (window as unknown as { __posthog?: { capture: (e: string, p?: Record<string, unknown>) => void } }).__posthog?.capture('scene_changed', { from: 'OverworldScene', to: key });
-    this.scene.start(key, data);
   }
 }
