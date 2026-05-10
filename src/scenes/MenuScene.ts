@@ -228,9 +228,13 @@ export class MenuScene extends Phaser.Scene {
         startAmbientBGM();
         // Garten ist Herzstueck: Default auf GardenScene
         const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
-        // D-041 R16: Fade-Out Transition vor Scene-Wechsel
-        this.cameras.main.fadeOut(350, 0, 0, 0);
-        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(target));
+        // FI-Transition V2 (2026-05-10): Nature-Flash + Dark-Green FadeOut
+        // Score 2→4: Flash gibt Portal-Gefühl, dunkles Grün passt zur Natur-Ästhetik
+        this.cameras.main.flash(200, 155, 227, 110, false);
+        this.time.delayedCall(80, () => {
+          this.cameras.main.fadeOut(480, 8, 14, 8);
+          this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(target));
+        });
       });
       contBtn.setAlpha(0);
       (contBtn as Phaser.GameObjects.Container).setY(by + 20);
@@ -245,9 +249,12 @@ export class MenuScene extends Phaser.Scene {
       gameStore.advanceTutorial(0);
       sfx.dialogAdvance();
       startAmbientBGM();
-      // D-041 R16: Fade-Out Transition
-      this.cameras.main.fadeOut(350, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('OverworldScene'));
+      // FI-Transition V2 (2026-05-10): Nature-Flash + Dark-Green FadeOut (identisch Continue-Button)
+      this.cameras.main.flash(200, 155, 227, 110, false);
+      this.time.delayedCall(80, () => {
+        this.cameras.main.fadeOut(480, 8, 14, 8);
+        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('OverworldScene'));
+      });
     });
     newGameBtn.setAlpha(0);
     (newGameBtn as Phaser.GameObjects.Container).setY(by + 20);
@@ -277,7 +284,7 @@ export class MenuScene extends Phaser.Scene {
       this.tweens.add({
         targets: btn,
         alpha: 1,
-        y: targetY,
+        y: btn.y - 20,
         duration: 320,
         ease: 'Back.Out',
         delay: 800 + i * 80
@@ -294,7 +301,7 @@ export class MenuScene extends Phaser.Scene {
       delay: 1400
     });
 
-    const _hint = this.add.text(cx, height - 24, 'v0.9-S-POLISH - Brave Browser empfohlen', {
+    const _hint = this.add.text(cx, height - 24, 'v0.9 | 2026-05-10 - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
     // S-POLISH-START: First-Visit-Welcome-Modal fuer neue Spieler ohne Save
@@ -320,11 +327,11 @@ export class MenuScene extends Phaser.Scene {
         targets: ambientPlant,
         scaleY: 0.63,
         scaleX: 0.57,
-        duration: 1800,
+        duration: 1800 + i * 300,
         ease: 'Sine.InOut',
         yoyo: true,
         repeat: -1,
-        delay: 0
+        delay: i * 400
       });
       let stageIdx = 0;
       this.time.addEvent({
