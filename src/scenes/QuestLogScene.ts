@@ -2,10 +2,12 @@ import Phaser from 'phaser';
 import { gameStore } from '../state/gameState';
 import { QUESTS, getQuest } from '../data/quests';
 import { COLOR_REWARD, COLOR_SUCCESS, FONT_FAMILY, FONT_SIZE_SMALL, MODAL_BORDER_COLOR } from '../ui/uiTheme';
+import { t } from '../i18n/index';
 
 /**
  * Quest-Log V2 (B7-R7): Filter (Aktiv/Abgeschlossen), Quest-Complete-Animation,
  * Reward-Reveal, Scroll-Support.
+ * i18n: DE+EN via t() (i18n-Phase-2, 2026-05-11)
  */
 type QuestFilter = 'all' | 'active' | 'completed';
 
@@ -24,7 +26,7 @@ export class QuestLogScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1a2820');
 
-    this.add.text(width / 2, 28, 'Tagebuch', {
+    this.add.text(width / 2, 28, t('ql.title'), {
       fontFamily: FONT_FAMILY, fontSize: '20px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
 
@@ -47,7 +49,7 @@ export class QuestLogScene extends Phaser.Scene {
     const bg = this.add.rectangle(width / 2, backY, 160, 32, 0x000000, 0.7)
       .setStrokeStyle(1, MODAL_BORDER_COLOR)
       .setInteractive({ useHandCursor: true });
-    this.add.text(width / 2, backY, 'Zurueck (B)', {
+    this.add.text(width / 2, backY, t('ql.back'), {
       fontFamily: FONT_FAMILY, fontSize: '12px', color: COLOR_SUCCESS
     }).setOrigin(0.5);
     const back = () => this.scene.start('OverworldScene');
@@ -63,9 +65,9 @@ export class QuestLogScene extends Phaser.Scene {
 
   private buildFilterButtons(width: number): void {
     const modes: { mode: QuestFilter; label: string }[] = [
-      { mode: 'all', label: 'Alle' },
-      { mode: 'active', label: 'Aktiv' },
-      { mode: 'completed', label: 'Abgeschlossen' },
+      { mode: 'all',       label: t('ql.filterAll') },
+      { mode: 'active',    label: t('ql.filterActive') },
+      { mode: 'completed', label: t('ql.filterCompleted') },
     ];
     const totalW = 260;
     const btnW = totalW / modes.length;
@@ -167,24 +169,28 @@ export class QuestLogScene extends Phaser.Scene {
       let progressPct = 0;
       if (g.type === 'capture') {
         const captured = gameStore.getPokedex().captured.includes(g.speciesSlug);
-        progressText = captured ? `Gefangen: ${g.speciesSlug}` : `Noch nicht gefangen: ${g.speciesSlug}`;
+        progressText = captured
+          ? t('ql.progress.captured', { slug: g.speciesSlug })
+          : t('ql.progress.notCaptured', { slug: g.speciesSlug });
         progressPct = captured ? 1 : 0;
       } else if (g.type === 'have-plant') {
         const has = gameStore.get().plants.some((p) => p.speciesSlug === g.speciesSlug);
-        progressText = has ? 'Pflanze vorhanden' : 'Pflanze fehlt';
+        progressText = has ? t('ql.progress.hasPlant') : t('ql.progress.noPlant');
         progressPct = has ? 1 : 0;
       } else if (g.type === 'have-item') {
         const have = inv[g.itemSlug] ?? 0;
         const need = g.count ?? 1;
-        progressText = `Bestand: ${have} / ${need}`;
+        progressText = t('ql.progress.have', { have: String(have), need: String(need) });
         progressPct = Math.min(1, have / need);
       } else if (g.type === 'discover') {
         const disc = gameStore.getPokedex().discovered.includes(g.speciesSlug);
-        progressText = disc ? 'Entdeckt' : 'Noch nicht entdeckt';
+        progressText = disc ? t('ql.progress.discovered') : t('ql.progress.notDiscovered');
         progressPct = disc ? 1 : 0;
       } else if (g.type === 'reach-zone') {
         const visited = gameStore.get().overworld?.zone === g.zone;
-        progressText = visited ? `Zone erreicht: ${g.zone}` : `Zone: ${g.zone}`;
+        progressText = visited
+          ? t('ql.progress.zoneReached', { zone: g.zone })
+          : t('ql.progress.zoneNotReached', { zone: g.zone });
         progressPct = visited ? 1 : 0;
       }
 
@@ -213,11 +219,12 @@ export class QuestLogScene extends Phaser.Scene {
     }
 
     if (count === 0) {
-      const emptyTxt = this.add.text(0, 20, this.filterMode === 'all'
-        ? 'Noch keine Quests aktiv. Sprich mit NPCs.'
-        : `Keine ${this.filterMode === 'active' ? 'aktiven' : 'abgeschlossenen'} Quests.`,
-        { fontFamily: FONT_FAMILY, fontSize: '12px', color: '#8a6e4a' }
-      ).setOrigin(0.5);
+      const emptyMsg = this.filterMode === 'all'
+        ? t('ql.emptyAll')
+        : this.filterMode === 'active' ? t('ql.emptyActive') : t('ql.emptyCompleted');
+      const emptyTxt = this.add.text(0, 20, emptyMsg, {
+        fontFamily: FONT_FAMILY, fontSize: '12px', color: '#8a6e4a'
+      }).setOrigin(0.5);
       const containerX = this.add.container(width / 2, 0);
       containerX.add(emptyTxt);
       this.listContainer.add(containerX);
