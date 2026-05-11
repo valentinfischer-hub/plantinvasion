@@ -301,7 +301,8 @@ export class MenuScene extends Phaser.Scene {
       delay: 1400
     });
 
-    const _hint = this.add.text(cx, height - 24, 'v0.9 | 2026-05-10 - Brave Browser empfohlen', {
+    // FI-Boot-Time R22: TS-Fix — kein const-Assignment, add.text hat Side-Effect (Render)
+    this.add.text(cx, height - 24, 'v0.9 | 2026-05-11 - Brave Browser empfohlen', {
       fontFamily: 'monospace', fontSize: '10px', color: '#553e2d'
     }).setOrigin(0.5);
     // S-POLISH-START: First-Visit-Welcome-Modal fuer neue Spieler ohne Save
