@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { loadGame } from '../state/storage';
 import { gameStore } from '../state/gameState';
-import { startAmbientBGM, sfx } from '../audio/sfxGenerator';
+import { sfx } from '../audio/sfxGenerator';
+import { startTitleBGM, stopTitleBGM } from '../audio/titleBgm';
 import { t } from '../i18n/index';
 
 /**
@@ -160,10 +161,41 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
+    // FI Art-UI R1 2026-05-11: Blütenstaub-Partikel-Hintergrund (max 30, 60fps-safe)
+    // Pollen-Dot-Textur dynamisch erzeugen (kein Atlas-Datei-Request)
+    if (!this.textures.exists('pollen_dot')) {
+      const gfx = this.make.graphics({ x: 0, y: 0, add: false });
+      gfx.fillStyle(0xffffff, 1);
+      gfx.fillCircle(4, 4, 4);
+      gfx.generateTexture('pollen_dot', 8, 8);
+      gfx.destroy();
+    }
+    // Partikel: driften langsam von unten nach oben, random X, max 30 aktiv
+    this.add.particles(cx, height + 10, 'pollen_dot', {
+      x: { min: -cx + 20, max: cx - 20 },
+      y: 0,
+      speedX: { min: -12, max: 12 },
+      speedY: { min: -22, max: -8 },
+      scale: { start: 0.9, end: 0.2 },
+      alpha: { start: 0.55, end: 0 },
+      lifespan: { min: 5000, max: 9000 },
+      quantity: 1,
+      frequency: 450,
+      maxParticles: 30,
+      tint: [0xfcd95c, 0x9be36e, 0xf4a832, 0xd4f5a0],
+      blendMode: 'ADD'
+    }).setDepth(1);
+
     // S-POLISH-START: Logo-Reveal-Animation
+    // FI Art-UI R1: verbesserte Schrift-Qualität (Stroke + Shadow für Logo-Charakter)
     const title = this.add.text(cx, plantY + 75, 'Plantinvasion', {
-      fontFamily: 'monospace', fontSize: '36px', color: '#9be36e'
-    }).setOrigin(0.5);
+      fontFamily: 'monospace',
+      fontSize: '36px',
+      color: '#9be36e',
+      stroke: '#1a4a0e',
+      strokeThickness: 4,
+      shadow: { offsetX: 2, offsetY: 3, color: '#000000', blur: 8, stroke: true, fill: true }
+    }).setOrigin(0.5).setDepth(2);
     this.tweens.killTweensOf(title);
     title.setAlpha(0);
     title.setScale(0.7);
@@ -184,6 +216,35 @@ export class MenuScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
       delay: 900
+    });
+
+    // FI Art-UI R1 2026-05-11: Sweep-Gloss-Tween nach 1.5s (Pokemon-Red Referenz)
+    // Ein heller Streifen gleitet einmalig von links nach rechts über den Titel-Text
+    this.time.delayedCall(1500, () => {
+      const titleBounds = title.getBounds();
+      const gloss = this.add.rectangle(
+        titleBounds.left - 20, titleBounds.centerY,
+        20, titleBounds.height + 10,
+        0x9be36e, 0
+      ).setOrigin(0, 0.5).setDepth(3).setBlendMode(Phaser.BlendModes.ADD);
+      // Phase 1: fade in + sweep right
+      this.tweens.add({
+        targets: gloss,
+        x: titleBounds.right + 20,
+        alpha: 0.7,
+        duration: 220,
+        ease: 'Cubic.In',
+        onComplete: () => {
+          // Phase 2: fade out am Ende
+          this.tweens.add({
+            targets: gloss,
+            alpha: 0,
+            duration: 120,
+            ease: 'Cubic.Out',
+            onComplete: () => gloss.destroy()
+          });
+        }
+      });
     });
 
     // S-POLISH-START: Subtitle-Rotation (3 Taglines im Loop, je 3.5s sichtbar plus 0.5s Cross-Fade)
@@ -225,7 +286,7 @@ export class MenuScene extends Phaser.Scene {
     if (save) {
       const contBtn = this.makeButton(cx, by, t('menu.continue'), '#9be36e', () => {
         sfx.dialogAdvance();
-        startAmbientBGM();
+        stopTitleBGM(480); // Cross-Fade: Title-BGM ausfaden synchron mit Kamera-Fade
         // Garten ist Herzstueck: Default auf GardenScene
         const target = save.overworld?.lastSceneVisited ?? 'GardenScene';
         // FI-Transition V2 (2026-05-10): Nature-Flash + Dark-Green FadeOut
@@ -248,7 +309,7 @@ export class MenuScene extends Phaser.Scene {
       gameStore.resetToNewGame();
       gameStore.advanceTutorial(0);
       sfx.dialogAdvance();
-      startAmbientBGM();
+      stopTitleBGM(480); // Cross-Fade parallel zur Kamera-Animation
       // FI-Transition V2 (2026-05-10): Nature-Flash + Dark-Green FadeOut (identisch Continue-Button)
       this.cameras.main.flash(200, 155, 227, 110, false);
       this.time.delayedCall(80, () => {
@@ -310,10 +371,11 @@ export class MenuScene extends Phaser.Scene {
       this.time.delayedCall(1500, () => this.showWelcomeModal());
     }
 
-    // S-POLISH-START: Auto-Ambient-BGM nach 2s damit Hauptmenue Atmosphaere bekommt
-    // (mit Try-Catch fuer Browser-Autoplay-Block, dann erst beim ersten Button-Click)
-    this.time.delayedCall(2000, () => {
-      try { startAmbientBGM(); } catch { /* Browser-Autoplay-Block, BGM startet bei erstem Click */ }
+    // FI-Run 2026-05-11: Title-BGM (D-Dur Major-7-Pad) ersetzt generischen Ambient-Drone.
+    // Fade-In über 2s. Bei Autoplay-Block startet BGM beim ersten Button-Interaction.
+    // Score-Ziel: FI-Item "Title-BGM (erste 10s)" 1->4.
+    this.time.delayedCall(200, () => {
+      try { startTitleBGM(2000); } catch { /* Autoplay-Block: BGM startet bei erstem Klick */ }
     });
 
     // S-POLISH-START: Atmospheric Plant-Growth-Loop hinten links
@@ -324,15 +386,16 @@ export class MenuScene extends Phaser.Scene {
       const stages = ['sonnenherz_stage_0_seed.webp', 'sonnenherz_stage_1_sprout.webp', 'sonnenherz_stage_2_juvenile.webp', 'sonnenherz_stage_3_adult.webp'];
       const ambientPlant = this.add.image(plantX, plantY, 'plants_sprint_0', stages[0]).setOrigin(0.5, 1).setScale(0.6).setAlpha(0.7);
       // D-041 Run9: Idle-Breathing fuer Ambient-Plants
+      // FI Art-UI R1: i-Variable-Bug behoben (war undefiniert in diesem Scope)
       this.tweens.add({
         targets: ambientPlant,
         scaleY: 0.63,
         scaleX: 0.57,
-        duration: 1800 + i * 300,
+        duration: 1800,
         ease: 'Sine.InOut',
         yoyo: true,
         repeat: -1,
-        delay: i * 400
+        delay: 200
       });
       let stageIdx = 0;
       this.time.addEvent({
