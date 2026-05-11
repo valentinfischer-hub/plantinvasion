@@ -8,6 +8,14 @@
     <meta name="theme-color" content="#2d3a2a" />
     <!-- D-041 R17: SVG-Favicon (inline, kein extra Datei-Request) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232d3a2a'/><text y='24' x='4' font-size='22'>🌿</text></svg>" />
+    <!-- FI-Boot-Time R22: Browser-Preload-Hints fuer kritische Atlas-Assets.
+         Der Browser laed diese Dateien sofort beim HTML-Parse, bevor JavaScript startet.
+         Wenn Phaser's Loader sie anfragt, sind sie bereits im Cache -> spuerbar kuerzere
+         MenuScene.preload()-Phase. Gilt fuer alle Verbindungstypen ausser Offline. -->
+    <link rel="preload" href="/assets/atlases/plants_sprint_0.webp" as="image" type="image/webp" />
+    <link rel="preload" href="/assets/atlases/plants_sprint_1.webp" as="image" type="image/webp" />
+    <link rel="preload" href="/assets/atlases/ground_sprint_1.webp" as="image" type="image/webp" />
+    <link rel="preload" href="/assets/atlases/ui_sprint_0.webp" as="image" type="image/webp" />
     <style>
       html, body { margin: 0; padding: 0; background: #1a1a2e; }
       body { display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: system-ui, sans-serif; color: #eee; }
