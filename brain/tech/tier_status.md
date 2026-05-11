@@ -2,6 +2,7 @@
 
 **Letzter Smoke:** 2026-04-30 QA-Run5 (5x-Session Browser-Smoke)
 **Letzter Feature-Run:** 2026-05-11 (R22) — Boot-Time + 60-FPS-Lock FI-Updates
+**Letzter Polish-Run:** 2026-05-11 12:00 — i18n Phase 2 CCS + QuestLogScene
 
 ---
 
@@ -73,8 +74,8 @@
 - i18n Phase 2 HelpScene UI: KOMPLETT (Run 3, 2 Keys, Data defer Open-Beta)
 - i18n Phase 2 DiaryScene UI: KOMPLETT (Run 4, 3 Keys, Data defer Open-Beta)
 - i18n Phase 2 InventoryScene UI: KOMPLETT (Run 4, 2 Keys)
-- i18n Phase 2 CharacterCreationScene: OFFEN (8 add.text noch hardcoded)
-- i18n Phase 2 QuestLogScene: OFFEN (8 add.text noch hardcoded)
+- i18n Phase 2 CharacterCreationScene: ✅ KOMPLETT (Run 12:00 2026-05-11, 7 Keys in DE+EN, ccs.* vollständig)
+- i18n Phase 2 QuestLogScene: ✅ KOMPLETT (Run 12:00 2026-05-11, 10 Keys in DE+EN, ql.* vollständig)
 - i18n Phase 2 OverworldScene Zonen-Keys: OFFEN (ow.zone.* Raw-Keys sichtbar)
 - i18n Phase 2 OverworldScene Sign-Dialogs: Deferred Open-Beta
 - TutorialOverlay i18n-Migration: pending, braucht Feature-Run-Spec
