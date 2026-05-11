@@ -187,35 +187,95 @@ export class MenuScene extends Phaser.Scene {
     }).setDepth(1);
 
     // S-POLISH-START: Logo-Reveal-Animation
-    // FI Art-UI R1: verbesserte Schrift-Qualität (Stroke + Shadow für Logo-Charakter)
-    const title = this.add.text(cx, plantY + 75, 'Plantinvasion', {
+    // FI Art-UI R2 (2026-05-11): Pixel-Art Logo-Styling — warmes Off-White, Pixel-Outline ohne Blur,
+    // Leaf-Dekorationen, koordinierte 4-Element-Entrance, Idle-Glow-Puls, Pollen-Burst.
+    // Score: 3 -> 4 (Art-UI Handoff 2026-05-11).
+    const titleY = plantY + 75;
+    const title = this.add.text(cx, titleY - 30, 'Plantinvasion', {
       fontFamily: 'monospace',
-      fontSize: '36px',
-      color: '#9be36e',
-      stroke: '#1a4a0e',
-      strokeThickness: 4,
-      shadow: { offsetX: 2, offsetY: 3, color: '#000000', blur: 8, stroke: true, fill: true }
-    }).setOrigin(0.5).setDepth(2);
-    this.tweens.killTweensOf(title);
-    title.setAlpha(0);
-    title.setScale(0.7);
+      fontSize: '42px',
+      color: '#f4e8c1',
+      stroke: '#2c1f0e',
+      strokeThickness: 6,
+      shadow: { offsetX: 3, offsetY: 4, color: '#1a0f00', blur: 0, fill: true }
+    }).setOrigin(0.5).setDepth(2).setAlpha(0);
+
+    // Leaf-Dekorationen links + rechts (starten eingefahren, fliegen raus)
+    const leafL = this.add.text(cx - 165, titleY + 2, '🌿', { fontSize: '26px' })
+      .setOrigin(0.5).setAlpha(0).setDepth(2);
+    const leafR = this.add.text(cx + 165, titleY + 2, '🌿', { fontSize: '26px' })
+      .setOrigin(0.5).setAlpha(0).setDepth(2);
+
+    // Statische Tagline — ersetzt Subtitle-Rotation (Schritt C der Entrance)
+    const tagline = this.add.text(
+      cx, titleY + 38,
+      '― Sammle • Kreuze • Entdecke ―',
+      { fontFamily: 'monospace', fontSize: '9px', color: '#9abd7a' }
+    ).setOrigin(0.5).setAlpha(0).setDepth(2);
+
+    // 4-Element koordinierte Entrance-Sequenz
+    // Schritt A: Title faellt rein (300ms Delay)
     this.tweens.add({
       targets: title,
       alpha: 1,
-      scale: 1,
-      duration: 700,
+      y: titleY,
       ease: 'Back.Out',
-      delay: 100
+      duration: 700,
+      delay: 300,
+      easeParams: [2.0]
     });
-    // Subtle Idle-Float auf Title nach Reveal
+    // Schritt B: Leaves fliegen rein (400ms Delay)
     this.tweens.add({
-      targets: title,
-      y: title.y + 4,
-      duration: 2400,
-      ease: 'Sine.InOut',
-      yoyo: true,
-      repeat: -1,
-      delay: 900
+      targets: leafL,
+      alpha: 1,
+      x: cx - 185,
+      ease: 'Back.Out',
+      duration: 500,
+      delay: 400
+    });
+    this.tweens.add({
+      targets: leafR,
+      alpha: 1,
+      x: cx + 185,
+      ease: 'Back.Out',
+      duration: 500,
+      delay: 400
+    });
+    // Schritt C: Tagline erscheint (800ms Delay)
+    this.tweens.add({
+      targets: tagline,
+      alpha: 0.85,
+      ease: 'Linear',
+      duration: 400,
+      delay: 800
+    });
+    // Schritt D: Idle-Glow-Puls nach Entrance (1100ms) — Alpha-Puls statt Color-Tween (Performance)
+    this.time.delayedCall(1100, () => {
+      this.tweens.add({
+        targets: title,
+        alpha: { from: 1.0, to: 0.88 },
+        ease: 'Sine.InOut',
+        duration: 2400,
+        yoyo: true,
+        repeat: -1
+      });
+    });
+    // Pollen-Burst beim Title-Erscheinen (650ms = ca. 50% der Entrance-Animation)
+    this.time.delayedCall(650, () => {
+      if (this.textures.exists('pollen_dot')) {
+        const burst = this.add.particles(cx, titleY, 'pollen_dot', {
+          speed: { min: 40, max: 120 },
+          angle: { min: -110, max: -70 },
+          scale: { start: 0.8, end: 0 },
+          alpha: { start: 0.9, end: 0 },
+          lifespan: 1200,
+          quantity: 18,
+          emitting: false,
+          tint: [0xfcd95c, 0x9be36e, 0xf4e8c1]
+        });
+        burst.explode(18);
+        this.time.delayedCall(1500, () => burst.destroy());
+      }
     });
 
     // FI Art-UI R1 2026-05-11: Sweep-Gloss-Tween nach 1.5s (Pokemon-Red Referenz)
@@ -247,36 +307,6 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    // S-POLISH-START: Subtitle-Rotation (3 Taglines im Loop, je 3.5s sichtbar plus 0.5s Cross-Fade)
-    const taglines = ['Cozy Botanik-RPG', 'Pflanzen-Sammler-Hybrid', 'Stardew trifft Pokemon'];
-    const subtitle = this.add.text(cx, plantY + 110, taglines[0], {
-      fontFamily: 'monospace', fontSize: '12px', color: '#8a6e4a'
-    }).setOrigin(0.5);
-    subtitle.setAlpha(0);
-    this.tweens.add({
-      targets: subtitle,
-      alpha: 1,
-      duration: 600,
-      delay: 600
-    });
-    let taglineIndex = 0;
-    this.time.addEvent({
-      delay: 4000,
-      loop: true,
-      callback: () => {
-        this.tweens.add({
-          targets: subtitle,
-          alpha: 0,
-          duration: 400,
-          ease: 'Cubic.Out',
-          onComplete: () => {
-            taglineIndex = (taglineIndex + 1) % taglines.length;
-            subtitle.setText(taglines[taglineIndex]);
-            this.tweens.add({ targets: subtitle, alpha: 1, duration: 400, ease: 'Cubic.Out' });
-          }
-        });
-      }
-    });
 
     const save = loadGame();
 
@@ -417,7 +447,7 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    void _hint; void _settingsBtn; void _helpBtn; void newGameBtn; void title; void subtitle;
+    void _settingsBtn; void _helpBtn; void newGameBtn; void title; void tagline; void leafL; void leafR;
   }
 
   private showWelcomeModal(): void {
@@ -512,6 +542,12 @@ export class MenuScene extends Phaser.Scene {
 
     overlay.setAlpha(0);
     this.tweens.add({ targets: overlay, alpha: 1, duration: 400, ease: 'Cubic.Out' });
+  }
+
+  shutdown(): void {
+    // Cleanup: alle Tweens + Timer der MenuScene beenden (kein Memory-Leak beim Scene-Wechsel)
+    this.tweens.killAll();
+    this.time.removeAllEvents();
   }
 
   private makeButton(x: number, y: number, label: string, accent: string, onClick: () => void): Phaser.GameObjects.Container {
