@@ -10,13 +10,13 @@ Alles was der Spieler in den **ersten 5 Minuten** sieht, hört, anklickt oder sp
 
 | Item | Phase | Domäne | Score | Iterationen | Letztes Update | Verantwortlich |
 |---|---|---|---|---|---|---|
-| Browser-Tab-Title plus Favicon | 0-2s | Art-UI plus Tech-Code | 2 | 0 | n/a | Art-UI |
+| Browser-Tab-Title plus Favicon | 0-2s | Art-UI plus Tech-Code | 5 | 1 | 2026-05-11 | Art-UI |
 | Boot-Time bis Title-Screen | 0-3s | Tech-Code | 5 | 4 | 2026-05-11 | Tech-Code |
 | Loading-Indicator-Animation | 0-3s | Art-UI | 3 | 1 | 2026-04-27 | Art-UI |
-| Title-Screen-Logo | 3-5s | Art-UI | 2 | 0 | n/a | Art-UI |
+| Title-Screen-Logo | 3-5s | Art-UI | 3 | 1 | 2026-05-11 | Art-UI |
 | Title-BGM (erste 10s) | 3-15s | Narrative-Sound | 1 | 0 | n/a | Narrative-Sound |
 | MenuScene-Layout | 5-15s | Art-UI plus Tech-Code | 4 | 4 | 2026-04-29 | Art-UI plus Tech-Code |
-| New-Game-Button-Hover plus Press | 10-15s | Art-UI | 2 | 1 | 2026-04-26 | Art-UI |
+| New-Game-Button-Hover plus Press | 10-15s | Art-UI | 4 | 2 | 2026-05-11 | Art-UI |
 | MenuScene-zu-GameScene-Transition | 15-20s | Art-UI plus Tech-Code | 4 | 1 | 2026-05-10 | Art-UI plus Tech-Code |
 | FTUE-Schritt 1 (Begrüssung) | 20-40s | Narrative-Sound plus Design-Balance | 2 | 1 | 2026-04-26 | Design-Balance |
 | FTUE-Schritt 2 (Bewegung) | 40-60s | Design-Balance plus Tech-Code | 2 | 1 | 2026-04-26 | Design-Balance |
