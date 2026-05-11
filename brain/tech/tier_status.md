@@ -25,7 +25,7 @@
 ---
 
 ## Tier 2: Garten-Experience
-**Status:** GRÜN
+**Status:** GRÜN (B-033+B-034 RESOLVED 2026-05-11 08:xx)
 **Smoke-Datum:** 2026-04-30 08:00 (QA-Run7/10 — manuelle Browser-Verifikation)
 **Ergebnis:**
 - GardenScene via G-Taste öffnet korrekt — PASS

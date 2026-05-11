@@ -1,11 +1,11 @@
 # Agent Coordination
 
 ## Tech-Code-Run idle
-- Run-ID: 2026-05-11_16:00_Polish
-- Status: ABGESCHLOSSEN — FI Art-UI R2 Title-Logo + FTUE Handoff-Response
-- Commits: cdbabd5 (feat/menu title-logo), 8b7d8cf (docs/ftue handoff-response)
-- Tier-Fokus: Tier 5 Polish (FI Art-UI Score 3→4)
-- Nächster geplanter Run: 20:00 QA-Run (Browser-Smoke + B-027-Verifikation)
+- Run-ID: 2026-05-12_08:00_Feature
+- Status: ABGESCHLOSSEN — B-033 Camera-Fade + B-034 Säen-Mojibake + B-036 Quota-Toast
+- Commits: 0688106 (fix garden), 76e68ee (fix storage)
+- Tier-Fokus: Tier 2 (Garten-Experience, P1-Blocker B-033 cleared)
+- Nächster geplanter Run: 12:00 Feature-Run (weitere GardenScene i18n-Migration)
 
 ## Letzter Run (2026-05-11 12:00 — Polish)
 - DE ui.json: +17 Keys (ccs.* + ql.*) — Commit 869f7745

@@ -93,3 +93,66 @@
 
 **Tests:** Kein Vitest (Sandbox disk-full + Phaser-Scene nicht unit-testbar). Naechster 20:00-QA-Run:
 Browser-Smoke mit explizitem Background-Tab-Test als Verifikation.
+
+---
+
+### B-033 RESOLVED 2026-05-11
+**Title:** GardenScene Camera-Fade bleibt dunkel — Phaser-Tween-Zeit bei niedrigem FPS nicht komplett.
+
+**Symptom:**
+- Beim Betreten der GardenScene aus der OverworldScene bleibt der Screen bei ~10% Helligkeit.
+- Phaser `cameras.main.fadeIn(300)` nutzt Game-Loop-Zeit (rAF-gebunden).
+- Bei 5-8fps (Low-End / MCP) dauert ein 300ms-Phaser-Tween bis zu 4 Sekunden wall-clock.
+
+**Fix (2026-05-11 08:00, Tech-Code):**
+- fadeIn auf 150ms reduziert.
+- `window.setTimeout(500ms)` Safety-Net: ruft `cameras.main.resetFX()` auf falls Tween nicht
+  via `camerafadeincomplete` abgeschlossen. clearTimeout bei normalem Abschluss.
+- `events.once('destroy')` Cleanup verhindert Memory-Leak bei Scene-Teardown.
+
+**Commit:** `0688106` (2026-05-11 08:xx, gepusht auf origin/main)
+
+---
+
+### B-034 RESOLVED 2026-05-11
+**Title:** Säen-Button zeigt "SÄ=en" — Umlaut-Encoding-Bug im GardenScene-Text.
+
+**Symptom:**
+- Der "Säen"-Button im Garten-UI zeigt "SÄ=en" statt "Säen".
+- `'SÃ¤en'` war Mojibake (Latin-1 vs UTF-8 Mismatch) in der hardcodierten String-Konstante.
+
+**Fix (2026-05-11 08:00, Tech-Code):**
+- GardenScene importiert jetzt `t()` aus `../i18n/index`.
+- Button-Text ersetzt durch `t('garden.seedBtn')`.
+- Key `garden.seedBtn`: DE = "Säen", EN = "Sow" in beide ui.json ergänzt.
+- Kein Mojibake-Risiko mehr da i18n-System UTF-8 nativ verarbeitet.
+
+**Commit:** `0688106` (2026-05-11 08:xx, gepusht auf origin/main)
+
+---
+
+### B-035 RESOLVED (war bereits implementiert) 2026-05-11
+**Title:** Kein try/catch um localStorage.getItem + JSON.parse — korrupter Save crasht Spielstart.
+
+**Analyse (2026-05-11 08:00, Tech-Code):**
+- `storage.ts loadGame()` hat bereits zwei getrennte try/catch-Blöcke: einen für
+  `localStorage.getItem` und einen für `JSON.parse`. Crash-Schutz war bereits vorhanden.
+- Bei korruptem Save: PostHog-Event `save_corrupted` + `return null` (→ neues Spiel).
+- Kein User-Toast fehlte noch — wurde im selben Run via B-036 mitbehandelt.
+
+**Status:** War ein False-Positive. Crash-Protection bereits seit S-POLISH Run10 aktiv.
+
+---
+
+### B-036 RESOLVED 2026-05-11
+**Title:** Kein User-Feedback bei QuotaExceededError beim Speichern.
+
+**Fix (2026-05-11 08:00, Tech-Code):**
+- `saveGame()` erkennt `DOMException` mit Name `QuotaExceededError` / `NS_ERROR_DOM_QUOTA_REACHED`.
+- `window.dispatchEvent(new CustomEvent('plantinvasion:save-quota-exceeded'))` (decoupled von Scene).
+- GardenScene.create() lauscht auf dieses Event, zeigt `showToast(t('errors.saveQuota'), 'error', {duration:4000})`.
+- `events.once('shutdown')` räumt Listener auf.
+- `errors.saveQuota`: DE = "Speicher voll — bitte Browser-Speicher leeren.", EN = "Storage full — please clear browser storage."
+- Sentry-captureException erhält `isQuota`-Flag im Context.
+
+**Commit:** `76e68ee` (2026-05-11 08:xx, gepusht auf origin/main)
