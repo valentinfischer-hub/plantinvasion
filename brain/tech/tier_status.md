@@ -2,7 +2,7 @@
 
 **Letzter Smoke:** 2026-04-30 QA-Run5 (5x-Session Browser-Smoke)
 **Letzter Feature-Run:** 2026-05-11 (R22) — Boot-Time + 60-FPS-Lock FI-Updates
-**Letzter Polish-Run:** 2026-05-11 12:00 — i18n Phase 2 CCS + QuestLogScene
+**Letzter Polish-Run:** 2026-05-11 16:00 — FI Art-UI R2 Title-Logo (Score 3→4) + FTUE Handoff-Response
 
 ---
 
@@ -75,6 +75,7 @@
 - i18n Phase 2 DiaryScene UI: KOMPLETT (Run 4, 3 Keys, Data defer Open-Beta)
 - i18n Phase 2 InventoryScene UI: KOMPLETT (Run 4, 2 Keys)
 - i18n Phase 2 CharacterCreationScene: ✅ KOMPLETT (Run 12:00 2026-05-11, 7 Keys in DE+EN, ccs.* vollständig)
+- FI Art-UI R2 Title-Logo MenuScene: ✅ KOMPLETT (Run 16:00 2026-05-11, Score 3→4, Pixel-Art Styling + 4-Element-Entrance + Leaf-Deko + Pollen-Burst + Idle-Glow)
 - i18n Phase 2 QuestLogScene: ✅ KOMPLETT (Run 12:00 2026-05-11, 10 Keys in DE+EN, ql.* vollständig)
 - i18n Phase 2 OverworldScene Zonen-Keys: OFFEN (ow.zone.* Raw-Keys sichtbar)
 - i18n Phase 2 OverworldScene Sign-Dialogs: Deferred Open-Beta

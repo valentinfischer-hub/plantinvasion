@@ -1,11 +1,11 @@
 # Agent Coordination
 
 ## Tech-Code-Run idle
-- Run-ID: 2026-05-11_12:00_B027
-- Status: ABGESCHLOSSEN — B-027 SplashScene Background-Tab-Fix committed
-- Commits: 03f765e (fix/splash B-027), 8c31e42 (docs/brain)
-- Tier-Fokus: Tier 1 Override (FTUE-Blocker B-027)
-- Nächster geplanter Run: 16:00 Polish-Run
+- Run-ID: 2026-05-11_16:00_Polish
+- Status: ABGESCHLOSSEN — FI Art-UI R2 Title-Logo + FTUE Handoff-Response
+- Commits: cdbabd5 (feat/menu title-logo), 8b7d8cf (docs/ftue handoff-response)
+- Tier-Fokus: Tier 5 Polish (FI Art-UI Score 3→4)
+- Nächster geplanter Run: 20:00 QA-Run (Browser-Smoke + B-027-Verifikation)
 
 ## Letzter Run (2026-05-11 12:00 — Polish)
 - DE ui.json: +17 Keys (ccs.* + ql.*) — Commit 869f7745
