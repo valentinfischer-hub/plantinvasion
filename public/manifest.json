@@ -1,0 +1,19 @@
+{
+  "name": "Plantinvasion — Cozy Botanik-RPG",
+  "short_name": "Plantinvasion",
+  "description": "Züchte seltene Pflanzen, kreuze Hybriden und entdecke fünf Biome.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1a2820",
+  "theme_color": "#2d3a2a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"]
+}
