@@ -6,6 +6,11 @@ import Phaser from 'phaser';
  * - Neue User: voller Splash 3.5s mit Logo-Reveal + Pollen-Drift
  * - Returning User (localStorage 'pi_visited'): Auto-Skip nach 800ms (FI-Boost)
  * - Klick/Taste: sofortiger Skip immer verfuegbar
+ *
+ * B-027 Fix (2026-05-11): window.setTimeout statt this.time.delayedCall.
+ * Phaser's delayedCall basiert auf requestAnimationFrame, das Chrome/Firefox
+ * in Background-Tabs auf ~1fps drosselt. window.setTimeout feuert zuverlaessig
+ * auch im Hintergrund. visibilitychange-Safety-Net setzt Timer bei Tab-Focus neu.
  */
 export class SplashScene extends Phaser.Scene {
   constructor() {
@@ -62,13 +67,44 @@ export class SplashScene extends Phaser.Scene {
     const splashDuration = isReturning ? 800 : 3500;
     try { localStorage.setItem('pi_visited', '1'); } catch { /* ignore */ }
 
+    // B-027: wall-clock Startzeit fuer visibilitychange-Restzeit-Berechnung
+    const wallStart = Date.now();
     let switched = false;
+    let splashTimerId: ReturnType<typeof setTimeout> | null = null;
+
     const goToMenu = () => {
       if (switched) return;
       switched = true;
+      if (splashTimerId !== null) {
+        clearTimeout(splashTimerId);
+        splashTimerId = null;
+      }
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       this.cameras.main.fadeOut(150, 0, 0, 0);
-      this.time.delayedCall(160, () => this.scene.start('MenuScene'));
+      // B-027: window.setTimeout statt Phaser-Zeit fuer Fade-Uebergang
+      setTimeout(() => {
+        try { this.scene.start('MenuScene'); } catch { /* scene schon weg */ }
+      }, 160);
     };
+
+    // B-027: visibilitychange-Safety-Net — bei Tab-Focus Restzeit pruefen
+    const onVisibilityChange = () => {
+      if (document.hidden || switched) return;
+      const elapsed = Date.now() - wallStart;
+      if (elapsed >= splashDuration) {
+        goToMenu();
+      } else {
+        if (splashTimerId !== null) clearTimeout(splashTimerId);
+        splashTimerId = setTimeout(goToMenu, splashDuration - elapsed);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    // Cleanup bei Scene-Destroy (z.B. Hard-Reload)
+    this.events.once('destroy', () => {
+      if (splashTimerId !== null) clearTimeout(splashTimerId);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    });
 
     if (isReturning) {
       // D-041 R21: Returning-User — schneller aber nicht kahl
@@ -87,7 +123,8 @@ export class SplashScene extends Phaser.Scene {
       }
       this.input.on('pointerdown', goToMenu);
       this.input.keyboard?.on('keydown', goToMenu);
-      this.time.delayedCall(splashDuration, goToMenu);
+      // B-027: window.setTimeout statt this.time.delayedCall
+      splashTimerId = setTimeout(goToMenu, splashDuration);
       return;
     }
 
@@ -214,6 +251,7 @@ export class SplashScene extends Phaser.Scene {
 
     this.input.on('pointerdown', goToMenu);
     this.input.keyboard?.on('keydown', goToMenu);
-    this.time.delayedCall(splashDuration, goToMenu);
+    // B-027: window.setTimeout statt this.time.delayedCall
+    splashTimerId = setTimeout(goToMenu, splashDuration);
   }
 }
