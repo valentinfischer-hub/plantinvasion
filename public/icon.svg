@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Plantinvasion Icon: Stilisierte Sonnenblume (Sonnenherz-Spezies) -->
+  <!-- Hintergrund: Forest-Green gerundet -->
+  <rect width="512" height="512" rx="112" fill="#2d3a2a"/>
+
+  <!-- Blütenblätter: 8 Stück alternierend gelb/orange -->
+  <!-- Cardinal petals (yellow) -->
+  <ellipse cx="256" cy="140" rx="34" ry="68" fill="#fcd95c"/>
+  <ellipse cx="256" cy="372" rx="34" ry="68" fill="#fcd95c"/>
+  <ellipse cx="140" cy="256" rx="68" ry="34" fill="#fcd95c"/>
+  <ellipse cx="372" cy="256" rx="68" ry="34" fill="#fcd95c"/>
+
+  <!-- Diagonal petals (orange/warm) -->
+  <ellipse cx="175" cy="175" rx="34" ry="68" fill="#f4a832" transform="rotate(-45 175 175)"/>
+  <ellipse cx="337" cy="175" rx="34" ry="68" fill="#f4a832" transform="rotate(45 337 175)"/>
+  <ellipse cx="175" cy="337" rx="34" ry="68" fill="#f4a832" transform="rotate(45 175 337)"/>
+  <ellipse cx="337" cy="337" rx="34" ry="68" fill="#f4a832" transform="rotate(-45 337 337)"/>
+
+  <!-- Blüten-Mitte: dunkelbraun mit Textur-Punkten -->
+  <circle cx="256" cy="256" r="90" fill="#a05c1a"/>
+  <circle cx="256" cy="256" r="72" fill="#5c3210"/>
+
+  <!-- Textur-Punkte auf der Mitte -->
+  <circle cx="237" cy="237" r="10" fill="#7a4218"/>
+  <circle cx="256" cy="233" r="10" fill="#7a4218"/>
+  <circle cx="275" cy="237" r="10" fill="#7a4218"/>
+  <circle cx="232" cy="256" r="10" fill="#7a4218"/>
+  <circle cx="256" cy="253" r="10" fill="#7a4218"/>
+  <circle cx="280" cy="256" r="10" fill="#7a4218"/>
+  <circle cx="237" cy="275" r="10" fill="#7a4218"/>
+  <circle cx="256" cy="279" r="10" fill="#7a4218"/>
+  <circle cx="275" cy="275" r="10" fill="#7a4218"/>
+
+  <!-- Grüner Plantinvasion-Akzentring -->
+  <circle cx="256" cy="256" r="92" fill="none" stroke="#9be36e" stroke-width="4" opacity="0.5"/>
+</svg>
