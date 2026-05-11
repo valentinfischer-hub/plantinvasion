@@ -144,7 +144,32 @@ weiss (normal) → `#fcd95c` gelb (super-effektiv) → `#f4a832` orange (crit) �
 
 ---
 
-## 10. Asset-Naming-Convention
+## 10. NPC-Charakter-Visual-Referenzen
+
+### Tilda Wurzelreich (npc_tilda)
+- **Rolle:** Grossmutter-Botanikerin, legendäre Forscherin, vermisst seit 15 Jahren
+- **Alter:** 75+ (erscheint im Finale, aber taucht als Flashback/Portrait früh auf)
+- **Stil:** Grüner Reise-Mantel mit botanischer Stickerei, silbergraues Haar im Dutt (Holznadel), Leder-Samen-Beutel am Gürtel, getrocknete Sonnenblume als Wanderstab
+- **Farbpalette:** Mantel `#3a5a2a`, Haare `#c8c8c8`, Haut `#c4956a`, Beutel `#8a6e4a`
+- **Ton:** Warmherzig, weise, leicht gebückt von jahrzehntelanger Feldarbeit
+- **Sprite-Priorität:** HOCH (Tilda-Sprite-Idle FI-Score 2→4)
+- **PixelLab-Prompt:** in `brain/assets/pixellab_prompts.md`
+- **Platzhalter bis Sprite generiert:** `npc_clara`
+
+### Iris Salbeyen (npc_iris)
+- **Rolle:** Wandernde Forscherin, taucht in jedem Biom einmal auf, kennt Tilda persönlich
+- **Alter:** 65
+- **Stil:** Langes graues Haar offen, Drahtbrille, schlichtes grau-grünes Reisekleid, langer Eichenholz-Stab, Ledertasche voller Samen und gepresster Blumen, barfuss
+- **Sprite-Priorität:** MITTEL (Akt 2+)
+- **Platzhalter bis Sprite generiert:** `npc_anya`
+
+### Anya Schauer (npc_anya) — bereits vorhanden
+- **Rolle:** Markt-Händlerin in Wurzelheim, Tildas beste Freundin
+- **Sprite:** `npc_anya.png` ✅ (generiert, in Verwendung)
+
+---
+
+## 11. Asset-Naming-Convention
 
 ```
 assets/sprites/plants/<family>/<species>_<stage>.webp
