@@ -177,6 +177,8 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
   private debugText!: Phaser.GameObjects.Text;
   private _saveAccum?: number;
   private _storyFlagAccum?: number;
+  // FI-60FPS R22: SeasonTint-Refresh throttled (Season wechselt sehr selten, kein Update noetig pro Frame)
+  private _seasonRefreshAccum?: number;
   private _lastPlayerTileX?: number;
   private _lastPlayerTileY?: number;
   private interactHint!: Phaser.GameObjects.Text;
@@ -678,7 +680,13 @@ export class OverworldScene extends Phaser.Scene implements CollisionChecker {
     // Tageszeit ticken
     this.timeOverlay?.tick(delta);
     this.weatherOverlay?.tick(delta);
-    this.seasonTint?.refresh();
+    // FI-60FPS R22: SeasonTint nur alle 3000ms refreshen (Season wechselt alle vielen Spielminuten).
+    // Spart gameStore.getTime()-Aufruf + 2 Property-Writes pro Frame = leicht positiver FPS-Budget-Beitrag.
+    this._seasonRefreshAccum = (this._seasonRefreshAccum ?? 0) + delta;
+    if (this._seasonRefreshAccum >= 3000) {
+      this._seasonRefreshAccum = 0;
+      this.seasonTint?.refresh();
+    }
     this.particles?.update(this.weatherOverlay?.getCurrentWeather?.() ?? 'clear');
 
     // Tutorial Auto-Advance
