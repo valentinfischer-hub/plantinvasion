@@ -32,6 +32,8 @@ import { isSeedItem, getItem } from '../data/items';
 import { debugLog } from '../utils/debugLog';
 import { showToast, type ToastType } from '../ui/Toast';
 import { drawModalBox } from '../ui/uiTheme';
+import { sfx } from '../audio/sfxGenerator';
+import { t } from '../i18n/index';
 
 const STAGE_FILES = ['00_seed', '01_sprout', '02_juvenile', '03_adult', '04_blooming'];
 const TILE = 92;
@@ -93,8 +95,23 @@ export class GardenScene extends Phaser.Scene {
     generateAllPlantStages(this);
 
     this.cameras.main.setBackgroundColor('#2d3a2a');
-    // D-041 R16: Fade-In beim Scene-Einstieg
-    this.cameras.main.fadeIn(280, 0, 0, 0);
+    // D-041 R16 + B-033 Fix: Fade-In mit wall-clock Safety-Net.
+    // Phaser fadeIn nutzt Game-Loop-Zeit (rAF-gebunden) — bei Low-FPS (5-8fps im
+    // Background-Tab oder Low-End-Device) dauert ein 280ms-Tween bis zu 4s wall-clock.
+    // Safety-Net: window.setTimeout als Fallback nach 500ms wall-clock setzt Cam zurueck.
+    this.cameras.main.fadeIn(150, 0, 0, 0);
+    const _fadeTimer = window.setTimeout(() => {
+      try { this.cameras.main.resetFX(); } catch { /* Scene bereits destroyed */ }
+    }, 500);
+    this.cameras.main.once('camerafadeincomplete', () => window.clearTimeout(_fadeTimer));
+    this.events.once('destroy', () => window.clearTimeout(_fadeTimer));
+
+    // B-036: QuotaExceededError-Toast via CustomEvent (storage.ts dispatched event)
+    const _onSaveQuota = () => {
+      showToast(this, t('errors.saveQuota'), 'error', { duration: 4000 });
+    };
+    window.addEventListener('plantinvasion:save-quota-exceeded', _onSaveQuota);
+    this.events.once('shutdown', () => window.removeEventListener('plantinvasion:save-quota-exceeded', _onSaveQuota));
 
     // Boden-Tile-Background (Sprint 1 Atlas): full-screen 32x32 Tile-Pattern
     // mit ground_erdig-Variationen rotiert per Hash-Index. Subtle Alpha
@@ -242,8 +259,8 @@ export class GardenScene extends Phaser.Scene {
       seedKey.on('down', () => this.openSeedPlantModal());
     }
 
-    // Header-Button "Pflanze einsaeen"
-    const seedBtn = this.add.text(width - 70, 14, 'SÃ¤en', {
+    // Header-Button "Pflanze einsäen" — B-034: war 'SÃ¤en' (Latin-1 Mojibake), jetzt t()
+    const seedBtn = this.add.text(width - 70, 14, t('garden.seedBtn'), {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#1a1f1a',
@@ -350,6 +367,8 @@ export class GardenScene extends Phaser.Scene {
       this.showFlash('Selbe Pflanze - waehle eine andere', '#ff7e7e');
       return;
     }
+    // Züchtung Moment 1: Pollen-Drop — zweite Pflanze ausgewählt
+    try { sfx.pollenDrop(); } catch { /* Autoplay-Block */ }
     // Preview-Modal vor Bestaetigung
     this.openCrossPreviewModal(this.crossFirstPlantId, plantId);
   }
@@ -630,6 +649,8 @@ export class GardenScene extends Phaser.Scene {
    */
   private async runCrossWithDrift(parentAId: string, parentBId: string, successColor: string): Promise<void> {
     const drifted = await this.playParentDrift(parentAId, parentBId);
+    // Züchtung Moment 2: Bestäubungs-SFX direkt vor Store-Update
+    try { sfx.pollinate(); } catch { /* Autoplay-Block */ }
     const result = gameStore.crossPlants(parentAId, parentBId);
     if (!result.ok) {
       this.showFlash(result.reason ?? 'Crossing fehlgeschlagen', '#ff7e7e');
@@ -687,6 +708,14 @@ export class GardenScene extends Phaser.Scene {
    * Bei isMutation zusaetzlich violet-Tint plus Camera-Shake.
    */
   private playHybridReveal(isMutation: boolean): void {
+    // Züchtung Moment 4/5: Audio-Stinger synchron mit Zoom-Punch
+    try {
+      if (isMutation) {
+        sfx.mutationReveal();
+      } else {
+        sfx.hybridReveal();
+      }
+    } catch { /* Autoplay-Block */ }
     const cam = this.cameras.main;
     const baseZoom = cam.zoom;
     // Zoom-Punch
