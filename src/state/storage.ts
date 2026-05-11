@@ -383,14 +383,21 @@ export function saveGame(state: GameState): void {
     localStorage.setItem(STORAGE_KEY, json);
   } catch (e) {
     console.error('[storage] saveGame failed', e);
+    // B-036: QuotaExceededError → User-Feedback via CustomEvent (decoupled von Phaser-Scene)
+    const isQuota = e instanceof DOMException && (
+      e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+    );
+    if (isQuota) {
+      window.dispatchEvent(new CustomEvent('plantinvasion:save-quota-exceeded'));
+    }
     // S-POLISH Run14: Sentry-Context + User-Feedback hint
     try {
       const S = window.__sentry;
       if (S?.captureException) {
-        S.captureException(e, { contexts: { save: { playerId: state.playerId, plantCount: state.plants?.length } } });
+        S.captureException(e, { contexts: { save: { playerId: state.playerId, plantCount: state.plants?.length, isQuota } } });
       }
     } catch { /* noop */ }
-    console.warn('[storage] ui: errors.saveFailed');
+    console.warn('[storage] saveGame failed — quota:', isQuota);
   }
 }
 
