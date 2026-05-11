@@ -3,7 +3,7 @@
 ## Tech-Code-Run idle
 - Run-ID: 2026-05-11_12:00_B027
 - Status: ABGESCHLOSSEN — B-027 SplashScene Background-Tab-Fix committed
-- Commits: [pending push — Netlify-CI Build aktiv]
+- Commits: 03f765e (fix/splash B-027), 8c31e42 (docs/brain)
 - Tier-Fokus: Tier 1 Override (FTUE-Blocker B-027)
 - Nächster geplanter Run: 16:00 Polish-Run
 

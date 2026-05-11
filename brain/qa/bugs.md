@@ -89,7 +89,7 @@
 
 **Entdeckt durch:** QA-Critic Browser-Smoke 2026-05-11 09:xx (Background-Tab-Test).
 
-**Commit:** [post-push — Netlify-CI Build aktiv] (2026-05-11 12:00, gepusht auf origin/main).
+**Commit:** `03f765e` (2026-05-11 12:00, gepusht auf origin/main).
 
 **Tests:** Kein Vitest (Sandbox disk-full + Phaser-Scene nicht unit-testbar). Naechster 20:00-QA-Run:
 Browser-Smoke mit explizitem Background-Tab-Test als Verifikation.

@@ -1,7 +1,7 @@
 # Tech-Code Run Report 2026-05-11 12:00 (Feature-Run / Tier-1-Override)
 
 **Status:** GRÜN
-**Commits:** [post-push — Netlify-CI verifiziert Build]
+**Commits:** 03f765e (fix), 8c31e42 (docs) — gepusht auf origin/main
 **Time-Used:** ~40 Min von 90 Min Budget
 **Tier-Fokus:** Tier 1 — FTUE/Game-Start (B-027 Blocker-Fix)
 
