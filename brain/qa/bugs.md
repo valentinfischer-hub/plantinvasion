@@ -63,3 +63,33 @@
 **Commit:** `a9cd655` (2026-04-28, gepusht auf origin/main).
 
 **Tests:** Vitest hat dies nicht catched weil Phaser-Text-Lifecycle nur in Browser ausgewertet wird. Browser-Smoke ist Pflicht-Verifikation.
+
+### B-027 RESOLVED 2026-05-11
+**Title:** SplashScene haengt ewig wenn Tab nicht im Vordergrund — rAF-Background-Throttle friert Phaser-Zeit ein.
+
+**Symptom:**
+- User öffnet URL und wechselt sofort in anderen Tab (Trailer schauen, Discord, etc.).
+- Bei Rueckkehr: SplashScene laeuft noch — nach 116+ Sekunden wall-clock, 331ms Phaser-Zeit.
+- Splash-Uebergang zu MenuScene findet nie statt.
+
+**Root-Cause:**
+- `this.time.delayedCall(splashDuration, goToMenu)` und `this.time.delayedCall(160, ...)` verwenden
+  Phaser's Game-Loop-Zeit, die auf `requestAnimationFrame` basiert.
+- Chrome/Firefox drosseln rAF in Background-Tabs auf ~1fps oder weniger.
+- Phaser akkumuliert also nur ~1ms Game-Zeit pro Sekunde wall-clock im Background-Tab.
+- Bei splashDuration=3500ms: ca. 3500 Sekunden Warte-Zeit fuer den User.
+
+**Fix (2026-05-11 12:00, Tech-Code):**
+- Alle drei `this.time.delayedCall`-Aufrufe in SplashScene.create() ersetzt durch `window.setTimeout`.
+- `window.setTimeout` ist nicht an rAF gebunden und feuert auch im Background (max. 1s Browser-Throttle-Floor).
+- `visibilitychange`-Safety-Net hinzugefuegt: bei Tab-Focus wall-clock-Restzeit pruefen.
+  Falls abgelaufen → goToMenu(). Falls nicht → neuer setTimeout fuer Restzeit.
+- `this.events.once('destroy', ...)` Cleanup fuer Timer + Event-Listener.
+- Dot-Animations-Timer bleibt Phaser-Zeit (rein kosmetisch, kein Einfluss auf Transition).
+
+**Entdeckt durch:** QA-Critic Browser-Smoke 2026-05-11 09:xx (Background-Tab-Test).
+
+**Commit:** [post-push — Netlify-CI Build aktiv] (2026-05-11 12:00, gepusht auf origin/main).
+
+**Tests:** Kein Vitest (Sandbox disk-full + Phaser-Scene nicht unit-testbar). Naechster 20:00-QA-Run:
+Browser-Smoke mit explizitem Background-Tab-Test als Verifikation.

@@ -1,10 +1,10 @@
 # Agent Coordination
 
 ## Tech-Code-Run idle
-- Run-ID: 2026-05-11_12:00
-- Status: ABGESCHLOSSEN
-- Commits: 869f7745, 0de8efd0, f95204d9, 339b41c7
-- Tier-Fokus: Tier 5 Polish (i18n CCS + QuestLogScene)
+- Run-ID: 2026-05-11_12:00_B027
+- Status: ABGESCHLOSSEN — B-027 SplashScene Background-Tab-Fix committed
+- Commits: [pending push — Netlify-CI Build aktiv]
+- Tier-Fokus: Tier 1 Override (FTUE-Blocker B-027)
 - Nächster geplanter Run: 16:00 Polish-Run
 
 ## Letzter Run (2026-05-11 12:00 — Polish)
