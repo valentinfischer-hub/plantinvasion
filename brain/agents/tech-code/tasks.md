@@ -1,85 +1,121 @@
 # Tech-Code Tasks
 
-**Sprint:** S-POLISH (2026-04-27 bis 2026-05-03)
+**Sprint:** S-POLISH (verlängert bis 2026-05-17, D-042)
 **Cadence:** alle 4h (08, 12, 16, 20)
-**Direktive:** 90% Polish bestehender Code. Max 10% Neu. i18n zaehlt als Polish.
+**Direktive:** 90% Polish bestehender Code. Max 10% Neu. i18n zählt als Polish.
 **Polish-Anteil messen:** Am Run-Ende Prozent in Log schreiben.
-**First-Impression-Pflicht:** Alles was Spieler in ersten 5 Minuten sieht/hoert/klickt = Score-Ziel 5/5. MenuScene + FTUE-Flow haben absolute Prioritaet.
+**First-Impression-Pflicht:** FTUE-Schritte 1–5 = Score-Ziel 5/5. Blocker für Closed-Alpha.
 
 ---
 
-## REIHENFOLGE VERBINDLICH (3 bestehende Items anfassen vor neuem File)
+## REIHENFOLGE VERBINDLICH
 
-### 1. GitHub-Push-Setup (BLOCKER, zuerst)
+### 0. CD-PIPELINE-FIX — P0 (ERSTE AKTION, VOR ALLEM ANDEREN)
 
-Bei Push-Fail: Patch in Slack-Alert.
+**Decision:** D-045 (Producer-Release 2026-05-13)
+**Problem:** Netlify deployed seit 2026-04-30 NICHT mehr automatisch. Aktueller Live-Deploy: commit 3b5976ae (fix xpBar), 13 Tage alt. Alle FI-Arbeit, Bug-Fixes, i18n-Arbeit seit 2026-04-30 sind für Spieler NICHT sichtbar.
 
-### 2. i18n-Setup (ERLEDIGT 2026-04-28)
-- Standalone src/i18n/index.ts (kein i18next, kein external dep)
-- src/i18n/de/ + en/ (common.json, ui.json, plants.json, quests.json)
-- Tests vorhanden (src/i18n/__tests__/i18n.test.ts)
-- MenuScene nutzt t() fuer alle Buttons
-- Locale-Toggle in SettingsScene (DE/EN, localStorage-Persist)
-- Detail: brain/agents/tech-code/i18n_progress.md
+**Aufgabe:**
+1. Netlify Admin → Site plantinvasion → Site settings → Build & deploy → Repository: GitHub-Verbindung prüfen
+2. Webhook-Status prüfen: Deploys → Deploy settings → Build hooks (expired?)
+3. Falls Webhook-Problem: Webhook löschen + neu anlegen
+4. Falls OAuth-Token: GitHub re-authorize
+5. Nach Fix: manueller Deploy triggern
+6. Netlify-CD verifizieren: Push 1 Test-Commit, Deploy-Status prüfen
+7. brain/release/build_log.md aktualisieren mit aktuellem Deploy
 
-### 3. Sentry-SDK (ERLEDIGT 2026-04-28)
-- In src/main.ts, conditional auf VITE_SENTRY_DSN
-- BrowserTracing plus captureMessage plantinvasion-boot
+**Keine anderen Tasks bis CD-Pipeline grün.**
 
-### 4. PostHog-SDK alle 9 Pflicht-Events (ERLEDIGT 2026-04-29)
-- Alle 9 Pflicht-Events implementiert:
-  - game_started: main.ts (S-09)
-  - breeding_attempted: GardenScene.ts (Batch 2)
-  - breeding_succeeded: GardenScene.ts (Batch 2)
-  - mutation_triggered: GardenScene.ts (Batch 2)
-  - battle_started: BattleScene.ts (2026-04-29 08:00)
-  - battle_won: BattleScene.ts (2026-04-29 08:00)
-  - battle_lost: BattleScene.ts (2026-04-29 08:00)
-  - save_corrupted: storage.ts (2026-04-29 12:00)
-  - scene_changed: OverworldScene.ts via trackStart-Helper (2026-04-29 12:00)
-  - achievement_unlocked: gameState.ts (2026-04-29 12:00)
+### 1. FTUE Phase A — State + Persistence (SOFORT, kein Warten mehr)
 
-### 5. ESLint Zero Warnings (ERLEDIGT 2026-04-29)
-- Batch 2 hat ~62 any-Errors behoben
-- Scan 2026-04-29 12:00: nur 2 any-Stellen uebrig, beide mit eslint-disable-next-line suppressed
-- 0 aktive Violations - Ziel erreicht
+**Spec:** brain/sprints/s-polish/ftue_phase_a.md (Producer-Release 2026-05-13)
+**Estimate:** 0.5h
 
-### 6. Zuechtungs-Visual Polish (wenn Art-UI Spec da)
-- Bestaeubungs-Animation 3-Lagen-Partikel (Pollen, Licht, Zauber)
-- Punnett-Square-Komponente (2x2 Grid, Wahrscheinlichkeits-Tooltips)
-- Hybrid-Reveal-Stinger (Camera-Punch in 200ms)
-- Mutation-Glow-Effekt (8% Basis, 15% Doppel-Sondermerkmal)
+- [ ] src/types/ftue.ts — FTUEState-Interface
+- [ ] src/managers/FTUEManager.ts — Singleton (getState, markStepComplete, isComplete, reset)
+- [ ] src/data/storage.ts — Save-Migration: bestehende Saves → alle ftue-Flags = true
+- [ ] Vitest: 4 Tests (reset, markStep, isComplete, Migration)
+- [ ] Commit: `feat(ftue): Phase A — FTUEState + FTUEManager + Save-Migration`
+- [ ] Antwort-Handoff: brain/HANDOFFS/YYYY-MM-DD_tech-code_ftue_phase_a_done.md
 
-### 7. Performance-Audit 60fps
-- Chrome-Profiler 30min Auto-Playthrough
-- Top-5-Slow-Functions identifizieren
-- Memory-Leak: Tween-Cleanup BattleScene plus GardenScene
-- Particle-Pool-Reuse pruefen
+### 2. Iter30 UI-Bugs (Handoff 2026-05-11_run2_art-ui_to_tech-code_iter30_bugs.md)
 
-### 8. TypeScript Strict Mode
-- noUncheckedIndexedAccess in tsconfig - GEPLANT
-- Plan dokumentiert in brain/tech/strict_migration.md
-- Aktivierung wenn Bash verfuegbar (Build-Gate: tsc plus vite build - Vorpruefung noetig)
+**P1 sofort:**
+- [ ] B-008: I-Hotkey → InventoryScene (keydown-I in OverworldScene.create())
+- [ ] B-009: Q-Hotkey → QuestLogScene statt Nebel
 
-### 9. Save-Migration Edge-Cases
-- v5 bis v8 Round-Trip-Test in Vitest
-- Kaputte Saves, Browser-Refresh mid-Battle, Storage-Quota-Overflow
+**P2 nach P1:**
+- [ ] B-006: Coin-HUD Flackern — Tween-Counter statt direktes setText
+- [ ] B-007: Kreuzungs-Modal X-Button top-right
+- [ ] B-010: introShown-Flag in SaveState
+
+**Commit-Prefix:** `fix: iter30 ui-bug-sync (B-006 bis B-010)`
+
+### 3. Title-Screen-Logo + Loading-Indicator (Handoff 2026-05-11_art-ui_to_tech-code_title_loading.md)
+
+**FI-Score-Ziel:** Logo 3→4, Loading 3→4
+
+- [ ] Title-Text: Outline + Schatten + Entrance-Sequenz (4 Elemente koordiniert)
+- [ ] Loading-Indicator: Puls-Tween 700ms + Dots-Animation
+- [ ] Transition MenuScene: alpha 0, 300ms
+- [ ] Tween-Cleanup in shutdown()
+- Commits: `FI: title-logo polish + loading indicator branded`
+
+### 4. FTUE Phase B — Schritt 1 Tilda-Dialog (nach Phase A)
+
+**Spec:** brain/design/ftue_spec.md (Design-Balance, 507 Zeilen)
+**Estimate:** 1.0h
+
+- Wartet auf: Phase A abgeschlossen
+- 1500ms Delay nach OverworldScene ready
+- Typewriter 40ms/Zeichen, Skip-Logik
+- PostHog Events: pi_ftue_step1_dialog_started + pi_ftue_step1_dialog_completed
+- Platzhalter-Dialog aus brain/narrative/dialogs/tilda.md (bereit)
+
+### 5. FTUE Phase C+D — Schritte 2–5 (nach Phase B)
+
+- Wartet auf: Phase B
+- Details in brain/design/ftue_spec.md
+
+### 6. i18n Phase 2 (laufend, als Polish bei jedem Run)
+
+- [ ] GardenScene hardcoded Strings → t()-Calls
+- [ ] BattleScene hardcoded Strings → t()-Calls
+- [ ] OverworldScene Dialog-Trigger-Strings → t()-Calls
+
+**Stand Phase 1:** MenuScene ✅, SettingsScene ✅, CCS ✅, QuestLogScene ✅
+**Noch offen:** GardenScene, BattleScene, OverworldScene-Dialoge
+
+### 7. Sentry P0/P1 Check
+
+- [ ] Sentry-Dashboard öffnen, aktive P0/P1 Errors dokumentieren
+- [ ] Bei P0/P1: sofort fixen, brain/qa/bugs.md aktualisieren
+
+### 8. Performance-Audit 60fps (laufend)
+
+- Chrome-Profiler 30min Auto-Playthrough wenn lokal möglich
+- Memory-Leak: Tween-Cleanup in BattleScene + GardenScene
 
 ---
 
-## NEU-BLOCK (max 10%)
+## Abgeschlossen (S-POLISH bisher)
 
-Kein neues Feature ohne Producer-Release-Freigabe.
+- i18n Phase 1 ✅ (MenuScene, SettingsScene, CCS, QuestLogScene)
+- Sentry-SDK ✅
+- PostHog alle 9 Pflicht-Events ✅
+- ESLint zero ✅
+- B-027 (window.setTimeout Splash) ✅
+- B-033 (GardenScene Camera-Fade) ✅
+- B-034 (Säen-Button Mojibake) ✅
+- B-035/B-036 (Save-Quota-Error) ✅
+- Performance: NPC-NameTag-Throttle + Story-Flag-500ms-Throttle ✅
+- Slot-Selection-Glow + Cross-Pollination Visual + Day-Night V2 ✅
 
 ---
 
 ## Quality Gates
 
-- npm test und npm run lint und npm run build gruen vor Push
-- Bundle kleiner 5MB
-- PostHog-game_started-Event im Dashboard nach Init
-
-## Cost-Tracking
-
-- i18next/Sentry/PostHog/Vitest/ESLint: 0 USD
-- PixelLab-Calls (wenn Sprites): sofort in brain/COSTS.md
+- tsc --noEmit grün vor Push
+- vitest run grün
+- Bundle < 5MB
+- Polish-Anteil ≥ 90% pro Run dokumentieren

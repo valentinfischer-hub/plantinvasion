@@ -1,51 +1,95 @@
 # Active Sprint
 
-**Sprint:** S-09 Story-Akt-1 spielbar plus NPC-Walking plus Saison-Tile-Variationen
-**Start:** 2026-04-26
-**Geplantes Ende:** 2026-05-04
-**Aktueller Stand (2026-04-28):** ALLE TIER-4-DoD-ITEMS V0.1 LIVE.
+**Sprint:** S-POLISH (verlängert D-042)
+**Start:** 2026-04-27
+**Verlängertes Ende:** 2026-05-17 23:59
+**Begründung Verlängerung:** FTUE-Schritte 1–5 auf Score 2/5. Quality-Gates (Critic ≥ 4.3, Stardew-Audit, Sentry zero P0) noch nicht bestätigt. D-042.
 
-## Sprint-DoD-Checkliste (V0.1)
+## Sprint-DoD-Checkliste — aktuelle Öffnungen
 
-### NPC-Walking-Cycles ✓ V0.1 LIVE
-- [x] Spec geschrieben: brain/sprints/S-09/npc-walking.md
-- [x] Pure-Function: src/entities/npcMovement.ts (Spawn-Radius, Wall-Check, Dialog-Pause)
-- [x] Vitest: 13 Tests gruen
-- [x] NPC.step() + initMovement() Hooks
-- [x] OverworldScene-Integration in update() live
-- [ ] Browser-Smoke (Chrome MCP, 20:00-QA-Run)
-- [x] V0.2 Pathfinding: pathfinding.ts + npcMovement V0.2 Integration (S-10 Item-1 DONE)
+### FTUE-Implementierung (Phase A) — NEU 2026-05-13
+- [ ] FTUEState-Interface in src/types/ftue.ts
+- [ ] Save-Migration: bestehende Saves → FTUE-Flags = true
+- [ ] FTUEManager-Singleton (getState, markStepComplete, isComplete, reset)
+- [ ] Vitest: 4 Tests grün
+- [ ] Spec: brain/sprints/s-polish/ftue_phase_a.md (FERTIG, assigniert Tech-Code)
 
-### Story-Akt-1 ✓ V0.1 LIVE
-- [x] Spec geschrieben: brain/sprints/S-09/story-akt-1.md
-- [x] Pure-Function: src/data/storyAct1.ts (evaluateAct1Progress + autoSetAct1Flags)
-- [x] Vitest: 12 Tests gruen
-- [x] OverworldScene-Integration in update() live: Auto-Flag-Setting + advanceAct(1) + collectDiaryEntry(1) + reward-Toast
-- [ ] Browser-Smoke End-to-End-Test
-- [ ] Story-Akt-2-Spec (Folge-Run)
+### FTUE-Implementierung (Phase B — Tilda-Dialog)
+- [ ] Dialog-Anzeige 1500ms nach OverworldScene ready
+- [ ] Typewriter 40ms/Zeichen, Skip-Logik
+- [ ] PostHog Events pi_ftue_step1_*
+- [ ] Narrative-Sound Dialog-Content eingebunden (brain/narrative/dialogs/tilda.md bereit)
+- [ ] Wartet auf: Phase A abgeschlossen
 
-### Saison-Tile-Variationen ✓ ABGESCHLOSSEN
-- [x] Atlas-Pack Sprint 0+1 plus 16 Tile-Variationen integriert (Control-Center 59d1d9a, a5eb995)
-- [x] BootScene + MenuScene laden Atlases
-- [ ] GardenScene rendert Atlas-Frames (Folge-Run, kosmetisch nicht blockierend)
+### Iter30-UI-Bugs (B-006 bis B-010)
+- [ ] B-008: I-Hotkey → InventoryScene (P1)
+- [ ] B-009: Q-Hotkey → QuestLog statt Nebel (P1)
+- [ ] B-006: Coin-HUD Flackern-Fix (P2)
+- [ ] B-007: Kreuzungs-Modal X-Button (P2)
+- [ ] B-010: Intro-Dialog introShown-Flag (P2)
+- Handoff: 2026-05-11_run2_art-ui_to_tech-code_iter30_bugs.md
 
-## Quality-Gates Stand
-- TS-strict: GRUEN
-- Vitest: 586/586 ueber 35 Suiten
-- ESLint: 0/0
-- Coverage: heilige Pfade 100/99-100, all-files >99% Lines
-- Bundle: ~1.7 MB total, im Budget
+### Title-Screen-Logo + Loading-Indicator
+- [ ] Title-Text Outline + Schatten + Entrance-Sequenz (FI Score 3→4)
+- [ ] Loading-Indicator Puls-Tween + Dots (FI Score 3→4)
+- Handoff: 2026-05-11_art-ui_to_tech-code_title_loading.md
 
-## Naechste Tech-Run-Prios
-1. **NPC-Wander-Ziele in OverworldScene** (targetTile per NPC setzen, z.B. Random-Wander-Punkt aus spawnArea)
-2. **GardenScene Atlas-Frames** statt fillStyle fuer Slots (kosmetisch, Tier-2-Plus)
-3. **PixelLab Walking-Sprites** (S-10 Item-2, braucht PIXELLAB_API_KEY)
-4. **Story-Akt-2 V0.1** (S-10 Item-3)
-5. **Save-V11-Bump** wenn NPC-State persistiert werden soll
+### Heimatdorf-BGM Placeholder
+- [ ] Tone.js-Synth warmerer Cozy-Loop in titleBgm.ts-Stil
+- [ ] FI-Score Heimatdorf-BGM 1→3
+- Assigniert: Narrative-Sound (D-044)
 
-## Sprint-Closure-Bedingung
-- [ ] Browser-Smoke ALLE 4 Tier-Tests PASS
-- [ ] Producer-Review der DoD-Specs
-- [ ] Sprint-Postmortem in brain/postmortems/S-09.md
+### Sentry P0/P1 Zero
+- [ ] Sentry-Dashboard auf offene P0/P1 prüfen (QA-Critic oder Tech-Code)
+- Stand: unbekannt
 
-Stand 2026-04-28: 4 von 6 Closure-Items offen, alle abhaengig vom 20:00-QA-Browser-Smoke.
+### Stardew-Vergleichs-Audit
+- [ ] GardenScene vs. Stardew
+- [ ] BattleScene vs. Stardew/Pokémon
+- [ ] OverworldScene vs. Stardew
+- [ ] MenuScene vs. Stardew
+- Stand: noch keine Scores dokumentiert
+
+### Sprint-Postmortem
+- [ ] brain/postmortems/S-POLISH.md schreiben (erst nach Sprint-Ende)
+
+## Quality-Gates Stand 2026-05-13
+
+| Gate | Status | Notiz |
+|---|---|---|
+| TS-strict grün | ✅ | letzter Build 2026-05-11 |
+| Vitest grün | ✅ | 833+ Tests, Disk-Full-Caveat in Sandbox |
+| ESLint zero | ✅ | 0 Violations seit 2026-04-29 |
+| Bundle < 5MB | ✅ | ~1.7MB |
+| 60fps stable | ✅ | FI-Score 5 |
+| Sentry zero P0/P1 | ❓ | ungeprüft |
+| Game-Critic ≥ 4.3★ | ❓ | kein Run seit 2026-04-30 |
+| Stardew-Audit alle 4 Scenes | ❌ | offen |
+| FI-Gesamtscore ≥ 4.0 | ❌ | FTUE 2/5, Heimatdorf-BGM 1/5 |
+
+## FI-Score Übersicht 2026-05-13
+
+| Item | Score | Trend |
+|---|---|---|
+| Favicon + Tab-Title | 5 | ✅ |
+| Boot-Time | 5 | ✅ |
+| 60-FPS | 5 | ✅ |
+| MenuScene-Layout | 4 | ↑ |
+| New-Game-Button | 4 | ↑ |
+| Title-BGM | 4 | ↑ |
+| Erster Bestäubungs-SFX | 4 | ↑ |
+| Hybrid-Reveal-Stinger | 4 | ↑ |
+| Erste 5 SFX | 4 | ↑ |
+| Loading-Indicator | 3 | → |
+| Title-Screen-Logo | 3 | → |
+| FTUE Schritt 1–5 | 2 | ⚠️ kritisch |
+| Tilda-Dialog | 2 | ⚠️ |
+| Tilda-Sprite-Idle | 2 | ⚠️ |
+| Bestäubungs-Animation | 2 | ⚠️ |
+| Heimatdorf-BGM | 1 | 🔴 |
+
+## Naechster Schritt nach S-POLISH
+
+S-7.5 First-Time-User-Experience plus Anfang-Polish (Start 2026-05-18)
+
+**Stand 2026-05-13 (Producer-Release Run V2):** Sprint verlängert, FTUE Phase A Spec delegiert, 3 Entscheidungen gefasst (D-042/D-043/D-044).
